@@ -120,7 +120,7 @@ export default function PedirTatuagem({ perfil }) {
         {erro ? <p className="mensagem-erro">{erro}</p> : null}
         {foiGravado && !erro ? (
           <p className="mensagem-erro" style={{ color: "var(--cor-texto)" }}>
-            Pedido registrado. A tattoo já está como pedida.
+            Pedido registrado. A tatuagem já está como pedida.
           </p>
         ) : null}
       </form>

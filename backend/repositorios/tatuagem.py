@@ -108,13 +108,18 @@ def atualizar_etapa(tatuagem_id: int, etapa: str) -> dict | None:
 # faz, e assim fica claro onde o conteúdo para e começa o código.
 #
 # A lista está montada com as quatro etapas, uma tatuagem em cada, de propósito:
-# é assim que o filtro por etapa da agenda tem o que mostrar. O id vai de 1 a 5
+# é assim que o filtro por etapa da agenda tem o que mostrar. O id vai de 1 a 8
 # sem buraco, porque o id da próxima tatuagem é o tamanho da lista mais um.
 #
 # Repare que existem duas clientes, e não uma só. A Bruna é a cliente 1, que é o
 # perfil que existe na tela; a cliente 2 é outra cliente do mesmo estúdio, e ela
 # entra pelo mesmo formulário. A diferença aparece na agenda do Vitor, que mostra
 # as duas, e na tela da Bruna, que mostra só a dela.
+#
+# A Bruna tem mais tatuagem que a Camila de propósito: ela é o perfil do celular,
+# que é o aparelho em que a tela precisa ficar impecável, e é a tela que se abre
+# primeiro na demonstração. Com mais registro nela, a lista do celular enche sem
+# que a pessoa precise scrolar para ver que o sistema tem conteúdo.
 tatuagens_de_exemplo = [
     {
         "id": 1,
@@ -156,10 +161,34 @@ tatuagens_de_exemplo = [
         "tamanho": 9.0,
         "etapa": "em sessões",
     },
+    {
+        "id": 6,
+        "cliente_id": 1,
+        "ideia": "folha de figueira na costela",
+        "local_do_corpo": "costela",
+        "tamanho": 14.0,
+        "etapa": "em sessões",
+    },
+    {
+        "id": 7,
+        "cliente_id": 1,
+        "ideia": "onda quebrando no tornozelo",
+        "local_do_corpo": "tornozelo",
+        "tamanho": 6.5,
+        "etapa": "desenho aprovado",
+    },
+    {
+        "id": 8,
+        "cliente_id": 2,
+        "ideia": "três pontos no ombro, como mapa",
+        "local_do_corpo": "ombro",
+        "tamanho": 5.0,
+        "etapa": "pedida",
+    },
 ]
 
 # O for abaixo joga cada exemplo na lista real. É a mesma lista que as funções
-# acima leem e escrevem, e por isso a tattoo que o Vitor registrar na demonstração
-# entra logo depois da 5, com o id 6, sem atropelar o exemplo.
+# acima leem e escrevem, e por isso a tatuagem que o Vitor registrar na demonstração
+# entra logo depois da 8, com o id 9, sem atropelar o exemplo.
 for exemplo in tatuagens_de_exemplo:
     tatuagens.append(exemplo)

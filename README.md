@@ -22,9 +22,9 @@ O back entrega as cinco coisas que a cartilha pede:
 | Listar os passos de uma tatuagem | `GET /tatuagens/{tatuagem_id}/passos` |
 | Registrar um passo numa tatuagem | `POST /tatuagens/{tatuagem_id}/passos` |
 
-A agenda abre com **cinco tatuagens de demonstração**, uma em cada etapa, e os históricos delas
-estão coerentes com a regra. Esses dados ficam no fim de cada arquivo de `repositorios/`, e é só
-apagar o bloco `..._de_exemplo` se você quiser a API vazia.
+A agenda abre com **oito tatuagens de demonstração** — cinco da Bruna e três da Camila — e os
+históricos delas estão coerentes com a regra. Esses dados ficam no fim de cada arquivo de
+`repositorios/`, e é só apagar o bloco `..._de_exemplo` se você quiser a API vazia.
 
 A agenda também mostra o nome da cliente, e não o `cliente_id`. O nome mora no back, em
 `repositorios/cliente.py`, e entra na resposta como `nome_da_cliente`. A cartilha lista o usuário
@@ -87,8 +87,8 @@ Com o back no ar, o esperado é:
 
 - o terminal mostrar `http://localhost:8000`;
 - abrir `http://localhost:8000/docs` e ver as cinco rotas da tabela acima;
-- `GET http://localhost:8000/tatuagens` responder com as **cinco tatuagens de demonstração**, e
-  `?etapa=em sessões` devolver só duas. A lista em memória morre quando o processo reinicia.
+- `GET http://localhost:8000/tatuagens` responder com as **oito tatuagens de demonstração**, e
+  `?etapa=em sessões` devolver só três. A lista em memória morre quando o processo reinicia.
 
 A raiz `http://localhost:8000` responde **404**, e isso é de propósito: as REGRAS proíbem rota no
 `main.py`.
@@ -112,9 +112,9 @@ O esperado é o Vite abrir `http://localhost:5173` e a tela de escolha de perfil
 Bruna e o Vitor. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
 navegador bloqueia a chamada por CORS.
 
-As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as três
+As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as cinco
 tatuagens dela, com a etapa de cada uma e o histórico ao clicar em "Ver histórico", e "Pedir
-tatuagem" grava no back e volta com a etapa `pedida`. Escolhendo Vitor, "A agenda" lista as cinco
+tatuagem" grava no back e volta com a etapa `pedida`. Escolhendo Vitor, "A agenda" lista as oito
 tatuagens do estúdio com filtro por etapa, e "Abrir ficha" abre a ficha de uma delas, onde o passo
 é registrado. A ficha mostra os dois resultados do back: quando a regra aceita, a etapa nova
 aparece; quando a regra recusa, o motivo aparece embaixo do campo, e a etapa não muda.

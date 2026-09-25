@@ -51,7 +51,7 @@ function Historico({ tatuagemId }) {
   }
 
   if (passos.length === 0) {
-    return <AvisoVazio>Nenhum passo ainda. A tattoo está esperando o desenho.</AvisoVazio>;
+    return <AvisoVazio>Nenhum passo ainda. A tatuagem está esperando o desenho.</AvisoVazio>;
   }
 
   return (

@@ -10,7 +10,7 @@
  * vê agenda e ficha. A ordem e a lista estão em src/perfis.js, e o App só obedece.
  *
  * A tatuagem aberta mora aqui, e não dentro da ficha, porque quem escolhe a
- * tattoo é a agenda. Se a escolha ficasse na ficha, a ficha teria de saber o que
+ * tatuagem é a agenda. Se a escolha ficasse na ficha, a ficha teria de saber o que
  * a agenda escolheu, e as duas telas passariam a se conhecer.
  */
 
@@ -46,7 +46,7 @@ export default function App() {
     setTela(TELAS[perfilEscolhido.tipo][0]);
   }
 
-  /* Sair do perfil devolve para a lista e limpa a tela e a tattoo aberta, para o
+  /* Sair do perfil devolve para a lista e limpa a tela e a tatuagem aberta, para o
    * próximo perfil começar do começo dele. */
   function sairDoPerfil() {
     setPerfil(null);
@@ -54,8 +54,8 @@ export default function App() {
     setTatuagemAberta(null);
   }
 
-  /* Abrir a ficha é sempre a mesma coisa: guardar a tattoo e trocar de tela. A
-   * agenda não sabe o nome da tela, e a ficha não sabe de onde a tattoo veio. */
+  /* Abrir a ficha é sempre a mesma coisa: guardar a tatuagem e trocar de tela. A
+   * agenda não sabe o nome da tela, e a ficha não sabe de onde a tatuagem veio. */
   function abrirFicha(tatuagem) {
     setTatuagemAberta(tatuagem);
     setTela("ficha");
@@ -113,7 +113,7 @@ export default function App() {
       ) : null}
       {tela === "agenda" ? <Agenda aoAbrirFicha={abrirFicha} /> : null}
 
-      {/* A ficha só existe com uma tattoo aberta. Sem ela, não há em qual
+      {/* A ficha só existe com uma tatuagem aberta. Sem ela, não há em qual
           registrar passo, e a tela diz isso em vez de mostrar um formulário
           vazio que não levaria a lugar nenhum. */}
       {tela === "ficha" ? (

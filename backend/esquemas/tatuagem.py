@@ -33,7 +33,7 @@ class TatuagemEntrada(BaseModel):
         description="Onde vai ser tatuado, no corpo dela.",
     )
 
-    # gt=0 significa "maior que zero": tamanho zero não é tattoo nenhuma, então
+    # gt=0 significa "maior que zero": tamanho zero não é tatuagem nenhuma, então
     # o Pydantic barra antes do serviço precisar conferir.
     tamanho: float = Field(gt=0, description="O tamanho combinado, em centímetros.")
 

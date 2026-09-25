@@ -3,12 +3,12 @@
  * A ficha é o formulário que registra um passo numa tatuagem. Ela tem duas metades:
  * à esquerda, de quem é a tatuagem e o que já foi feito nela; à direita, o
  * formulário. No celular as duas metades empilham, na ordem em que se lê: primeiro
- * o que é a tattoo, depois o que fazer com ela.
+ * o que é a tatuagem, depois o que fazer com ela.
  *
  * Esta tela é onde a regra da cartilha fica visível. O Vitor registra um passo, e
  * duas coisas podem acontecer: o back aceita e a etapa muda, ou o back recusa e
  * devolve o motivo. Os dois casos aparecem na tela, e é por isso que ela recarrega
- * a tattoo depois de registrar: a resposta do POST do passo é o passo, e a etapa é
+ * a tatuagem depois de registrar: a resposta do POST do passo é o passo, e a etapa é
  * outra coisa, que mora em outro recurso da API.
  *
  * A tela NÃO esconde os passos que a regra recusa. O seletor traz os três tipos
@@ -20,6 +20,7 @@
 import { useEffect, useState } from "react";
 
 import { buscarPassos, buscarTatuagem, registrarPasso } from "../api";
+import { AvisoCarregando } from "../componentes/Avisos";
 import Etiqueta from "../componentes/Etiqueta";
 import { formatarData } from "../datas";
 
@@ -31,27 +32,61 @@ const TIPOS_DE_PASSO = ["desenho aprovado", "sessão", "retoque"];
 export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
   const [etapaAtual, setEtapaAtual] = useState(tatuagem.etapa);
   const [passos, setPassos] = useState([]);
+  /* O que está guardado aqui não é um "carregando", é de qual tatuagem os
+   * passos que estão na tela são. O carregando é derivado disso: enquanto não
+   * bater com a tatuagem aberta, a tela não sabe o histórico ainda. Assim o
+   * estado não é marcado dentro do efeito, e trocar de tatuagem volta a
+   * carregar sozinho. */
+  const [passosDa, setPassosDa] = useState(null);
   const [tipo, setTipo] = useState("");
   const [observacao, setObservacao] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
 
-  /* Carrega o histórico da tattoo. A busca da tattoo em si não acontece aqui: ela
+  /* Sem esta linha, a lista de passos começa vazia e o histórico escreveria
+   * "Nenhum passo ainda" antes de a resposta chegar, que é uma coisa diferente
+   * de não ter passo nenhum. */
+  const carregando = passosDa !== tatuagem.id;
+
+  /* Carrega o histórico da tatuagem. A busca da tatuagem em si não acontece aqui: ela
    * veio pronta da agenda, que já a tinha buscado para mostrar. */
+  /* O vivo é o que impede a resposta velha de chegar depois da nova. Se a tela
+   * abrir outra tatuagem com uma busca ainda no ar, o cleanup marca esta como
+   * morta e ela para de escrever, em vez de sobrescrever a lista com o histórico
+   * da tatuagem anterior. */
   useEffect(() => {
+    let vivo = true;
+
     buscarPassos(tatuagem.id)
-      .then(setPassos)
-      .catch((erroRecebido) => setErro(erroRecebido.message));
+      .then((passosRecebidos) => {
+        if (vivo) {
+          setPassos(passosRecebidos);
+        }
+      })
+      .catch((erroRecebido) => {
+        if (vivo) {
+          setErro(erroRecebido.message);
+        }
+      })
+      .finally(() => {
+        if (vivo) {
+          setPassosDa(tatuagem.id);
+        }
+      });
+
+    return () => {
+      vivo = false;
+    };
   }, [tatuagem.id]);
 
   /* Depois de registrar, duas coisas precisam ser relidas: a etapa, porque ela
    * mudou, e o histórico, porque ganhou um passo. São duas buscas, e não uma,
-   * porque a API separa a tattoo do passo em recursos diferentes. */
+   * porque a API separa a tatuagem do passo em recursos diferentes. */
   function recarregar() {
     buscarTatuagem(tatuagem.id)
       .then((atualizada) => setEtapaAtual(atualizada.etapa))
-      .catch(() => {});
+      .catch((erroRecebido) => setErro(erroRecebido.message));
 
     buscarPassos(tatuagem.id)
       .then(setPassos)
@@ -118,7 +153,9 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
           ) : null}
 
           <h3>Histórico</h3>
-          {passos.length === 0 ? (
+          {carregando ? (
+            <AvisoCarregando oQue="o histórico" />
+          ) : passos.length === 0 ? (
             <p className="vazio">Nenhum passo ainda.</p>
           ) : (
             <ol className="lista">

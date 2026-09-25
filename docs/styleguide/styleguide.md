@@ -187,15 +187,19 @@ impecável. Isso vira regra de código.
 1. **Escrevo para o celular primeiro.** O CSS é mobile-first, e a regra de
   (width) maior entra por `@media (min-width: 48rem)`. Nenhuma tela ganha
    ajuste para o computador antes de funcionar no celular.
-2. **Telas 1 e 2 (Bruna) são pensadas para o celular.** Uma coluna, botão
-   fixo embaixo, tabela vira lista de cartões.
+2. **Telas 1 e 2 (Bruna) são pensadas para o celular.** Uma coluna só, e
+   campo e botão com altura de dedo, para o polegar acertar sem olhar. Não há
+   tabela nestas telas: o pedido é um formulário e a lista de tatuagens já é uma
+   lista de cartões desde o começo.
 3. **Telas 3 e 4 (Vitor) são pensadas para o computador.** Filtro de etapa em
    abas na horizontal, lista em tabela com a coluna da cliente visível, e a ficha
-   com o formulário em duas colunas para não esticar o campo no meio da tela.
+   com o formulário em duas colunas para não esticar o campo no meio da tela. No
+   celular a tabela vira uma lista de cartões, e o nome de cada coluna é escrito
+   no começo da própria linha, para a linha continuar se explicando sozinha.
 4. **As quatro funcionam nos dois tamanhos.** Quem abre a agenda no celular
    recebe a mesma informação, empilhada. Isso não muda o que a tela diz, muda
    como ela se acomoda.
-5. **A lista de tattooagens nunca fica dentro de um contêiner com largura fixa.**
+5. **A lista de tatuagens nunca fica dentro de um contêiner com largura fixa.**
    A largura máxima é só para o texto, senão a linha some em tela grande.
 
 ## 6. O que não entra

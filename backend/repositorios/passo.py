@@ -65,9 +65,10 @@ def criar_passo(tatuagem_id: int, dados: dict) -> dict:
 # apresentação, não regra. Cada histórico é compatível com a etapa em que a
 # tatuagem está, senão a demonstração mostraria uma coisa que a regra proíbe.
 #
-# A tatuagem 4 é a única sem passo nenhum, porque ela está em "pedida": é o
-# exemplo vivo da regra de que nada acontece antes do desenho aprovado. O id vai
-# de 1 a 10 sem buraco, para o próximo passo criado na apresentação sair com o 11.
+# A tatuagem 4 e a tatuagem 8 são as duas sem passo nenhum, porque as duas estão em
+# "pedida": são o exemplo vivo da regra de que nada acontece antes do desenho
+# aprovado. O id vai de 1 a 13 sem buraco, para o próximo passo criado na
+# apresentação sair com o 14.
 passos_de_exemplo = [
     {
         "id": 1,
@@ -116,7 +117,7 @@ passos_de_exemplo = [
         "tatuagem_id": 3,
         "tipo": "desenho aprovado",
         "data": date(2026, 9, 15),
-        "observacao": "desenho aprovado, a tattoo entra na fila das sessões",
+        "observacao": "desenho aprovado, a tatuagem entra na fila das sessões",
     },
     {
         "id": 8,
@@ -138,6 +139,27 @@ passos_de_exemplo = [
         "tipo": "sessão",
         "data": date(2026, 9, 19),
         "observacao": "letra fechada, aguardando a cicatrização para o retoque",
+    },
+    {
+        "id": 11,
+        "tatuagem_id": 6,
+        "tipo": "desenho aprovado",
+        "data": date(2026, 9, 8),
+        "observacao": "a cliente pediu a folha menor que a primeira versão",
+    },
+    {
+        "id": 12,
+        "tatuagem_id": 6,
+        "tipo": "sessão",
+        "data": date(2026, 9, 22),
+        "observacao": "contorno e primeira parte do sombreado da folha",
+    },
+    {
+        "id": 13,
+        "tatuagem_id": 7,
+        "tipo": "desenho aprovado",
+        "data": date(2026, 9, 24),
+        "observacao": "onda aprovada, entra na fila das sessões",
     },
 ]
 
