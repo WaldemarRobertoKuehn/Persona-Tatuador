@@ -129,6 +129,12 @@ Já decidi:
   cliente**, e **Vitor, tatuador e dono do Traço Fino**. Não entra rota de usuário no back, porque a
   cartilha não pede isso e o perfil já é escolhido na tela, sem senha. O tipo de cada um viaja junto
   com o id: a Bruna manda o `cliente_id` dela no pedido, e o Vitor não manda nada disso.
+- **de onde sai o nome da cliente.** A agenda do Vitor precisa mostrar de quem é cada tatuagem, e o
+  nome mora no back, em `repositorios/cliente.py`, entrando na resposta como `nome_da_cliente`. A
+  cartilha lista o usuário como uma das três entidades, e nome é dado do negócio: se o nome ficasse
+  no front, o mesmo dado estaria escrito em dois lugares e divergiria na primeira correção. Esse
+  depósito **não tem rota**, porque a cartilha não pede rota de cliente, e as cinco capacidades
+  continuam sendo cinco.
 - **a marca.** "Traço Fino" numa serifada de contraste alto, com uma linha fina de 1,5 px
   embaixo, na cor de acento. É uma palavra e uma linha: sem agulha, sem tribo. As quatro versões
   do logo e as regras de uso estão em `docs/marca/`.

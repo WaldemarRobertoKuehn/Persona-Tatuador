@@ -48,6 +48,13 @@ class TatuagemSaida(BaseModel):
 
     cliente_id: int = Field(description="De quem é esta tatuagem.")
 
+    # nome_da_cliente é o mesmo dado de cliente_id, já escrito com letras, porque a
+    # agenda do Vitor precisa mostrar o nome e não o número. O front não adivinha o
+    # nome a partir do id: o id é uma referência, e quem guarda o dado é o back.
+    nome_da_cliente: str = Field(
+        description="O nome da cliente dona desta tatuagem."
+    )
+
     ideia: str = Field(description="A ideia pedida pela cliente.")
 
     local_do_corpo: str = Field(description="Onde vai ser tatuado.")

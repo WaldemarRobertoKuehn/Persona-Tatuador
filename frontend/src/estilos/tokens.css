@@ -1,0 +1,48 @@
+/* As variáveis do styleguide.
+ *
+ * Este arquivo é o único lugar do front que tem cor, espaço e fonte escrito
+ * dentro. Nenhuma tela escreve um código de cor no meio do arquivo: se um
+ * componente precisa de cor, ele usa o nome da variável. É assim que a regra do
+ * styleguide, "cor fora da paleta não entra", continua valendo no código.
+ */
+
+:root {
+  /* Cores. Os nomes vêm do styleguide, seção 1. */
+  --cor-texto: #111111;
+  --cor-texto-fraco: #52525b;
+  --cor-fundo: #ffffff;
+  --cor-superficie: #f4f4f5;
+  --cor-borda: #e4e4e7;
+  --cor-acento: #c2410c;
+
+  /* A cor de cada etapa. Fundo claro é "está esperando", fundo escuro é
+   * "acabou", e o acento é "é agora", que é onde o tatuador trabalha. */
+  --etapa-pedida-fundo: #f4f4f5;
+  --etapa-pedida-texto: #111111;
+  --etapa-desenho-fundo: #e4e4e7;
+  --etapa-desenho-texto: #111111;
+  --etapa-sessoes-fundo: #c2410c;
+  --etapa-sessoes-texto: #ffffff;
+  --etapa-finalizada-fundo: #111111;
+  --etapa-finalizada-texto: #ffffff;
+
+  /* Espaço, raio e sombra, do styleguide seção 3. Tudo em rem, para respeitar
+   * o tamanho de texto que a pessoa escolheu na acessibilidade do sistema. */
+  --espaco-1: 0.25rem;
+  --espaco-2: 0.5rem;
+  --espaco-3: 1rem;
+  --espaco-4: 1.5rem;
+  --espaco-5: 3rem;
+  --raio: 0.5rem;
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+  /* As duas fontes do styleguide seção 2: a do sistema para o texto, e a de
+   * personalidade para logo e títulos. */
+  --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fonte-titulo: "Playfair Display", Georgia, serif;
+
+  /* Onde a tela deixa de ser de celular. O nome da medida serve de lembrete de
+   * que ela não é um número mágico: é a largura em que a tela pequena já não
+   * segura mais o conteúdo. */
+  --tela-grande: 48rem;
+}

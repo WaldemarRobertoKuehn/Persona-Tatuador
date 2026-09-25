@@ -9,8 +9,9 @@ o que pode e o que não pode aparecer no código, estão em `REGRAS.md`.
 
 ## Estado atual
 
-**O back está pronto e testado. O front ainda não existe**, e nada foi commitado no Git. Marca e
-styleguide estão escritos, em `docs/marca/` e `docs/styleguide/`.
+**O back está pronto e testado, e o front está começado.** Marca e styleguide estão escritos, em
+`docs/marca/` e `docs/styleguide/`. O único commit do Git é o do briefing: o resto do trabalho está
+na árvore, sem commit.
 
 O back entrega as cinco coisas que a cartilha pede:
 
@@ -25,6 +26,12 @@ O back entrega as cinco coisas que a cartilha pede:
 A agenda abre com **cinco tatuagens de demonstração**, uma em cada etapa, e os históricos delas
 estão coerentes com a regra. Esses dados ficam no fim de cada arquivo de `repositorios/`, e é só
 apagar o bloco `..._de_exemplo` se você quiser a API vazia.
+
+A agenda também mostra o nome da cliente, e não o `cliente_id`. O nome mora no back, em
+`repositorios/cliente.py`, e entra na resposta como `nome_da_cliente`. A cartilha lista o usuário
+como uma das três entidades, e nome é dado do negócio, não dado de tela: guardar no front
+significaria o mesmo nome escrito em dois lugares, divergindo na primeira correção. Esse depósito
+não tem rota, porque a cartilha não pede rota de cliente.
 
 ```
 .
@@ -42,6 +49,7 @@ apagar o bloco `..._de_exemplo` se você quiser a API vazia.
 │   ├── rotas/           o que conhece HTTP
 │   ├── servicos/        as decisões e a regra da cartilha
 │   ├── repositorios/    a lista em memória
+│   │   └── cliente.py       o nome de quem é dona da tatuagem
 │   └── esquemas/        o formato de entrada e de saída
 ├── REGRAS.md        as regras do projeto para a IA
 └── README.md        este arquivo
@@ -74,7 +82,9 @@ Se o endereço mudar, mude no `.env` e reinicie o back.
 
 ## Como rodar o front
 
-O front é o React, na pasta `frontend/`. O `npm create vite@latest` ainda não foi executado.
+O front é o React, na pasta `frontend/`. Ele precisa do back no ar, porque todas as telas chamam a
+API. Só React e React DOM são dependência de execução: não há biblioteca de rotas, nem de requisição,
+porque a cartilha tem quatro telas e não precisa de mais que isso.
 
 ```bash
 cd frontend
@@ -82,8 +92,16 @@ npm install
 npm run dev
 ```
 
-Com o front escrito, o esperado é o Vite abrir `http://localhost:5173`. Esse endereço tem que ser
-igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o navegador bloqueia a chamada por CORS.
+O esperado é o Vite abrir `http://localhost:5173` e a tela de escolha de perfil aparecer, com a
+Bruna e o Vitor. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
+navegador bloqueia a chamada por CORS.
+
+As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as três
+tatuagens dela, com a etapa de cada uma e o histórico ao clicar em "Ver histórico", e "Pedir
+tatuagem" grava no back e volta com a etapa `pedida`. Escolhendo Vitor, "A agenda" lista as cinco
+tatuagens do estúdio com filtro por etapa, e "Abrir ficha" abre a ficha de uma delas, onde o passo
+é registrado. A ficha mostra os dois resultados do back: quando a regra aceita, a etapa nova
+aparece; quando a regra recusa, o motivo aparece embaixo do campo, e a etapa não muda.
 
 ## Regras de ouro deste repositório
 

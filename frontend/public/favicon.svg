@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tra&#231;o Fino">
+  <!-- S&#237;mbolo para lugar pequeno: favicon, quadrinho do app, marca d'&#225;gua. A
+       mesma idea do logo, reduzida: a letra e a linha fina. Sem a palavra, porque
+       em 32 pixels a palavra n&#227;o se l&#234; e vira borra. -->
+  <text x="32" y="40" text-anchor="middle" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="30" fill="#111111">TF</text>
+  <line x1="6" y1="50" x2="58" y2="50" stroke="#C2410C" stroke-width="1.5" />
+</svg>
