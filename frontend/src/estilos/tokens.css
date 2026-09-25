@@ -6,6 +6,25 @@
  * styleguide, "cor fora da paleta não entra", continua valendo no código.
  */
 
+/* A fonte de logo e de títulos, do styleguide seção 2.
+ *
+ * O arquivo está em src/fontes/, e não em um link para o Google Fonts, para a
+ * tela não depender de internet: se a fonte não carregar, a queda para Georgia
+ * aparece e o nome do estúdio perde a-serifada de contraste alto.
+ *
+ * A Playfair Display é fonte variável, e por isso um peso escrito como faixa,
+ * 400 700: o mesmo arquivo serve do normal ao negrito. O font-display swap faz
+ * o navegador desenhar o texto na Georgia assim que a página aparece, e trocar
+ * para a Playfair quando o arquivo chega, em vez de esperar e só então mostrar
+ * o texto. */
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fontes/playfair-display.woff2") format("woff2");
+}
+
 :root {
   /* Cores. Os nomes vêm do styleguide, seção 1. */
   --cor-texto: #111111;
@@ -14,6 +33,14 @@
   --cor-superficie: #f4f4f5;
   --cor-borda: #e4e4e7;
   --cor-acento: #c2410c;
+  --cor-acento-texto: #c2410c;
+
+  /* O texto que fica sobre o preenchimento de acento, que é o botão principal. É
+   * branco nos dois temas, porque o preenchimento é o mesmo laranja nos dois, e
+   * branco sobre ele dá 5,18:1. Ficar com token, e não com o #ffffff escrito no
+   * meio do CSS, é o que mantém a regra do styleguide: cor fora da paleta não
+   * entra, e nem a cor da paleta entra escrita à mão. */
+  --cor-sobre-acento: #ffffff;
 
   /* A cor de cada etapa. Fundo claro é "está esperando", fundo escuro é
    * "acabou", e o acento é "é agora", que é onde o tatuador trabalha. */
@@ -37,7 +64,9 @@
   --sombra: 0 1px 2px rgba(0, 0, 0, 0.08);
 
   /* As duas fontes do styleguide seção 2: a do sistema para o texto, e a de
-   * personalidade para logo e títulos. */
+   * personalidade para logo e títulos. A Playfair Display é a que o @font-face
+   * acima carrega; a Georgia fica na pilha como queda, para o caso do arquivo
+   * não carregar. */
   --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --fonte-titulo: "Playfair Display", Georgia, serif;
 
@@ -45,4 +74,52 @@
    * que ela não é um número mágico: é a largura em que a tela pequena já não
    * segura mais o conteúdo. */
   --tela-grande: 48rem;
+
+  /* O color-scheme avisa o navegador de que os controles nativos — a barra de
+   * rolagem, o cursor de texto — devem seguir o tema, e não ficar claros dentro
+   * de uma tela escura. */
+  color-scheme: light;
+}
+
+/* O tema escuro, do styleguide seção 1. O seletor é o atributo data-tema no <html>,
+ * e não uma classe: um atributo com nome é mais fácil de ler em uma ferramenta
+ * de inspeção, e a pessoa consegue mudar o tema pelo console se precisar.
+ *
+ * A estratégia é não duplicar a lista inteira. Tudo que é igual nos dois temas
+ * — espaço, raio, fonte, a cor de acento — fica aqui em cima e não é repetido
+ * aqui embaixo. Este bloco só troca o que muda de valor. */
+[data-tema="escuro"] {
+  color-scheme: dark;
+
+  /* A régua de neutros invertida: o que era fundo de cartão vira texto, e o que
+   * era texto vira fundo. O preto da marca (#111111) é o fundo da tela, e não um
+   * cinza qualquer. */
+  --cor-texto: #f4f4f5;
+  --cor-texto-fraco: #a1a1aa;
+  --cor-fundo: #111111;
+  --cor-superficie: #1c1c1f;
+  --cor-borda: #2e2e33;
+
+  /* O acento de preenchimento continua o mesmo laranja nos dois temas: uma cor só
+   * de destaque é a regra da marca. O que muda é o de texto, porque o #c2410c
+   * sobre o preto dá 3,65:1 e reprova em texto normal, e a mensagem de erro é
+   * acento escrito. Sobre o escuro ela usa o mesmo laranja mais claro, que passa
+   * com 8,34:1. */
+  --cor-acento-texto: #fb923c;
+
+  /* As etapas, com os valores do styleguide. As duas que esperam sobem de
+   * claridade em degraus, o acento continua sendo o mesmo, e a finalizada se
+   * inverte: preta sobre preto sumiria. */
+  --etapa-pedida-fundo: #26262b;
+  --etapa-pedida-texto: #f4f4f5;
+  --etapa-desenho-fundo: #34343a;
+  --etapa-desenho-texto: #f4f4f5;
+  --etapa-sessoes-fundo: #c2410c;
+  --etapa-sessoes-texto: #ffffff;
+  --etapa-finalizada-fundo: #f4f4f5;
+  --etapa-finalizada-texto: #111111;
+
+  /* A sombra do claro é preta em 8%, que não aparece em fundo preto. Aqui ela
+   * ganha força para o cartão flutuante continuar flutuando. */
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.5);
 }

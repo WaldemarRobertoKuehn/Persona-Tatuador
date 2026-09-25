@@ -5,12 +5,43 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- O ícone da aba é o símbolo da marca, servido da pasta docs/marca, que é
+         onde a REGRAS pede que os arquivos da marca fiquem. O caminho é o do
+         arquivo de origem, e não uma cópia dentro do front. -->
+    <link rel="icon" type="image/svg+xml" href="/simbolo.svg" />
     <!-- A meta viewport é o que faz a tela se adaptar ao celular. Sem ela, o
          navegador assume que a tela tem 980 pixels de largura e mostra a página
          inteira reduzida, como se fosse uma folha de ofício. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Traço Fino · estúdio de tatuagem</title>
+
+    <!-- O tema, aplicado antes de a página desenhar.
+         Este script é síncrono e fica no <head> de propósito. Ele não pode ser um
+         módulo, porque módulo espera o HTML ser lido, e esperar demais é o que
+         causa o piscar: a pessoa abriria a tela no branco, e um instante depois
+         a tela inteira viraria escura. Aqui não há tempo para isso.
+
+         Ele faz duas coisas, e só duas: lê a escolha guardada no navegador e
+         escreve o atributo data-tema no <html>, que é o que o CSS de tokens.css
+         lê. Se não houver escolha guardada, ele pergunta ao sistema da pessoa, e
+         por isso o tema escuro do Windows ou do celular já abre o site escuro.
+         O módulo src/tema.js não repete essa conta: ele lê o atributo que este
+         script deixou. -->
+    <script>
+      (function () {
+        var guardado = window.localStorage.getItem("tema");
+        var escuroDoSistema = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        var tema =
+          guardado === "claro" || guardado === "escuro"
+            ? guardado
+            : escuroDoSistema
+              ? "escuro"
+              : "claro";
+        document.documentElement.setAttribute("data-tema", tema);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

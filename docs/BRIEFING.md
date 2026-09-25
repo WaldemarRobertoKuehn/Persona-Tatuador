@@ -137,15 +137,45 @@ Já decidi:
   continuam sendo cinco.
 - **a marca.** "Traço Fino" numa serifada de contraste alto, com uma linha fina de 1,5 px
   embaixo, na cor de acento. É uma palavra e uma linha: sem agulha, sem tribo. As quatro versões
-  do logo e as regras de uso estão em `docs/marca/`.
+  do logo estão em `docs/marca/`, e o que a marca é e as regras de uso estão em `docs/marca.md`.
+- **onde a marca mora.** Os arquivos da marca não são copiados para o front. O Vite serve
+  `docs/marca/` como arquivo estático, com `publicDir` em `frontend/vite.config.js`, e o cabeçalho
+  das telas pede `/logo.svg`. Uma cópia dentro do front daria dois arquivos iguais no Git, e na
+  primeira vez que o logo mudasse a cópia ficaria velha sem ninguém perceber.
 - **a paleta e a tipografia.** Preto, branco e **uma** cor de acento, `#C2410C`, que é a única cor
   da interface além do preto e do branco. Corpo em sans-serif do sistema; logo e títulos em
   Playfair Display, com queda para Georgia. Os contrastes foram calculados e estão no styleguide,
   em `docs/styleguide/`.
+- **a fonte fica no repositório, e não em link.** A Playfair Display foi baixada para
+  `frontend/src/fontes/playfair-display.woff2`, 38 KB, e é declarada com `@font-face` em
+  `tokens.css`. Podia ter sido um link do Google Fonts e seria uma linha a menos, mas aí a
+  apresentação depende de internet, e a fonte de título é a assinatura do sistema. O
+  `LEIA-ME.md` da pasta registra a origem e a licença, que é a SIL Open Font License 1.1.
+- **a letra do logo está em curva.** Os quatro SVG da marca têm a palavra, e as letras do símbolo,
+  desenhadas como `<path>`. Não por gosto de vetor: um SVG aberto com `<img>` é um documento
+  separado e não enxerga a fonte que a página carregou, então a letra escrita como texto só
+  apareceria igual nas máquinas com a Playfair Display instalada. O favicon é o pior caso, porque
+  o navegador desenha o ícone sem fonte nenhuma.
+- **tema claro e escuro.** O botão no cabeçalho alterna, e a escolha fica guardada no navegador.
+  Quem nunca escolheu vê o tema do sistema operacional, respeitado na primeira pintura da página,
+  sem piscar. O escuro não é o claro invertido: ele repete preto, branco e o mesmo laranja, com
+  valores próprios porque contraste é o que impede texto de sumir. Uma coisa mudou de matiz: o
+  laranja continua o mesmo quando é preenchimento, mas quando é **texto** — e a mensagem de erro
+  da ficha é o caso — ele fica mais claro no escuro, porque `#C2410C` sobre `#111111` dá 3,65:1 e
+  reprova. Os números estão no styleguide.
+- **o logo troca de arquivo com o tema, e não de cor.** No escuro a interface pede o
+  `logo-escuro.svg`, que já foi desenhado com a palavra em branco. Recolorir o logo por CSS seria
+  uma versão da marca que ninguém desenhou, e a `marca.md` é explícita em não trocar as cores dele.
 
-Ainda falta decidir:
+- **o comprimento da linha do logo.** A palavra cresceu de 40 para 46 de tamanho, e a linha foi
+  encurtada para passar exatamente da primeira letra à última. Antes a palavra ocupava 207 px e a
+  linha ia de 8 a 312, sobrando 98 px de linha solta depois do desenho, o que não é sublinhado.
+  Agora a palavra ocupa 233 px e a linha vai de 9,3 a 242,6. A caixa do SVG encolheu de 320×72 para
+  250×71, acompanhando a palavra, e a espessura da linha continua 1,5 px. O símbolo não mudou:
+  ele é a versão para 32 pixels e não acompanha a palavra.
 
-- **logo em alta**, para impressão, com letra e traço convertidos em curvas.
+Ainda falta decidir, e continua sendo decisão de marca: o manual em PDF e o Figma da marca, que
+estão anotados no fim de `docs/marca.md`.
 
 ## 8. Resumo objetivo
 

@@ -17,6 +17,9 @@
 import { useState } from "react";
 
 import { TELAS, TEXTOS_DAS_TELAS } from "./perfis";
+import AlternadorTema from "./componentes/AlternadorTema";
+import Logo from "./componentes/Logo";
+import { ESCURO, useTema } from "./tema";
 import Agenda from "./telas/Agenda";
 import EscolhaPerfil from "./telas/EscolhaPerfil";
 import Ficha from "./telas/Ficha";
@@ -30,6 +33,11 @@ export default function App() {
   const [perfil, setPerfil] = useState(null);
   const [tela, setTela] = useState(null);
   const [tatuagemAberta, setTatuagemAberta] = useState(null);
+
+  /* O tema é do App e não de cada tela, porque o botão fica no cabeçalho, que é
+   * compartilhado. Se cada tela guardasse o seu, o botão de uma tela trocaria
+   * só aquela tela, e a pessoa teria um site com dois temas ao mesmo tempo. */
+  const { tema, trocarTema } = useTema();
 
   /* Escolher o perfil também abre a primeira tela dele. Sem isso, a Bruna
    * cairia na tela do Vitor, que não é dela. */
@@ -54,17 +62,26 @@ export default function App() {
   }
 
   if (!perfil) {
-    return <EscolhaPerfil aoEscolher={escolherPerfil} />;
+    return (
+      <EscolhaPerfil
+        aoEscolher={escolherPerfil}
+        tema={tema}
+        trocarTema={trocarTema}
+      />
+    );
   }
 
   return (
     <div>
       <nav className="tela" style={{ paddingBottom: 0 }}>
         <header className="cabecalho">
-          <h1>Traço Fino</h1>
-          <p>
-            {perfil.nome} · {perfil.tipo}
-          </p>
+          <Logo escuro={tema === ESCURO} />
+          <div className="cabecalho-lado">
+            <p>
+              {perfil.nome} · {perfil.tipo}
+            </p>
+            <AlternadorTema tema={tema} trocarTema={trocarTema} />
+          </div>
         </header>
 
         <ul className="lista" style={{ listStyle: "none", padding: 0 }}>

@@ -46,16 +46,50 @@ h2 {
 
 .cabecalho {
   display: flex;
-  align-items: baseline;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: var(--espaco-3);
   margin-bottom: var(--espaco-4);
+}
+
+/* O lado direito do cabeçalho: quem está usando, e o botão de tema. Os dois são
+ * informação pequena, então vão juntos no fim da linha oposta ao logo.
+ *
+ * O flex-wrap aqui é o que segura o celular. Em 375 pixels o logo já ocupa 160,
+ * e o nome da pessoa mais o botão não cabem na mesma linha: sem a quebra, o
+ * cabeçalho esticaria a página e apareceria a barra de rolagem de lado. Com a
+ * quebra, o bloco inteiro desce para a linha de baixo, e a página continua
+ * cabendo na tela. */
+.cabecalho-lado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
 }
 
 .cabecalho p {
   margin: 0;
   color: var(--cor-texto-fraco);
   font-size: 0.8125rem;
+}
+
+/* O logo. O cabeçalho alinha os filhos no meio, e o align-self vem da regra
+ * geral: o logo é o único elemento mais alto da linha, e sem ele a palavra do
+ * cabeçalho é que ficaria desalinhada. O display block tira o espaço que o
+ * navegador deixa embaixo de uma imagem dentro de um elemento de texto. */
+.logo {
+  display: block;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* O botão de tema não é o botão principal: ele é um controle de ajuste, e
+ * chamá-lo de destaque tiraria o destaque do botão de ação da tela, que é o que
+ * o styleguide diz que o acento marca. Ele fica com a altura menor de um botão
+ * comum, porque é secundário, e ganha um respiro de espaço no celular. */
+.alternador-tema {
+  white-space: nowrap;
 }
 
 /* Botão principal: fundo no acento, texto branco, e a altura mínima de 2,75 rem
@@ -66,7 +100,7 @@ h2 {
   border: 0;
   border-radius: var(--raio);
   background: var(--cor-acento);
-  color: #ffffff;
+  color: var(--cor-sobre-acento);
   font-family: var(--fonte-texto);
   font-size: 1rem;
   font-weight: 500;
@@ -201,11 +235,12 @@ h2 {
 }
 
 /* Um texto que o usuário precisa parar e ler: erro de campo e recusa da regra
- * da cartilha. A cor de acento aqui é a mesma do botão, e o texto do motivo vem
- * do back, escrito por inteiro. */
+ * da cartilha. A cor vem de --cor-acento-texto, e não de --cor-acento: no tema
+ * escuro o laranja de preenchimento reprova em texto, e esta é justamente uma
+ * linha de texto. O texto do motivo vem do back, escrito por inteiro. */
 .mensagem-erro {
   margin: var(--espaco-1) 0 0;
-  color: var(--cor-acento);
+  color: var(--cor-acento-texto);
   font-size: 0.8125rem;
 }
 
@@ -223,7 +258,7 @@ h2 {
 }
 
 .confirmacao strong {
-  color: var(--cor-acento);
+  color: var(--cor-acento-texto);
 }
 
 /* As abas do filtro por etapa. No celular elas quebram em várias linhas, e é por
@@ -236,9 +271,11 @@ h2 {
   margin-bottom: var(--espaco-4);
 }
 
+/* A aba ativa do filtro. A borda fica no --cor-acento, que é preenchimento, e o
+ * texto no --cor-acento-texto, que é a cor feita para ser lida. */
 .aba-ativa {
   border-color: var(--cor-acento);
-  color: var(--cor-acento);
+  color: var(--cor-acento-texto);
   font-weight: 500;
 }
 

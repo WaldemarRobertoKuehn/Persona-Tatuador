@@ -10,13 +10,19 @@
  * tela da Bruna mostrar só as tatuagens dela.
  */
 
+import AlternadorTema from "../componentes/AlternadorTema";
+import Logo from "../componentes/Logo";
 import { PERFIS } from "../perfis";
+import { ESCURO } from "../tema";
 
-export default function EscolhaPerfil({ aoEscolher }) {
+export default function EscolhaPerfil({ aoEscolher, tema, trocarTema }) {
   return (
     <main className="tela">
       <header className="cabecalho">
-        <h1>Traço Fino</h1>
+        <Logo escuro={tema === ESCURO} />
+        <div className="cabecalho-lado">
+          <AlternadorTema tema={tema} trocarTema={trocarTema} />
+        </div>
       </header>
 
       <p className="vazio">

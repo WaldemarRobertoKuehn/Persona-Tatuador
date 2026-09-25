@@ -50,9 +50,72 @@ que o estúdio precisa agir.
 | `em sessões` | `#C2410C` | `#FFFFFF` | **o destaque**: é aqui que o Vitor trabalha |
 | `finalizada` | `#111111` | `#FFFFFF` | fechada, e o preto diz "pronto" |
 
-Como ler essa tabela: fundo claro é "está esperando", fundo escuro é "acabou", e
-o laranja é "é agora". Uma tela com três etiquetas de etapa mostra isso sem
+Como ler essa tabela: fundo claro é "está esperando", fundo escuro é "acabou", e o
+laranja é "é agora". Uma tela com três etiquetas de etapa mostra isso sem
 precisar de legenda.
+
+### O tema escuro
+
+A tela tem dois temas, e a escolha é da pessoa: o botão no cabeçalho alterna. O
+tema vem do sistema quando a pessoa não escolheu, e fica guardado no navegador
+depois que ela escolhe.
+
+O escuro não é o claro invertido à força. Ele repete a mesma regra — preto, branco
+e **um** acento — com os valores próprios, porque contraste é o que impede o
+texto de sumir.
+
+| token | claro | escuro | onde entra |
+| --- | --- | --- | --- |
+| `--cor-texto` | `#111111` | `#F4F4F5` | títulos e texto do corpo |
+| `--cor-texto-fraco` | `#52525B` | `#A1A1AA` | legenda, rótulo de campo, data |
+| `--cor-fundo` | `#FFFFFF` | `#111111` | fundo das telas |
+| `--cor-superficie` | `#F4F4F5` | `#1C1C1F` | cartão, campo de formulário |
+| `--cor-borda` | `#E4E4E7` | `#2E2E33` | borda de cartão e de campo |
+| `--cor-acento` | `#C2410C` | `#C2410C` | preenchimento: botão principal e etiqueta |
+| `--cor-acento-texto` | `#C2410C` | `#FB923C` | o acento quando é **texto**: o erro do campo |
+
+O acento é o mesmo laranja nos dois temas, e essa é a regra da marca: uma cor só
+de destaque. O que muda é o claro e o escuro do laranja, e só onde ele é texto.
+
+**Por que `--cor-acento-texto` existe.** O `#C2410C` sobre `#111111` dá 3,65:1 e
+reprova em texto normal, que precisa de 4,5:1. A mensagem de erro da ficha é
+exatamente esse caso: acento escrito como texto. No tema escuro ela usa
+`#FB923C`, que é o mesmo laranja mais claro e passa com folga. Sem esse token, a
+mensagem de erro no escuro seria a única coisa ilegível do sistema.
+
+As etapas também ganham valores próprios:
+
+| etapa | claro | escuro | por quê |
+| --- | --- | --- | --- |
+| `pedida` | `#F4F4F5` | `#26262B` | a mais apagada das duas que esperam |
+| `desenho aprovado` | `#E4E4E7` | `#34343A` | um degrau mais clara: o próximo passo é sessão |
+| `em sessões` | `#C2410C` | `#C2410C` | **o destaque**, e é o mesmo nos dois temas |
+| `finalizada` | `#111111` | `#F4F4F5` | invertida, porque preto sobre preto sumiria |
+
+A `finalizada` é a única que muda de sentido visual: no claro ela é preta sobre
+branco, e no escuro precisa ficar clara sobre preto, senão a etiqueta do trabalho
+pronto seria invisível em cima do fundo escuro. Invertida, ela continua sendo a
+etiqueta mais sólida da tela, que é o que "acabado" quer dizer.
+
+**Contraste do tema escuro**, pela mesma conta da WCAG 2.1:
+
+| combinação | contraste | veredito |
+| --- | --- | --- |
+| `#F4F4F5` sobre `#111111` | **17,18:1** | passa em AA e AAA |
+| `#F4F4F5` sobre `#1C1C1F` | **15,47:1** | passa em AA e AAA |
+| `#A1A1AA` sobre `#111111` | **7,37:1** | passa em AA e AAA |
+| `#A1A1AA` sobre `#1C1C1F` | **6,63:1** | passa em AA |
+| `#FFFFFF` sobre `#C2410C` (botão) | **5,18:1** | passa em AA |
+| `#FB923C` sobre `#111111` (erro) | **8,34:1** | passa em AA e AAA |
+| `#F4F4F5` sobre `#26262B` (`pedida`) | **13,70:1** | passa em AA e AAA |
+| `#F4F4F5` sobre `#34343A` (`desenho`) | **11,25:1** | passa em AA e AAA |
+| `#111111` sobre `#F4F4F5` (`finalizada`) | **17,18:1** | passa em AA e AAA |
+
+A borda escura `#2E2E33` sobre a superfície `#1C1C1F` dá 1,26:1, e continua
+decoração como no tema claro, onde ela dá 1,27:1. O `color-scheme` do navegador
+acompanha o tema, para a barra de rolagem e os controles nativos não ficarem
+claros dentro de uma tela escura.
+
 
 ## 2. Tipografia
 
