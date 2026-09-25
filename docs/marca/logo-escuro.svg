@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" width="320" height="72" role="img" aria-label="Tra&#231;o Fino">
+  <!-- Versão invertida, para fundo escuro. A palavra vai para branco, e o tra&#231;o
+       mant&#233;m a cor de acento, porque ele continua sendo a assinatura. -->
+  <text x="8" y="48" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-size="40" letter-spacing="1.5" fill="#FFFFFF">Tra&#231;o Fino</text>
+  <line x1="8" y1="60" x2="312" y2="60" stroke="#C2410C" stroke-width="1.5" />
+</svg>

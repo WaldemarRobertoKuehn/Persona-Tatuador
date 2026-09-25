@@ -8,9 +8,10 @@ são gravadas por cima.
 
 **Cartilha 4 · Traço Fino, estúdio de tatuagem.**
 
-Quem toca o negócio: um estúdio de tatuagem pequeno, com dois tatuadores, e a regra é que a tatuagem
-nasce **pedida** e só anda por **desenho aprovado**, **sessão** e **retoque**, nessa ordem, mudando
-de etapa a cada passo aceito.
+Quem toca o negócio: o estúdio Traço Fino, pequeno, com dois tatuadores, e o dono é o **Vitor**,
+que também tatua. A regra é que a tatuagem nasce **pedida** e só anda por **desenho aprovado**,
+**sessão** e **retoque**, nessa ordem, mudando de etapa a cada passo aceito. A cliente do sistema é
+a **Bruna**.
 
 ## O projeto
 

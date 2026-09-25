@@ -5,10 +5,11 @@ não foi alterada. Aqui eu explico a intenção por trás dela, que é o que eu 
 
 ## 1. O negócio
 
-O **Traço Fino** é um estúdio de tatuagem pequeno, com dois tatuadores. O trabalho deles nunca
-acaba no balcão: toda tatuagem passa por etapas, o desenho precisa ser aprovado, vem uma ou mais
-sessões, e quando a pele cicatriza vem o retoque. Entre uma etapa e outra existem dias de espera, e
-o que o estúdio precisa é de uma agenda que separe o que já foi feito do que ainda vai ser.
+O **Traço Fino** é um estúdio de tatuagem pequeno, com dois tatuadores. O dono é o **Vitor**, que
+também tatua, e é ele quem organiza a agenda do estúdio. O trabalho nunca acaba no balcão: toda
+tatuagem passa por etapas, o desenho precisa ser aprovado, vem uma ou mais sessões, e quando a pele
+cicatriza vem o retoque. Entre uma etapa e outra existem dias de espera, e o que o estúdio precisa é
+de uma agenda que separe o que já foi feito do que ainda vai ser.
 
 O nome veio da própria cartilha. A cartilha avisa que dois alunos receberam o mesmo problema e que
 não se pode combinar marca, paleta, telas nem nomes de rota entre os dois. Tudo que aparece aqui é
@@ -115,15 +116,30 @@ Fica fora, de propósito, para o escopo não estourar:
 Nenhum desses quatro aparece no sistema. Se alguém pedir, a resposta é que não está no escopo da
 cartilha.
 
-## 7. O que ainda não decidi
+## 7. O que eu já decidi, e o que falta
 
-Estes pontos são meus e ainda vão ser fechados por mim, e não podem ser combinados com o colega de
-cartilha:
+Nenhum destes pontos pode ser combinado com o colega de cartilha.
 
-- **marca:** o logo e as versões dele, em `docs/marca/`.
-- **styleguide:** paleta e tipografia, em `docs/styleguide/`, ou o link do Figma.
-- **nomes de rota e de status da API:** os status `pedida`, `desenho aprovado`, `em sessões` e
-  `finalizada` vêm da cartilha, mas o caminho das rotas é escolha minha.
+Já decidi:
+
+- **os nomes das rotas da API.** São `/tatuagens` e `/tatuagens/{tatuagem_id}/passos`, e os status
+  `pedida`, `desenho aprovado`, `em sessões` e `finalizada` são os da cartilha. O caminho aninhado
+  dos passos existe porque um passo sem tatuagem dona não tem onde ficar.
+- **de onde sai a lista de perfis.** Ela fica fixa no front, com os dois perfis do sistema: **Bruna,
+  cliente**, e **Vitor, tatuador e dono do Traço Fino**. Não entra rota de usuário no back, porque a
+  cartilha não pede isso e o perfil já é escolhido na tela, sem senha. O tipo de cada um viaja junto
+  com o id: a Bruna manda o `cliente_id` dela no pedido, e o Vitor não manda nada disso.
+- **a marca.** "Traço Fino" numa serifada de contraste alto, com uma linha fina de 1,5 px
+  embaixo, na cor de acento. É uma palavra e uma linha: sem agulha, sem tribo. As quatro versões
+  do logo e as regras de uso estão em `docs/marca/`.
+- **a paleta e a tipografia.** Preto, branco e **uma** cor de acento, `#C2410C`, que é a única cor
+  da interface além do preto e do branco. Corpo em sans-serif do sistema; logo e títulos em
+  Playfair Display, com queda para Georgia. Os contrastes foram calculados e estão no styleguide,
+  em `docs/styleguide/`.
+
+Ainda falta decidir:
+
+- **logo em alta**, para impressão, com letra e traço convertidos em curvas.
 
 ## 8. Resumo objetivo
 
@@ -132,6 +148,8 @@ cartilha:
   recusado. Cada passo aceito muda a etapa.
 - **Quatro telas:** Pedir tatuagem, Minhas tatuagens, A agenda, A ficha. As duas primeiras do
   celular, as duas últimas do computador, todas responsivas.
+- **Quem usa:** Bruna é a cliente, e usa o celular. Vitor é o tatuador e o dono, e usa o
+  computador. As telas 1 e 2 são da Bruna, as telas 3 e 4 são do Vitor.
 - **Três entidades:** usuário (cliente ou tatuador), tatuagem (pertence a um cliente) e passo
   (pertence a uma tatuagem).
 - **Fora de escopo:** orçamento, sinal, pagamento, portfólio e aviso por mensagem.
