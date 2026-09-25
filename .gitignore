@@ -1,0 +1,16 @@
+# Ambiente
+venv/
+.env
+.env.local
+# O .env.exemplo vai para o Git: é a lista das chaves, sem os valores.
+!.env.exemplo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
