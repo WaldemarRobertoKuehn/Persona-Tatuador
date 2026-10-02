@@ -1,0 +1,121 @@
+/* Variáveis do Design System - Traço Fino Studio */
+
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fontes/playfair-display.woff2") format("woff2");
+}
+
+:root {
+  /* Paleta Base - Estúdio & Papel Artesanal */
+  --cor-fundo: #fafaf9;
+  --cor-superficie: #ffffff;
+  --cor-superficie-elevada: #ffffff;
+  --cor-superficie-suave: #f5f5f4;
+  --cor-borda: #e7e5e4;
+  --cor-borda-suave: #f0eeeb;
+  --cor-borda-foco: #c2410c;
+
+  /* Tipografia */
+  --cor-texto: #1c1917;
+  --cor-texto-medio: #44403c;
+  --cor-texto-fraco: #78716c;
+  --cor-texto-invertido: #ffffff;
+
+  /* Acento Assinatura - Terracota Queimado de Estúdio */
+  --cor-acento: #c2410c;
+  --cor-acento-hover: #9a3412;
+  --cor-acento-suave: #ffedd5;
+  --cor-acento-texto: #c2410c;
+  --cor-sobre-acento: #ffffff;
+
+  /* Etapas da Cartilha */
+  --etapa-pedida-fundo: #f5f5f4;
+  --etapa-pedida-texto: #44403c;
+  --etapa-pedida-borda: #d6d3d1;
+
+  --etapa-desenho-fundo: #f1f5f9;
+  --etapa-desenho-texto: #334155;
+  --etapa-desenho-borda: #cbd5e1;
+
+  --etapa-sessoes-fundo: #c2410c;
+  --etapa-sessoes-texto: #ffffff;
+  --etapa-sessoes-borda: #9a3412;
+
+  --etapa-finalizada-fundo: #1c1917;
+  --etapa-finalizada-texto: #ffffff;
+  --etapa-finalizada-borda: #0c0a09;
+
+  /* Espaçamento, Raio e Sombras */
+  --espaco-1: 0.25rem;
+  --espaco-2: 0.5rem;
+  --espaco-3: 1rem;
+  --espaco-4: 1.5rem;
+  --espaco-5: 2.5rem;
+  --espaco-6: 4rem;
+
+  --raio-sm: 0.375rem;
+  --raio: 0.625rem;
+  --raio-md: 0.875rem;
+  --raio-lg: 1.25rem;
+  --raio-full: 9999px;
+
+  --sombra-sm: 0 1px 2px 0 rgba(28, 25, 23, 0.05);
+  --sombra: 0 4px 12px -2px rgba(28, 25, 23, 0.06), 0 2px 6px -1px rgba(28, 25, 23, 0.03);
+  --sombra-elevada: 0 12px 28px -6px rgba(28, 25, 23, 0.1), 0 6px 12px -3px rgba(28, 25, 23, 0.04);
+
+  --fonte-texto: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fonte-titulo: "Playfair Display", Georgia, serif;
+  --fonte-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --tela-grande: 48rem;
+  --tela-desktop: 72rem;
+
+  color-scheme: light;
+}
+
+[data-tema="escuro"] {
+  color-scheme: dark;
+
+  /* Paleta Escura - Tinta Preta & Carvão */
+  --cor-fundo: #0c0a09;
+  --cor-superficie: #171514;
+  --cor-superficie-elevada: #201d1b;
+  --cor-superficie-suave: #262220;
+  --cor-borda: #292524;
+  --cor-borda-suave: #1c1917;
+  --cor-borda-foco: #ea580c;
+
+  --cor-texto: #f5f5f4;
+  --cor-texto-medio: #d6d3d1;
+  --cor-texto-fraco: #a8a29e;
+  --cor-texto-invertido: #0c0a09;
+
+  --cor-acento: #ea580c;
+  --cor-acento-hover: #f97316;
+  --cor-acento-suave: rgba(234, 88, 12, 0.16);
+  --cor-acento-texto: #fb923c;
+  --cor-sobre-acento: #ffffff;
+
+  --etapa-pedida-fundo: #262220;
+  --etapa-pedida-texto: #d6d3d1;
+  --etapa-pedida-borda: #44403c;
+
+  --etapa-desenho-fundo: #1e293b;
+  --etapa-desenho-texto: #e2e8f0;
+  --etapa-desenho-borda: #334155;
+
+  --etapa-sessoes-fundo: #ea580c;
+  --etapa-sessoes-texto: #ffffff;
+  --etapa-sessoes-borda: #c2410c;
+
+  --etapa-finalizada-fundo: #f5f5f4;
+  --etapa-finalizada-texto: #0c0a09;
+  --etapa-finalizada-borda: #e7e5e4;
+
+  --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --sombra: 0 4px 16px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+  --sombra-elevada: 0 14px 32px -6px rgba(0, 0, 0, 0.7), 0 6px 14px -3px rgba(0, 0, 0, 0.5);
+}
