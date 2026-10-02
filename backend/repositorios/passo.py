@@ -1,22 +1,28 @@
-"""A lista de passos em memória e as funções que leem e gravam nela.
+"""O depósito dos passos, agora na tabela passos do MySQL.
 
 Este arquivo é o depósito dos passos, e trabalha igual ao depósito das tatuagens:
 guarda, devolve, e não decide nada. A ordem dos passos, que é a regra da
 cartilha, é do serviço, e o status HTTP é da rota.
 
-A lista vive dentro do arquivo, sem banco, conforme a regra do projeto. Quando o
-back reinicia, ela volta vazia.
+O que mudou quando os dados foram para o banco
 
-Cada passo é um dicionário com as mesmas chaves do esquema de saída: id,
-tatuagem_id, tipo, data e observacao.
+    Antes os passos viviam numa lista de dicionários neste arquivo. Agora a lista
+    é a tabela passos, e quem guarda é o MySQL.
+
+    A assinatura das funções não mudou uma vírgula: o serviço recebe a mesma
+    lista de dicionários e o mesmo dicionário de antes. Como o DictCursor devolve
+    cada linha como dicionário, o tipo que sai daqui é o mesmo que entrava.
+
+A data não precisa de conversão
+
+    A coluna data é do tipo DATE, e o pymysql devolve esse tipo como um date do
+    Python, que é exatamente o que o esquema de saída declara. Não há o que
+    converter aqui, ao contrário do tamanho da tatuagem, que vem como Decimal.
 """
 
 from datetime import date
 
-# A lista de passos é separada da lista de tatuagens, porque cada arquivo guarda o
-# seu próprio depósito. Os dois ficam no nível do módulo, para sobreviverem à
-# passagem de uma função para outra.
-passos: list[dict] = []
+import banco
 
 
 def listar_passos(tatuagem_id: int) -> list[dict]:
@@ -26,143 +32,64 @@ def listar_passos(tatuagem_id: int) -> list[dict]:
     Bruna lê é o de uma tatuagem só, e a pergunta "quais passos existem" sem
     dono não tem resposta útil.
 
-    A lista não é ordenada com sorted. Ordenar não entra neste projeto, e não
-    precisa: como nada apaga passo, cada passo entra no fim da lista quando é
-    gravado, então a ordem da lista já é a ordem em que as coisas aconteceram.
+    O ORDER BY id é obrigatório, e é a parte que mais mudou com a chegada do
+    banco. Na versão em memória a ordem não precisava ser pedida porque cada passo
+    era jogado no fim da lista, e a posição na lista era a ordem em que as coisas
+    aconteceram. O MySQL não garante nada disso: ele devolve as linhas na ordem
+    que for mais barata para ele, e essa ordem pode mudar de um SELECT para o
+    outro. Sem o ORDER BY, o histórico da tatuagem apareceria embaralhado.
+
+    Ordenar pelo id e não pela data é proposital. A ordem em que o passo foi
+    registrado e a ordem da data não são sempre a mesma coisa: se o Vitor
+    registrar hoje o passo de uma sessão de ontem, a data vai estar fora de
+    ordem, e o histórico que ele lê é o que ele registrou, na ordem em que
+    registrou.
     """
-    return [passo for passo in passos if passo["tatuagem_id"] == tatuagem_id]
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, tatuagem_id, tipo, data, observacao "
+            "FROM passos WHERE tatuagem_id = %s ORDER BY id",
+            (tatuagem_id,),
+        )
+
+        return cursor.fetchall()
 
 
 def criar_passo(tatuagem_id: int, dados: dict) -> dict:
     """Grava um passo numa tatuagem e devolve como ele ficou gravado.
 
-    O id é montado com o tamanho da lista mais um, pelo mesmo motivo do depósito
-    de tatuagens: o id é do depósito, e o front não escolhe id. Como nada apaga
-    passo nesta API, o número não se repete.
+    O id não é escrito no INSERT: a coluna é AUTO_INCREMENT, e quem escolhe o
+    número é o MySQL. Depois do INSERT, o cursor.lastrowid devolve o número
+    gerado, e é com ele que a função busca a linha de novo, pelo mesmo motivo da
+    tatuagem: o que volta é o que está gravado.
 
     A tatuagem dona do passo entra pela função, e não pelo dicionário de dados,
     porque quem diz de que tatuagem é o passo é o caminho da rota, e a rota já
     recebeu esse valor. Assim o mesmo pedido não pode mandar dois donos.
 
     A data é a de hoje, montada aqui com date.today(). A ficha do Vitor não tem
-    campo de data, então a data é do servidor. Ela fica guardada como date, que é
-    o tipo que o MySQL vai devolver no ciclo 2.
+    campo de data, então a data é do servidor. Ela é entregue ao MySQL como um
+    date do Python, e o MySQL guarda no tipo DATE, sem horário. Na volta ela
+    continua um date, e por isso o esquema de saída não precisa de nada.
     """
-    passo = {
-        "id": len(passos) + 1,
-        "tatuagem_id": tatuagem_id,
-        "tipo": dados["tipo"],
-        "data": date.today(),
-        "observacao": dados["observacao"],
-    }
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO passos (tatuagem_id, tipo, data, observacao) "
+            "VALUES (%s, %s, %s, %s)",
+            (
+                tatuagem_id,
+                dados["tipo"],
+                date.today(),
+                dados["observacao"],
+            ),
+        )
 
-    passos.append(passo)
+        novo_id = cursor.lastrowid
 
-    return passo.copy()
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, tatuagem_id, tipo, data, observacao FROM passos WHERE id = %s",
+            (novo_id,),
+        )
 
-
-# Dados de demonstração, com a mesma finalidade dos da tatuagem: conteúdo para a
-# apresentação, não regra. Cada histórico é compatível com a etapa em que a
-# tatuagem está, senão a demonstração mostraria uma coisa que a regra proíbe.
-#
-# A tatuagem 4 e a tatuagem 8 são as duas sem passo nenhum, porque as duas estão em
-# "pedida": são o exemplo vivo da regra de que nada acontece antes do desenho
-# aprovado. O id vai de 1 a 13 sem buraco, para o próximo passo criado na
-# apresentação sair com o 14.
-passos_de_exemplo = [
-    {
-        "id": 1,
-        "tatuagem_id": 1,
-        "tipo": "desenho aprovado",
-        "data": date(2026, 8, 3),
-        "observacao": "a cliente aprovou o desenho, sem ajuste",
-    },
-    {
-        "id": 2,
-        "tatuagem_id": 1,
-        "tipo": "sessão",
-        "data": date(2026, 8, 10),
-        "observacao": "contorno com linha fina, sem preenchimento",
-    },
-    {
-        "id": 3,
-        "tatuagem_id": 1,
-        "tipo": "sessão",
-        "data": date(2026, 8, 17),
-        "observacao": "preenchimento do fundo e ajuste de traço",
-    },
-    {
-        "id": 4,
-        "tatuagem_id": 1,
-        "tipo": "retoque",
-        "data": date(2026, 9, 14),
-        "observacao": "retoque na ponta de um pétala",
-    },
-    {
-        "id": 5,
-        "tatuagem_id": 2,
-        "tipo": "desenho aprovado",
-        "data": date(2026, 9, 1),
-        "observacao": "aprovado depois de duas mudanças no desenho",
-    },
-    {
-        "id": 6,
-        "tatuagem_id": 2,
-        "tipo": "sessão",
-        "data": date(2026, 9, 8),
-        "observacao": "primeira sessão, só a linha",
-    },
-    {
-        "id": 7,
-        "tatuagem_id": 3,
-        "tipo": "desenho aprovado",
-        "data": date(2026, 9, 15),
-        "observacao": "desenho aprovado, a tatuagem entra na fila das sessões",
-    },
-    {
-        "id": 8,
-        "tatuagem_id": 5,
-        "tipo": "desenho aprovado",
-        "data": date(2026, 9, 5),
-        "observacao": "texto na fonte escolhida pela cliente",
-    },
-    {
-        "id": 9,
-        "tatuagem_id": 5,
-        "tipo": "sessão",
-        "data": date(2026, 9, 12),
-        "observacao": "rascunho da letra",
-    },
-    {
-        "id": 10,
-        "tatuagem_id": 5,
-        "tipo": "sessão",
-        "data": date(2026, 9, 19),
-        "observacao": "letra fechada, aguardando a cicatrização para o retoque",
-    },
-    {
-        "id": 11,
-        "tatuagem_id": 6,
-        "tipo": "desenho aprovado",
-        "data": date(2026, 9, 8),
-        "observacao": "a cliente pediu a folha menor que a primeira versão",
-    },
-    {
-        "id": 12,
-        "tatuagem_id": 6,
-        "tipo": "sessão",
-        "data": date(2026, 9, 22),
-        "observacao": "contorno e primeira parte do sombreado da folha",
-    },
-    {
-        "id": 13,
-        "tatuagem_id": 7,
-        "tipo": "desenho aprovado",
-        "data": date(2026, 9, 24),
-        "observacao": "onda aprovada, entra na fila das sessões",
-    },
-]
-
-# O for abaixo joga cada exemplo na lista real, a mesma que criar_passo usa.
-for exemplo in passos_de_exemplo:
-    passos.append(exemplo)
+        return cursor.fetchone()

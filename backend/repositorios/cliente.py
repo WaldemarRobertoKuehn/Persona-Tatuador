@@ -1,4 +1,4 @@
-"""O depósito das clientes do estúdio.
+"""O depósito das clientes do estúdio, agora no MySQL.
 
 A cartilha lista três entidades: o usuário, a tatuagem e o passo. O usuário é quem
 entra no sistema, e tem um tipo: cliente ou tatuador. A Bruna é a cliente 1, que é
@@ -15,43 +15,46 @@ Por que este arquivo não tem rota: a cartilha não pede rota de cliente. Ela pe
 cinco capacidades, e nenhuma delas é "listar clientes". O que ela pede é que a
 agenda mostre a cliente, e o nome indo junto da tatuagem resolve isso sem
 inventar rota nenhuma.
+
+O que mudou quando os dados foram para o banco
+
+    Antes este arquivo guardava tudo numa lista de dicionários criada no próprio
+    módulo, e as funções só caminhavam por ela com for. Agora a lista é a tabela
+    clientes, e as funções pedem um cursor ao banco.py.
+
+    A assinatura das funções não mudou uma vírgula, e é isso que interessa: o
+    serviço que chama este arquivo continua recebendo exatamente o mesmo tipo de
+    coisa, um dicionário ou None. Quem consome o depósito não percebeu a troca,
+    e é por isso que nem o serviço nem a rota precisaram ser mexidos.
 """
 
-# A lista começa no nível do módulo, pelo mesmo motivo da lista de tatuagens: todas
-# as funções deste arquivo leem sempre a mesma lista, e ela morre com o processo.
-clientes: list[dict] = []
+# A lista de clientes some daqui: no banco ela é a tabela clientes do esquema.sql.
+# Este import é o mesmo que o main.py faz, por módulo e com `as`, e o apelido deixa
+# claro que o que está do outro lado é o banco, e não uma lista na memória.
+import banco
 
 
 def buscar_cliente(cliente_id: int) -> dict | None:
     """Devolve a cliente de um id, ou None se esse id não existir.
 
-    Devolve None em vez de levantar exceção porque quem decide o que fazer com a
-    falta de uma cliente é o serviço, e não este arquivo.
+    O SELECT pede as duas colunas pelo nome, e não usa o asterisco. O asterisco
+    traria qualquer coluna que alguém acrescentasse na tabela depois, e o
+    dicionário devolvido passaria a ter uma chave a mais sem ninguém pedir.
+
+    O WHERE usa o %s, e nunca uma f-string com o número escrito dentro. Esse %s é
+    um espaço reservado: o pymysql troca ele pelo valor do segundo argumento,
+    com escape, e o valor chega ao MySQL como texto, nunca como parte do comando.
+    É o que impede alguém de mandar um cliente_id que carregue junto um comando
+    de SQL, e a proteção vale mesmo quando o valor é só um número.
+
+    O fetchone devolve a primeira linha, ou None se não houver nenhuma. Por isso
+    a função já devolve None quando a cliente não existe, e o serviço continua
+    decidindo o que fazer com a falta, como decidia antes.
     """
-    for cliente in clientes:
-        if cliente["id"] == cliente_id:
-            return cliente.copy()
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, nome FROM clientes WHERE id = %s",
+            (cliente_id,),
+        )
 
-    return None
-
-
-# Dados de demonstração. A Bruna entra como cliente 1 porque é o id que a tela dela
-# usa, e porque o id da próxima tatuagem é o tamanho da lista mais um. A segunda
-# cliente existe para a agenda do Vitor ter mais de uma linha para mostrar a coluna
-# da cliente: com uma só, a coluna não provaria nada.
-clientes_de_exemplo = [
-    {
-        "id": 1,
-        "nome": "Bruna",
-    },
-    {
-        "id": 2,
-        "nome": "Camila",
-    },
-]
-
-# O for abaixo joga cada exemplo na lista real, e é a mesma lista que a função acima
-# lê. fica no fim do arquivo pelo mesmo motivo da tatuagem: o conteúdo vem depois
-# do código, para ficar claro onde o código para.
-for exemplo in clientes_de_exemplo:
-    clientes.append(exemplo)
+        return cursor.fetchone()
