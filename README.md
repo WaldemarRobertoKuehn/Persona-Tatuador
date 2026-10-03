@@ -43,6 +43,7 @@ cópia nenhuma dentro do front.
 ├── docs/            o que não é código
 │   ├── CARTILHA.md  a cartilha sorteada, sem alteração
 │   ├── BRIEFING.md  o briefing, escrito por mim
+│   ├── COMO_RODAR.md o passo a passo de abrir e de fechar os dois servidores
 │   ├── marca.md     o que a marca é e as regras de uso
 │   ├── marca/       os arquivos da marca, que o front serve de lá
 │   └── styleguide/  o styleguide, ou o link do Figma
@@ -74,6 +75,9 @@ cópia nenhuma dentro do front.
 ```
 
 ## Como rodar o back
+
+> O passo a passo completo de abrir e de fechar os dois está em
+> [`docs/COMO_RODAR.md`](docs/COMO_RODAR.md).
 
 O back é o FastAPI, na pasta `backend/`. A documentação automática fica em `/docs`.
 
