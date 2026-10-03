@@ -7,14 +7,20 @@
  * Os três estados da tela estão aqui: carregando, erro e pronto. O histórico de
  * uma tatuagem só é buscado quando a Bruna abre aquela tatuagem, e não junto com
  * a lista, porque ela raramente abre todas.
+ *
+ * Cada tatuagem é um cartão com a linha do tempo das quatro etapas em cima do
+ * botão do histórico. A linha do tempo é o que a Bruna mais procura: a pergunta
+ * dela não é em que etapa está, e sim até onde já andou.
  */
 
 import { useEffect, useState } from "react";
 
 import { buscarPassos, buscarTatuagens } from "../api";
 import { AvisoCarregando, AvisoErro, AvisoVazio } from "../componentes/Avisos";
+import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
-import { formatarData } from "../datas";
+import LinhaDoTempo from "../componentes/LinhaDoTempo";
+import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
 
 /* O histórico de uma tatuagem, buscado só quando a Bruna abre ela. */
 function Historico({ tatuagemId }) {
@@ -54,16 +60,7 @@ function Historico({ tatuagemId }) {
     return <AvisoVazio>Nenhum passo ainda. A tatuagem está esperando o desenho.</AvisoVazio>;
   }
 
-  return (
-    <ol className="lista">
-      {passos.map((passo) => (
-        <li key={passo.id} className="cartao">
-          <strong>{passo.tipo}</strong> · {formatarData(passo.data)}
-          {passo.observacao ? <p>{passo.observacao}</p> : null}
-        </li>
-      ))}
-    </ol>
-  );
+  return <LinhaDoTempo passos={passos} />;
 }
 
 export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
@@ -92,14 +89,15 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
 
   return (
     <main className="tela">
-      <header className="cabecalho">
-        <h1>Minhas tatuagens</h1>
-        <p>{perfil.nome}</p>
-      </header>
-
-      <button type="button" className="botao" onClick={aoAbrirPedido}>
-        Pedir tatuagem
-      </button>
+      <CabecalhoDaTela
+        titulo="Minhas tatuagens"
+        apoio={`${perfil.nome}, estas são as tatuagens do estúdio que são suas.`}
+        acao={
+          <button type="button" className="botao" onClick={aoAbrirPedido}>
+            Pedir tatuagem
+          </button>
+        }
+      />
 
       {estado === "carregando" ? <AvisoCarregando oQue="suas tatuagens" /> : null}
       {estado === "erro" ? <AvisoErro erro={erro} /> : null}
@@ -108,38 +106,54 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
         tatuagens.length === 0 ? (
           <AvisoVazio>Você ainda não tem tatuagem aqui.</AvisoVazio>
         ) : (
-          <ul className="lista" style={{ marginTop: "1.5rem" }}>
-            {tatuagens.map((tatuagem) => (
-              <li key={tatuagem.id} className="cartao">
-                <div className="cartao-tatuagem">
-                  <div>
-                    <h2>{tatuagem.ideia}</h2>
-                    <p>
-                      {tatuagem.local_do_corpo} · {tatuagem.tamanho} cm
-                    </p>
-                  </div>
-                  <Etiqueta etapa={tatuagem.etapa} />
-                </div>
+          <div className="lista-cartoes">
+            {tatuagens.map((tatuagem) => {
+              /* A tatuagem aberta é a única coisa que o botão do histórico
+               * precisa saber: o mesmo id aberto ou fechado, sem dois estados. */
+              const estaAberta = aberta === tatuagem.id;
 
-                <button
-                  type="button"
-                  className="botao-neutro"
-                  style={{ marginTop: "0.5rem" }}
-                  onClick={() =>
-                    setAberta(aberta === tatuagem.id ? null : tatuagem.id)
-                  }
-                >
-                  {aberta === tatuagem.id ? "Fechar histórico" : "Ver histórico"}
-                </button>
+              return (
+                <article key={tatuagem.id} className="cartao">
+                  <div className="topo-do-cartao">
+                    <div>
+                      <h2>{tatuagem.ideia}</h2>
+                      <div className="detalhes">
+                        <span>
+                          local <strong>{tatuagem.local_do_corpo}</strong>
+                        </span>
+                        <span className="separador" aria-hidden="true">
+                          ·
+                        </span>
+                        <span className="numero">
+                          <strong>{tatuagem.tamanho} cm</strong>
+                        </span>
+                        <span className="separador" aria-hidden="true">
+                          ·
+                        </span>
+                        <span className="numero">#{tatuagem.id}</span>
+                      </div>
+                    </div>
 
-                {aberta === tatuagem.id ? (
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <Historico tatuagemId={tatuagem.id} />
+                    <Etiqueta etapa={tatuagem.etapa} />
                   </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+
+                  <ProgressoDasEtapas etapa={tatuagem.etapa} />
+
+                  <div className="rodape-do-cartao">
+                    <button
+                      type="button"
+                      className="botao-neutro"
+                      onClick={() => setAberta(estaAberta ? null : tatuagem.id)}
+                    >
+                      {estaAberta ? "Fechar histórico" : "Ver histórico"}
+                    </button>
+                  </div>
+
+                  {estaAberta ? <Historico tatuagemId={tatuagem.id} /> : null}
+                </article>
+              );
+            })}
+          </div>
         )
       ) : null}
     </main>

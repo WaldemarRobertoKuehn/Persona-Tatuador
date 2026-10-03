@@ -157,11 +157,18 @@ o primeiro defeito de interface que aparece quando a tela é pequena.
 | `--espaco-4` | 1,5 rem | dentro do cartão |
 | `--espaco-5` | 3 rem | entre cartões |
 | `--raio` | 0,5 rem | botão, campo, cartão |
+| `--raio-cheio` | 9999 px | o que é redondo: retrato, pontinho, marcador da linha do tempo |
 | `--sombra` | `0 1px 2px rgba(0,0,0,.08)` | só no cartão flutuante |
 
 Tudo em `rem`, para o navegador aplicar o tamanho que a pessoa escolheu nas
 acessibilidade. Sombra só quando o cartão realmente flutua; sombra em tudo vira
 sujeira.
+
+`--raio-cheio` é o único token desta seção que não está em rem, e ele não podia
+estar: raio de círculo não é medida de texto, é medida de raio mesmo. Ele existe
+porque três elementos do sistema são redondos — o pontinho da plaquinha do estúdio,
+o retrato do perfil e o marcador da linha do tempo das etapas — e os três são
+círculos de verdade, não um cartão com o canto muito redondo.
 
 ## 4. Componentes
 
@@ -178,6 +185,25 @@ etiqueta fica em cima à direita, porque a etapa é o que se procura primeiro.
 
 **Etiqueta de etapa.** Cantos arredondados, texto de 0,8125 rem em maiúscula, e
 a cor vem da tabela da seção 1. Sem borda: a cor do fundo já separa.
+
+**Barra fixa.** Uma barra só, no alto, igual nas quatro telas: o logo, a plaquinha
+do estúdio, o cartão de quem está usando e o botão de tema. Ela acompanha a
+rolagem (`position: sticky`), e é por isso que as duas telas da Bruna não
+precisam repetir o logo. Nenhum elemento dela é cor de destaque: o único acento da
+barra é o pontinho da plaquinha, que é o elemento mais discreto que aceita a cor.
+
+**Linha do tempo das etapas.** Quatro pontos em linha, um por etapa da cartilha,
+com a régua atrás. O que já passou é preenchido de `--cor-texto`, o que é o atual
+é o acento, e o que ainda não chegou é a borda. Ela aparece na lista da cliente e
+na ficha do tatuador, e é a regra da cartilha desenhada: mostra onde a tatuagem
+está, mas não decide o que é aceito.
+
+**Linha do tempo dos passos.** Lista com o traço na esquerda e um ponto por passo
+registrado, mostrando tipo, data e observação. É o histórico, e ele é o mesmo
+componente nas duas telas que o mostram.
+
+**Cartão de perfil.** Só na tela de escolha de perfil: retrato em círculo, nome,
+tipo, uma frase de descrição e a ação escrita. O botão é o cartão inteiro.
 
 ## 5. As duas telas não são a mesma tela encolhida
 
@@ -201,6 +227,12 @@ impecável. Isso vira regra de código.
    como ela se acomoda.
 5. **A lista de tatuagens nunca fica dentro de um contêiner com largura fixa.**
    A largura máxima é só para o texto, senão a linha some em tela grande.
+6. **Foto entra, texto sobre foto não.** Só a tela de escolha de perfil usa foto:
+   a do ateliê e a vitrine de uma tatuagem de linha fina. Texto nunca é escrito
+   por cima da imagem, porque o contraste de um texto sobre foto depende da foto
+   e não dá para garantir pela tabela da seção 1 — o texto fica na superfície,
+   ao lado ou abaixo. Os retratos dos dois perfis são a única exceção, e eles são
+   decorativos: o nome está escrito do lado.
 
 ## 6. O que não entra
 

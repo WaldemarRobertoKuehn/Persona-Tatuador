@@ -1,6 +1,0 @@
-{
-  "name": "Traço Fino · estúdio de tatuagem",
-  "description": "Sistema para estúdio de tatuagem pequeno com acompanhamento das etapas de cada tatuagem.",
-  "permissions": [],
-  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

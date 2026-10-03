@@ -9,8 +9,9 @@ o que pode e o que não pode aparecer no código, estão em `REGRAS.md`.
 
 ## Estado atual
 
-**O back está pronto e testado, e o front está começado.** Marca e styleguide estão escritos, em
-`docs/marca.md` e `docs/styleguide/`. O front é servido e testado em `http://localhost:5173`.
+**O back está pronto e testado, e o front está pronto e testado.** Marca e styleguide estão
+escritos, em `docs/marca.md` e `docs/styleguide/`. O front é servido e testado em
+`http://localhost:5173`.
 
 O back entrega as cinco coisas que a cartilha pede:
 
@@ -47,9 +48,10 @@ cópia nenhuma dentro do front.
 │   └── styleguide/  o styleguide, ou o link do Figma
 ├── frontend/        o React, com as quatro telas
 │   ├── src/
-│   │   ├── componentes/  o logo e o botão de tema, usados pelas cinco telas
+│   │   ├── componentes/  o logo, o botão de tema e as peças repetidas
 │   │   ├── estilos/      os tokens do styleguide e o CSS das telas
 │   │   ├── fontes/       a Playfair Display, com a licença e a procedência
+│   │   ├── imagens/      as fotos do ateliê, da vitrine e dos dois perfis
 │   │   ├── telas/        as quatro telas da cartilha e a escolha de perfil
 │   │   ├── api.js        o único lugar do front que fala com o back
 │   │   ├── datas.js      ISO do back virando dd/mm/aaaa na tela
@@ -118,6 +120,31 @@ tatuagem" grava no back e volta com a etapa `pedida`. Escolhendo Vitor, "A agend
 tatuagens do estúdio com filtro por etapa, e "Abrir ficha" abre a ficha de uma delas, onde o passo
 é registrado. A ficha mostra os dois resultados do back: quando a regra aceita, a etapa nova
 aparece; quando a regra recusa, o motivo aparece embaixo do campo, e a etapa não muda.
+
+### A cara da tela
+
+A entrada tem a foto do ateliê e uma vitrine, e os dois perfis são cartões com retrato. A barra
+fixa do alto é a mesma nas quatro telas: logo, plaquinha do estúdio, quem está usando e o botão de
+tema. Cada tatuagem ganha a linha do tempo das quatro etapas em cima do botão do histórico, e o
+histórico é desenhado como uma linha do tempo com um ponto por passo.
+
+Tudo isso é CSS em `estilos/base.css`, e nada disso é uma cor nova: as cores continuam sendo só as
+do styleguide, seção 1. As fotos são importadas como arquivo (`import`), e não com caminho escrito
+à mão, que é o que faz o `npm run build` copiá-las para dentro do `dist`.
+
+### O que a tela não pode fazer
+
+O visual do AI Studio foi copiado para dentro do styleguide, e não por cima dele. Três coisas dele
+ficaram de fora, e vale saber por quê:
+
+- **O texto da regra da cartilha não foi para a ficha.** A versão do AI Studio escrevia embaixo do
+  campo de qual etapa aceita qual passo. A regra é do serviço, no back: copiar para a tela criaria
+  duas regras que divergem na primeira correção. A ficha mostra os três passos sempre, e o motivo
+  da recusa vem do back.
+- **Sem gradiente no hero.** O styleguide seção 6 proíbe, e texto por cima de foto não tem contraste
+  garantido — o que garante contraste é a tabela da seção 1.
+- **Sem emoji no botão de tema.** O botão continua sendo "Tema escuro" em texto, pela mesma regra
+  que proíbe ícone no lugar de palavra.
 
 ### A marca e a fonte não pedem internet
 

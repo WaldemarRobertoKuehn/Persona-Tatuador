@@ -4,6 +4,10 @@
  * @media vale para o celular, e a regra @media com --tela-grande é o ajuste
  * para a tela de computador. Nenhuma tela ganha ajuste de computador antes de
  * funcionar no celular.
+ *
+ * Nenhuma cor aparece escrita aqui. Tudo vem de uma variável do tokens.css, que é
+ * a transcrição do styleguide seção 1. Se uma regra nova precisasse de uma cor que
+ * não está na paleta, o problema seria a hierarquia de informação, não a paleta.
  */
 
 * {
@@ -20,7 +24,8 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   font-family: var(--fonte-titulo);
   font-weight: 600;
   line-height: 1.3;
@@ -35,43 +40,48 @@ h2 {
   font-size: 1.125rem;
 }
 
-/* A tela ocupa a largura toda, mas o texto não. Sem este limite, a linha do
- * texto estica junto com a tela de computador e fica ilegível. */
-.tela {
-  width: 100%;
-  max-width: 70rem;
-  margin: 0 auto;
-  padding: var(--espaco-4) var(--espaco-3) var(--espaco-5);
+h3 {
+  font-size: 1.125rem;
+  line-height: 1.4;
 }
 
-.cabecalho {
+p {
+  margin: 0;
+}
+
+/* A barra fixa no alto, com o logo, as telas do perfil e o botão de tema.
+ *
+ * O position sticky é o que faz a barra acompanhar a rolagem: em vez de a tela
+ * inteira descer junto, o que obrigaria a subir para achar o logo de novo, só a
+ * barra fica. No celular a barra continua valendo, porque é onde estão as telas do
+ * perfil e o botão de tema, e são as duas coisas que se usam com o polegar. */
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.barra-conteudo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--espaco-3);
-  margin-bottom: var(--espaco-4);
+  gap: var(--espaco-2);
+  width: 100%;
+  max-width: var(--tela-grande);
+  margin: 0 auto;
+  padding: var(--espaco-2) var(--espaco-3);
 }
 
-/* O lado direito do cabeçalho: quem está usando, e o botão de tema. Os dois são
- * informação pequena, então vão juntos no fim da linha oposta ao logo.
- *
- * O flex-wrap aqui é o que segura o celular. Em 375 pixels o logo já ocupa 160,
- * e o nome da pessoa mais o botão não cabem na mesma linha: sem a quebra, o
- * cabeçalho esticaria a página e apareceria a barra de rolagem de lado. Com a
- * quebra, o bloco inteiro desce para a linha de baixo, e a página continua
- * cabendo na tela. */
-.cabecalho-lado {
+/* O lado esquerdo da barra: o logo e a plaquinha "Estúdio aberto". A plaquinha é o
+ * detalhe que dá contexto de que o estúdio existe e está de pé, e ela usa a
+ * superfície do cartão para não competir com o logo. */
+.marca {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--espaco-2);
-}
-
-.cabecalho p {
-  margin: 0;
-  color: var(--cor-texto-fraco);
-  font-size: 0.8125rem;
 }
 
 /* O logo. O cabeçalho alinha os filhos no meio, e o align-self vem da regra
@@ -84,6 +94,77 @@ h2 {
   flex-shrink: 0;
 }
 
+.placa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-1);
+  padding: var(--espaco-1) var(--espaco-2);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* O pontinho da plaquinha é o acento da tela, e ele é pequeno de propósito: a
+ * regra de ouro do styleguide, seção 1, é que o acento apareça no máximo em um
+ * elemento por tela, e um ponto de 6 pixels é o elemento mais discreto que aceita
+ * essa cor. */
+.placa-ponto {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--raio-cheio);
+  background: var(--cor-acento);
+}
+
+/* O lado direito da barra: quem está usando, e o botão de tema. Os dois são
+ * informação pequena, então vão juntos no fim da linha oposta ao logo.
+ *
+ * O flex-wrap aqui é o que segura o celular. Em 375 pixels o logo já ocupa 160,
+ * e o nome da pessoa mais o botão não cabem na mesma linha: sem a quebra, a
+ * barra esticaria a página e apareceria a barra de rolagem de lado. Com a
+ * quebra, o bloco inteiro desce para a linha de baixo, e a página continua
+ * cabendo na tela. */
+.barra-lado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+/* O cartão de identificação da pessoa dentro da barra: o retrato em círculo, o
+ * nome e o tipo. No celular a plaquinha inteira é o que mostra quem está usando,
+ * e o retrato é o que a faz ser reconhecida num olhar. */
+.pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  padding: var(--espaco-1) var(--espaco-2);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+}
+
+.pessoa-retrato {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--raio-cheio);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.pessoa-nome {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pessoa-tipo {
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+}
+
 /* O botão de tema não é o botão principal: ele é um controle de ajuste, e
  * chamá-lo de destaque tiraria o destaque do botão de ação da tela, que é o que
  * o styleguide diz que o acento marca. Ele fica com a altura menor de um botão
@@ -92,9 +173,66 @@ h2 {
   white-space: nowrap;
 }
 
+/* As telas do perfil, na barra. No celular elas são uma linha só e rolam para o
+ * lado, porque são duas e cada uma tem o nome inteiro: quebrar o nome em duas
+ * linhas custaria mais leitura do que a rolagem custa. No computador são as duas
+ * cabendo à vista, e a que está aberta fica marcada com o acento.
+ *
+ * A lista é centralizada com a mesma largura máxima da tela, senão o logo da
+ * barra e o texto do conteúdo ficariam em colunas diferentes. */
+.telas {
+  display: flex;
+  gap: var(--espaco-1);
+  overflow-x: auto;
+  width: 100%;
+  max-width: var(--tela-max);
+  margin: 0 auto var(--espaco-3);
+  padding: var(--espaco-2) var(--espaco-3);
+  list-style: none;
+}
+
+.tela-link {
+  white-space: nowrap;
+  padding: var(--espaco-2) var(--espaco-3);
+  border: 1px solid transparent;
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--cor-texto);
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.tela-link[aria-current="page"] {
+  border-color: var(--cor-borda);
+  background: var(--cor-fundo);
+  color: var(--cor-acento-texto);
+  font-weight: 500;
+}
+
+/* A tela ocupa a largura toda, mas o texto não. Sem este limite, a linha do
+ * texto estica junto com a tela de computador e fica ilegível. */
+.tela {
+  width: 100%;
+  max-width: var(--tela-max);
+  margin: 0 auto;
+  padding: var(--espaco-4) var(--espaco-3) var(--espaco-5);
+}
+
+/* O texto de apoio que fica embaixo do título da tela. Ele é --cor-texto-fraco
+ * porque é legenda, e legenda não compete com o título. */
+.legenda {
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+}
+
 /* Botão principal: fundo no acento, texto branco, e a altura mínima de 2,75 rem
  * porque o alvo de dedo não pode ser menor que isso. */
 .botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-2);
   min-height: 2.75rem;
   padding: 0 var(--espaco-4);
   border: 0;
@@ -114,8 +252,12 @@ h2 {
 
 /* Botão neutro, para ação que não é a principal da tela. */
 .botao-neutro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-2);
   min-height: 2.75rem;
-  padding: 0 var(--espaco-4);
+  padding: 0 var(--espaco-3);
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   background: var(--cor-fundo);
@@ -125,22 +267,124 @@ h2 {
   cursor: pointer;
 }
 
-.campo {
+.botao-largo {
+  width: 100%;
+}
+
+/* O cartão. Fundo branco, borda de 1 px e raio --raio, que é a receita do
+ * styleguide seção 4. O cartão não ganha sombra: sombra é do cartão flutuante, e
+ * aqui quem flutua é a barra e a imagem grande do início. */
+.cartao {
+  padding: var(--espaco-4);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+}
+
+/* O cartão que é clicável. A borda é a única coisa que muda no estado de
+ * descanso do ponteiro, porque mudar a cor do preenchimento tiraria o acento de
+ * onde ele está marcando alguma coisa. */
+.cartao-clicavel {
+  width: 100%;
+  text-align: left;
+  font-family: var(--fonte-texto);
+  color: var(--cor-texto);
+  cursor: pointer;
+}
+
+.cartao-clicavel:hover {
+  border-color: var(--cor-acento);
+}
+
+/* O título de dentro do cartão, que vem depois da linha do tempo ou da
+ * confirmação e por isso precisa do respiro: são blocos que não encostam um no
+ * outro. */
+.cartao h3 {
+  margin-top: var(--espaco-4);
+}
+
+/* A legenda que explica a coluna, e que precisa de um respiro antes do
+ * formulário que ela explica. */
+.legenda-folgada {
+  margin: var(--espaco-1) 0 var(--espaco-3);
+}
+
+/* A lista de cartões que é o coração de duas telas. O grid com uma coluna é o
+ * começo mobile-first, e a segunda coluna só entra na tela de computador.
+ *
+ * O list-style é removido porque em uma das telas essa lista é uma ul e na outra
+ * é uma div: sem esta regra, os itens apareceriam com a bolinha do marcador da
+ * lista só em uma das duas. */
+.lista-cartoes {
+  display: grid;
+  gap: var(--espaco-3);
+  margin-top: var(--espaco-4);
+  padding: 0;
+  list-style: none;
+}
+
+/* A linha de dados que fica embaixo do título do cartão: local, tamanho e o
+ * número da tatuagem. O flex-wrap deixa cada dado quebrar sozinho no celular, e
+ * o separador entre eles é um ponto decorativo que o leitor de tela não lê. */
+.detalhes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-2);
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+}
+
+.detalhes strong {
+  color: var(--cor-texto);
+  font-weight: 500;
+}
+
+/* O separador dos detalhes. O aria-hidden é porque ele não diz nada: ele só
+ * separa visualmente. */
+.separador {
+  color: var(--cor-borda);
+}
+
+/* O número que não muda: o tamanho em centímetros e o id. O tabular-nums alinha os
+ * algarismos em coluna, que é o que faz uma coluna de números parecer coluna. */
+.numero {
+  font-variant-numeric: tabular-nums;
+}
+
+/* O campo de formulário, e o campo com dica do lado direito do rótulo, como o
+ * contador de caracteres da observação na ficha. Os dois aparecem na lista de
+ * seletores porque o campo é o mesmo: a diferença entre os dois é o rótulo, e o
+ * rótulo não muda o campo. */
+.campo,
+.campo-com-dica {
   display: block;
   margin-bottom: var(--espaco-3);
 }
 
-.campo span {
-  display: block;
+/* O rótulo do campo, com a dica do lado direito. A dica é --cor-texto-fraco e
+ * menor, porque ela ajuda e não é o pedido. */
+.campo-rodape {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espaco-2);
   margin-bottom: var(--espaco-1);
   color: var(--cor-texto-fraco);
   font-size: 0.8125rem;
   font-weight: 500;
 }
 
+.campo-dica {
+  font-weight: 400;
+}
+
 .campo input,
 .campo textarea,
-.campo select {
+.campo select,
+.campo-com-dica input,
+.campo-com-dica textarea,
+.campo-com-dica select {
   width: 100%;
   min-height: 2.75rem;
   padding: var(--espaco-2) var(--espaco-3);
@@ -152,28 +396,36 @@ h2 {
   font-size: 1rem;
 }
 
-.campo textarea {
+.campo textarea,
+.campo-com-dica textarea {
   min-height: 6rem;
   resize: vertical;
 }
 
-.cartao {
-  padding: var(--espaco-4);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  background: var(--cor-fundo);
+/* O contorno de foco é o mesmo em todo campo, e é o token --cor-acento-texto, e
+ * não o --cor-acento: no tema escuro o laranja de preenchimento reprova em
+ * linha, e foco é informação, não preenchimento. */
+.campo input:focus,
+.campo textarea:focus,
+.campo select:focus,
+.campo-com-dica input:focus,
+.campo-com-dica textarea:focus,
+.campo-com-dica select:focus {
+  outline: 2px solid var(--cor-acento-texto);
+  outline-offset: 1px;
 }
 
-.lista {
+/* Os dois campos curtos lado a lado, que é o que o formulário do pedido ganha no
+ * computador: local e tamanho juntos, que são curtos. No celular é uma coluna só,
+ * porque dois campos de lado no celular dão um alvo de dedo estreito demais. */
+.par {
   display: grid;
   gap: var(--espaco-3);
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 /* A etiqueta de etapa. A cor vem do nome da etapa, escrito em uma classe, e
- * nunca de uma cor dentro do componente. */
+ * nunca de uma cor dentro do componente. Sem borda, porque a cor do fundo já
+ * separa, que é o que o styleguide seção 4 pede. */
 .etiqueta {
   display: inline-block;
   padding: var(--espaco-1) var(--espaco-2);
@@ -208,6 +460,7 @@ h2 {
  * tela. O terceiro estado, o conteúdo pronto, é a tela em si. */
 .aviso {
   padding: var(--espaco-4);
+  border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   background: var(--cor-superficie);
   color: var(--cor-texto-fraco);
@@ -253,12 +506,167 @@ h2 {
   align-items: center;
   gap: var(--espaco-2);
   padding: var(--espaco-3);
+  border: 1px solid var(--cor-borda);
   border-radius: var(--raio);
   background: var(--cor-superficie);
 }
 
 .confirmacao strong {
   color: var(--cor-acento-texto);
+}
+
+/* A linha do tempo dos quatro pontos de uma tatuagem.
+ *
+ * É a peça que traduz a regra da cartilha em figura: a tatuagem nasce pedida e
+ * anda para a direita, um ponto por passo aceito. A régua é a borda da paleta, e
+ * o que está andado é o acento, que é a cor de "é agora". */
+.progresso {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: var(--espaco-4) 0 var(--espaco-3);
+  padding: 0 var(--espaco-1);
+}
+
+.progresso-regua {
+  position: absolute;
+  height: 2px;
+  background: var(--cor-borda);
+}
+
+/* O pedaço andado da régua. A largura é calculada em JavaScript e entra por
+ * estilo, porque ela depende da etapa, e etapa é dado do back: a régua não
+ * pode ser desenhada com CSS puro sem repetir a ordem das etapas aqui. */
+.progresso-andado {
+  position: absolute;
+  height: 2px;
+  background: var(--cor-acento);
+}
+
+.progresso-passo {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-1);
+  text-align: center;
+}
+
+/* O marcador do passo. É o --cor-superficie com borda da paleta quando o passo
+ * ainda não chegou, e o preenchimento é o --cor-texto quando ele passou. O passo
+ * que é o atual é o único que ganha o acento. */
+.progresso-marcador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-cheio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.progresso-passo-espera .progresso-marcador {
+  background: var(--cor-texto);
+  border-color: var(--cor-texto);
+  color: var(--cor-superficie);
+}
+
+.progresso-passo-atual .progresso-marcador {
+  background: var(--cor-acento);
+  border-color: var(--cor-acento);
+  color: var(--cor-sobre-acento);
+}
+
+.progresso-nome {
+  font-size: 0.8125rem;
+  color: var(--cor-texto-fraco);
+}
+
+.progresso-passo-atual .progresso-nome {
+  color: var(--cor-texto);
+  font-weight: 500;
+}
+
+/* A linha do tempo do histórico, que é a lista de passos de uma tatuagem. O
+ * traço da esquerda é a régua do tempo, e o ponto é o passo. */
+.linha-do-tempo {
+  list-style: none;
+  margin: var(--espaco-3) 0 0;
+  padding: 0;
+}
+
+.passo {
+  position: relative;
+  padding-left: var(--espaco-4);
+  padding-bottom: var(--espaco-3);
+}
+
+/* O traço que liga um passo no outro. O pseudo-elemento ::before não existe no
+ * documento, e é o jeito de desenhar a régua sem um elemento a mais na lista. */
+.passo::before {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  bottom: -0.25rem;
+  left: 0.3125rem;
+  width: 2px;
+  background: var(--cor-borda);
+}
+
+/* O último passo não tem traço depois dele, porque não há o que ligar. */
+.passo:last-child {
+  padding-bottom: 0;
+}
+
+.passo:last-child::before {
+  display: none;
+}
+
+.passo-ponto {
+  position: absolute;
+  top: 0.25rem;
+  left: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--cor-acento);
+  border-radius: var(--raio-cheio);
+  background: var(--cor-fundo);
+}
+
+.passo-conteudo {
+  padding: var(--espaco-3);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+}
+
+.passo-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espaco-2);
+}
+
+.passo-tipo {
+  font-weight: 500;
+}
+
+.passo-data {
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+}
+
+.passo-observacao {
+  margin-top: var(--espaco-1);
+  color: var(--cor-texto);
+  font-size: 0.8125rem;
 }
 
 /* As abas do filtro por etapa. No celular elas quebram em várias linhas, e é por
@@ -277,6 +685,19 @@ h2 {
   border-color: var(--cor-acento);
   color: var(--cor-acento-texto);
   font-weight: 500;
+}
+
+/* O contador de cada aba. Ele é --cor-texto-fraco porque é informação de apoio,
+ * e a aba ativa inverte: o número fica com o texto da aba para os dois lerem
+ * como uma coisa só. */
+.aba-conta {
+  margin-left: var(--espaco-1);
+  color: var(--cor-texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+.aba-ativa .aba-conta {
+  color: var(--cor-acento-texto);
 }
 
 /* A tabela da agenda.
@@ -317,6 +738,10 @@ h2 {
   border-radius: var(--raio);
 }
 
+.tabela tbody tr:last-child {
+  margin-bottom: 0;
+}
+
 .tabela td {
   display: flex;
   gap: var(--espaco-3);
@@ -343,12 +768,182 @@ h2 {
 .ficha {
   display: grid;
   gap: var(--espaco-4);
+  align-items: start;
+}
+
+/* O título do cartão com a ação do lado. A ordem é a de leitura: primeiro o que
+ * a tela é, depois o que dá para fazer nela. */
+.topo-do-cartao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaco-2);
 }
 
 .vazio {
   padding: var(--espaco-5) var(--espaco-3);
   color: var(--cor-texto-fraco);
   text-align: center;
+}
+
+/* A tela de escolha de perfil: a imagem do ateliê em cima, e os dois cartões de
+ * perfil embaixo. A imagem é o que dá a cara do estúdio antes de qualquer dado
+ * aparecer, e ela não tem texto sobreposto. O texto da tela de entrada fica na
+ * superfície, e é por isso que ele passa no contraste da tabela do styleguide. */
+.entrada {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+  box-shadow: var(--sombra);
+  margin-bottom: var(--espaco-4);
+  overflow: hidden;
+}
+
+.entrada-imagem {
+  display: block;
+  width: 100%;
+  height: 12rem;
+  object-fit: cover;
+}
+
+.entrada-texto {
+  padding: var(--espaco-4);
+}
+
+.entrada-frase {
+  font-family: var(--fonte-titulo);
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.entrada-apoio {
+  margin-top: var(--espaco-2);
+  color: var(--cor-texto-fraco);
+}
+
+/* A grade dos perfis. Uma coluna no celular, que é onde a Bruna entra, e duas no
+ * computador, que é onde o Vitor entra. */
+.perfis {
+  display: grid;
+  gap: var(--espaco-3);
+  margin: var(--espaco-4) 0;
+}
+
+.perfil-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  margin-bottom: var(--espaco-3);
+}
+
+.perfil-retrato {
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-cheio);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.perfil-tipo {
+  color: var(--cor-acento-texto);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.perfil-descricao {
+  color: var(--cor-texto);
+  font-size: 0.8125rem;
+}
+
+/* O pé do cartão de perfil, com a ação escrita. A ação é o texto do botão, e não
+ * uma seta ou um desenho: o styleguide seção 6 proíbe ícone no lugar de palavra. */
+.perfil-acao {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espaco-2);
+  margin-top: var(--espaco-3);
+  padding-top: var(--espaco-2);
+  border-top: 1px solid var(--cor-borda);
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+}
+
+.perfil-acao-forte {
+  color: var(--cor-acento-texto);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* O rodapé de um cartão: a ação do cartão, separada do resto por um traço. É o
+ * lugar do "Ver histórico" e do "Abrir ficha", que são ações que mudam o estado
+ * da tela e por isso não ficam misturadas com os dados da tatuagem. */
+.rodape-do-cartao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--espaco-2);
+  margin-top: var(--espaco-3);
+  padding-top: var(--espaco-3);
+  border-top: 1px solid var(--cor-borda);
+}
+
+/* A vitrine: uma foto de tatuagem de linha fina ao lado do texto que explica o
+ * modo de trabalhar do estúdio. Ela existe para a tela de entrada não ser só um
+ * formulário. */
+.vitrine {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-4);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+}
+
+.vitrine-foto {
+  display: block;
+  width: 100%;
+  height: 10rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  object-fit: cover;
+}
+
+.vitrine-texto p {
+  margin-top: var(--espaco-2);
+  color: var(--cor-texto-fraco);
+  font-size: 0.8125rem;
+}
+
+/* O cartão de sucesso, que é o que a Bruna vê depois de enviar o pedido. O
+ * símbolo é um texto, e não um desenho: o styleguide seção 6 proíbe ícone no
+ * lugar de palavra, e aqui o que importa é a frase, não o símbolo. */
+.sucesso {
+  text-align: center;
+}
+
+.sucesso-marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: var(--espaco-3);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-cheio);
+  background: var(--cor-superficie);
+  color: var(--cor-acento-texto);
+  font-size: 1.25rem;
+}
+
+.sucesso-acao {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--espaco-2);
+  margin-top: var(--espaco-4);
 }
 
 /* O ajuste para a tela de computador. Tudo que está dentro daqui só existe a
@@ -358,17 +953,30 @@ h2 {
     padding: var(--espaco-5) var(--espaco-4);
   }
 
+  .barra-conteudo {
+    padding: var(--espaco-2) var(--espaco-4);
+  }
+
+  .telas {
+    padding: var(--espaco-2) var(--espaco-4);
+    margin-bottom: var(--espaco-4);
+  }
+
   /* Na tela grande o cartão de tatuagem passa a ter a etapa à direita, porque
    * sobra largura e a etapa é o que se procura primeiro. */
-  .cartao-tatuagem {
-    display: grid;
-    grid-template-columns: 1fr auto;
+  .par {
+    grid-template-columns: 1fr 1fr;
     gap: var(--espaco-4);
-    align-items: start;
+  }
+
+  .lista-cartoes {
+    gap: var(--espaco-4);
   }
 
   /* Aqui a tabela volta a ser tabela: o cabeçalho aparece, a linha deixa de ser
-   * cartão e cada célula volta a ser uma coluna com o nome em cima. */
+   * cartão e cada célula volta a ser uma coluna com o nome em cima. O
+   * border-spacing zerado é o que deixa a borda arredondada do quadro fechar
+   * certinho por cima do cabeçalho. */
   .tabela thead {
     position: static;
     width: auto;
@@ -380,6 +988,11 @@ h2 {
 
   .tabela {
     display: table;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
   }
 
   .tabela tbody {
@@ -394,6 +1007,7 @@ h2 {
 
   .tabela th {
     padding: var(--espaco-2) var(--espaco-3);
+    background: var(--cor-superficie);
     color: var(--cor-texto-fraco);
     font-size: 0.8125rem;
     font-weight: 500;
@@ -407,12 +1021,43 @@ h2 {
     border-bottom: 1px solid var(--cor-borda);
   }
 
+  .tabela tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
   .tabela td::before {
     content: none;
   }
 
   .ficha {
     grid-template-columns: 1fr 1fr;
-    align-items: start;
+  }
+
+  .perfis {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espaco-4);
+  }
+
+  .entrada-imagem {
+    height: 16rem;
+  }
+
+  .vitrine {
+    grid-template-columns: 14rem 1fr;
+    align-items: center;
+  }
+
+  .vitrine-foto {
+    height: 9rem;
+  }
+}
+
+/* Quem pede para o sistema não reduzir movimento não recebe transição nenhuma.
+ * A regra vale para tudo da tela, porque o conteúdo da agenda e da lista muda
+ * sem a pessoa pedir, e é isso que incomoda quem pede menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
   }
 }

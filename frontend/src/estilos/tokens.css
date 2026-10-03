@@ -61,6 +61,14 @@
   --espaco-4: 1.5rem;
   --espaco-5: 3rem;
   --raio: 0.5rem;
+
+  /* O raio de círculo. Existe porque três coisas do sistema são redondas — o
+   * pontinho da plaquinha, o retrato do perfil e o marcador da linha do tempo —
+   * e nenhuma delas é um cartão. Sem este token, cada uma delas escreveria o
+   * mesmo número por conta própria, e número repetido à mão é número que um dia
+   * fica diferente do outro sem ninguém perceber. */
+  --raio-cheio: 9999px;
+
   --sombra: 0 1px 2px rgba(0, 0, 0, 0.08);
 
   /* As duas fontes do styleguide seção 2: a do sistema para o texto, e a de
@@ -74,6 +82,11 @@
    * que ela não é um número mágico: é a largura em que a tela pequena já não
    * segura mais o conteúdo. */
   --tela-grande: 48rem;
+
+  /* A largura máxima do conteúdo. Ela vale para a tela e para a barra fixa, e as
+   * duas precisam do mesmo número: se a barra usasse outro, o logo ficaria numa
+   * coluna e o texto do conteúdo em outra. */
+  --tela-max: 70rem;
 
   /* O color-scheme avisa o navegador de que os controles nativos — a barra de
    * rolagem, o cursor de texto — devem seguir o tema, e não ficar claros dentro

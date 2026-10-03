@@ -12,6 +12,11 @@
  * A tatuagem aberta mora aqui, e não dentro da ficha, porque quem escolhe a
  * tatuagem é a agenda. Se a escolha ficasse na ficha, a ficha teria de saber o que
  * a agenda escolheu, e as duas telas passariam a se conhecer.
+ *
+ * A barra fixa do alto é desenhada aqui, e não em cada tela, porque é a única parte
+ * da tela que é a mesma nas quatro. Cada tela desenha só o seu conteúdo, e por isso
+ * duas telas não podem divergir na barra: uma delas ficaria com o logo, a pessoa e o
+ * botão de tema em lugares diferentes.
  */
 
 import { useState } from "react";
@@ -28,14 +33,14 @@ import PedirTatuagem from "./telas/PedirTatuagem";
 
 export default function App() {
   /* null significa que ninguém escolheu perfil ainda, e a tela de escolha
-   * aparece. Guardar o perfil inteiro, e não só o id, é para o nome e o tipo
-   * ficarem disponíveis sem voltar na lista. */
+   * aparece. Guardar o perfil inteiro, e não só o id, é para o nome, o tipo e o
+   * retrato ficarem disponíveis sem voltar na lista. */
   const [perfil, setPerfil] = useState(null);
   const [tela, setTela] = useState(null);
   const [tatuagemAberta, setTatuagemAberta] = useState(null);
 
-  /* O tema é do App e não de cada tela, porque o botão fica no cabeçalho, que é
-   * compartilhado. Se cada tela guardasse o seu, o botão de uma tela trocaria
+  /* O tema é do App e não de cada tela, porque o botão fica na barra, que é
+   * compartilhada. Se cada tela guardasse o seu, o botão de uma tela trocaria
    * só aquela tela, e a pessoa teria um site com dois temas ao mesmo tempo. */
   const { tema, trocarTema } = useTema();
 
@@ -61,6 +66,8 @@ export default function App() {
     setTela("ficha");
   }
 
+  /* A escolha de perfil não tem barra: ela é a entrada do sistema, e a barra só
+   * faz sentido depois que há alguém usando. */
   if (!perfil) {
     return (
       <EscolhaPerfil
@@ -73,23 +80,45 @@ export default function App() {
 
   return (
     <div>
-      <nav className="tela" style={{ paddingBottom: 0 }}>
-        <header className="cabecalho">
-          <Logo escuro={tema === ESCURO} />
-          <div className="cabecalho-lado">
-            <p>
-              {perfil.nome} · {perfil.tipo}
-            </p>
+      <div className="barra">
+        <div className="barra-conteudo">
+          <div className="marca">
+            <Logo escuro={tema === ESCURO} />
+            <span className="placa">
+              <span className="placa-ponto" aria-hidden="true" />
+              Estúdio aberto
+            </span>
+          </div>
+
+          <div className="barra-lado">
+            {/* A pessoa que está usando, com o retrato. O retrato aqui é
+                decorativo de novo, porque o nome está escrito do lado. */}
+            <span className="pessoa">
+              <img
+                className="pessoa-retrato"
+                src={perfil.retrato}
+                alt=""
+                width="32"
+                height="32"
+              />
+              <span className="pessoa-nome">{perfil.nome}</span>
+              <span className="pessoa-tipo">· {perfil.tipo}</span>
+            </span>
+
             <AlternadorTema tema={tema} trocarTema={trocarTema} />
           </div>
-        </header>
+        </div>
 
-        <ul className="lista" style={{ listStyle: "none", padding: 0 }}>
+        {/* As telas do perfil. O aria-current é o que diz ao leitor de tela qual
+            é a tela aberta: sem ele, quem navega por teclado ouve quatro botões
+            iguais e não sabe onde está. */}
+        <ul className="telas">
           {TELAS[perfil.tipo].map((nome) => (
             <li key={nome}>
               <button
                 type="button"
-                className={nome === tela ? "botao" : "botao-neutro"}
+                className="tela-link"
+                aria-current={nome === tela ? "page" : undefined}
                 onClick={() => setTela(nome)}
               >
                 {TEXTOS_DAS_TELAS[nome].titulo}
@@ -98,19 +127,23 @@ export default function App() {
           ))}
 
           <li>
-            <button type="button" className="botao-neutro" onClick={sairDoPerfil}>
+            <button type="button" className="tela-link" onClick={sairDoPerfil}>
               Trocar de perfil
             </button>
           </li>
         </ul>
-      </nav>
+      </div>
 
       {/* Cada tela é desenhada em um bloco só seu, e só entra quando ela é a
           tela atual. É o que mantém o perfil da Bruna longe da agenda. */}
-      {tela === "pedir" ? <PedirTatuagem perfil={perfil} /> : null}
+      {tela === "pedir" ? (
+        <PedirTatuagem perfil={perfil} aoConcluir={() => setTela("minhas")} />
+      ) : null}
+
       {tela === "minhas" ? (
         <MinhasTatuagens perfil={perfil} aoAbrirPedido={() => setTela("pedir")} />
       ) : null}
+
       {tela === "agenda" ? <Agenda aoAbrirFicha={abrirFicha} /> : null}
 
       {/* A ficha só existe com uma tatuagem aberta. Sem ela, não há em qual

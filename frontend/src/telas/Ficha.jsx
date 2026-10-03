@@ -11,17 +11,21 @@
  * a tatuagem depois de registrar: a resposta do POST do passo é o passo, e a etapa é
  * outra coisa, que mora em outro recurso da API.
  *
- * A tela NÃO esconde os passos que a regra recusa. O seletor traz os três tipos
- * sempre, porque a regra é do serviço e a tela não vai adivinhar o que é aceito em
- * cada etapa. Se a tela escondesse, o Vitor nunca veria a recusa, e a recusa é
- * parte do que ele precisa entender.
+ * A tela NÃO esconde os passos que a regra recusa, e também NÃO escreve a regra
+ * aqui. As duas coisas são a mesma escolha: a regra de quais etapas aceitam quais
+ * passos é do serviço, e copiá-la para a tela faria duas regras que divergem na
+ * primeira correção. O seletor traz os três tipos sempre, e o back é quem recusa e
+ * diz por quê.
  */
 
 import { useEffect, useState } from "react";
 
 import { buscarPassos, buscarTatuagem, registrarPasso } from "../api";
 import { AvisoCarregando } from "../componentes/Avisos";
+import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
+import LinhaDoTempo from "../componentes/LinhaDoTempo";
+import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
 import { formatarData } from "../datas";
 
 /* Os três passos que a cartilha fecha. A lista vem para desenhar o seletor, e
@@ -122,27 +126,49 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
 
   return (
     <main className="tela">
-      <header className="cabecalho">
-        <h1>A ficha</h1>
-        <p>
-          <button type="button" className="botao-neutro" onClick={aoVoltarParaAgenda}>
+      <CabecalhoDaTela
+        titulo={`A ficha de ${tatuagem.ideia}`}
+        apoio={`Tatuagem ${tatuagem.id}, de ${tatuagem.nome_da_cliente}.`}
+        acao={
+          <button
+            type="button"
+            className="botao-neutro"
+            onClick={aoVoltarParaAgenda}
+          >
             Voltar para a agenda
           </button>
-        </p>
-      </header>
+        }
+      />
 
       <div className="ficha">
+        {/* A coluna da tatuagem: quem é, em que etapa está e o que já foi feito. */}
         <section className="cartao">
-          <div className="cartao-tatuagem">
+          <div className="topo-do-cartao">
             <div>
               <h2>{tatuagem.ideia}</h2>
-              <p>
-                {tatuagem.local_do_corpo} · {tatuagem.tamanho} cm ·{" "}
-                {tatuagem.nome_da_cliente}
-              </p>
+              <div className="detalhes">
+                <span>
+                  local <strong>{tatuagem.local_do_corpo}</strong>
+                </span>
+                <span className="separador" aria-hidden="true">
+                  ·
+                </span>
+                <span className="numero">
+                  <strong>{tatuagem.tamanho} cm</strong>
+                </span>
+                <span className="separador" aria-hidden="true">
+                  ·
+                </span>
+                <span>
+                  cliente <strong>{tatuagem.nome_da_cliente}</strong>
+                </span>
+              </div>
             </div>
+
             <Etiqueta etapa={etapaAtual} />
           </div>
+
+          <ProgressoDasEtapas etapa={etapaAtual} />
 
           {confirmacao ? (
             <div className="confirmacao" role="status">
@@ -153,65 +179,78 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
           ) : null}
 
           <h3>Histórico</h3>
+
           {carregando ? (
             <AvisoCarregando oQue="o histórico" />
           ) : passos.length === 0 ? (
             <p className="vazio">Nenhum passo ainda.</p>
           ) : (
-            <ol className="lista">
-              {passos.map((passo) => (
-                <li key={passo.id}>
-                  <strong>{passo.tipo}</strong> · {formatarData(passo.data)}
-                  {passo.observacao ? <p>{passo.observacao}</p> : null}
-                </li>
-              ))}
-            </ol>
+            <LinhaDoTempo passos={passos} />
           )}
         </section>
 
-        <form className="cartao" onSubmit={enviar}>
+        {/* A coluna do formulário. */}
+        <section className="cartao">
           <h2>Registrar um passo</h2>
+          <p className="legenda legenda-folgada">
+            A regra do estúdio é do servidor: se a etapa atual não aceitar o passo,
+            o motivo da recusa aparece embaixo do campo.
+          </p>
 
-          <label className="campo">
-            <span>Passo</span>
-            <select
-              name="tipo"
-              value={tipo}
-              onChange={(evento) => setTipo(evento.target.value)}
-              required
-            >
-              <option value="">Escolha o passo</option>
-              {TIPOS_DE_PASSO.map((nome) => (
-                <option key={nome} value={nome}>
-                  {nome}
-                </option>
-              ))}
-            </select>
-          </label>
+          <form onSubmit={enviar}>
+            <label className="campo">
+              <span>Passo</span>
+              <select
+                name="tipo"
+                value={tipo}
+                onChange={(evento) => {
+                  setTipo(evento.target.value);
+                  /* Limpar o erro ao escolher outro passo é o que faz a recusa
+                   * sumir quando ela deixou de valer: o erro era daquele passo,
+                   * e a escolha mudou. */
+                  setErro("");
+                }}
+                required
+              >
+                <option value="">Escolha o passo</option>
+                {TIPOS_DE_PASSO.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          {/* O erro da regra fica embaixo do campo, que é onde o Vitor está olhando
-              depois de apertar registrar. */}
-          {erro ? (
-            <p className="mensagem-erro" role="alert">
-              {erro}
-            </p>
-          ) : null}
+            {/* O erro da regra fica embaixo do campo, que é onde o Vitor está olhando
+                depois de apertar registrar. */}
+            {erro ? (
+              <p className="mensagem-erro" role="alert">
+                {erro}
+              </p>
+            ) : null}
 
-          <label className="campo">
-            <span>Observação (opcional)</span>
-            <textarea
-              name="observacao"
-              value={observacao}
-              onChange={(evento) => setObservacao(evento.target.value)}
-              maxLength={500}
-              placeholder="O que foi feito neste passo."
-            />
-          </label>
+            <label className="campo-com-dica">
+              {/* O campo com dica usa uma tag própria porque o rótulo dele tem duas
+                  partes: o nome do campo e o contador de caracteres, que é
+                  --cor-texto-fraco e menor, porque ajuda e não é o pedido. */}
+              <span className="campo-rodape">
+                Observação (opcional)
+                <span className="campo-dica">{observacao.length}/500</span>
+              </span>
+              <textarea
+                name="observacao"
+                value={observacao}
+                onChange={(evento) => setObservacao(evento.target.value)}
+                maxLength={500}
+                placeholder="O que foi feito neste passo."
+              />
+            </label>
 
-          <button type="submit" className="botao" disabled={enviando}>
-            {enviando ? "Registrando..." : "Registrar passo"}
-          </button>
-        </form>
+            <button type="submit" className="botao botao-largo" disabled={enviando}>
+              {enviando ? "Registrando..." : "Registrar passo"}
+            </button>
+          </form>
+        </section>
       </div>
     </main>
   );
