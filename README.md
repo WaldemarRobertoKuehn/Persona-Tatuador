@@ -24,8 +24,9 @@ O back entrega as cinco coisas que a cartilha pede:
 | Registrar um passo numa tatuagem | `POST /tatuagens/{tatuagem_id}/passos` |
 
 A agenda abre com **oito tatuagens de demonstração** — cinco da Bruna e três da Camila — e os
-históricos delas estão coerentes com a regra. Esses dados ficam no fim de cada arquivo de
-`repositorios/`, e é só apagar o bloco `..._de_exemplo` se você quiser a API vazia.
+históricos delas estão coerentes com a regra. Esses dados estão no MySQL, e foram criados pelo
+`backend/esquema.sql`, no bloco `DADOS DE DEMONSTRAÇÃO` do fim do arquivo. Para a API nascer vazia,
+rode o `esquema.sql` sem aquele bloco.
 
 A agenda também mostra o nome da cliente, e não o `cliente_id`. O nome mora no back, em
 `repositorios/cliente.py`, e entra na resposta como `nome_da_cliente`. A cartilha lista o usuário
@@ -64,10 +65,16 @@ cópia nenhuma dentro do front.
 │   ├── .env         o que muda de máquina para máquina, fora do Git
 │   ├── .env.exemplo as mesmas chaves, sem os valores, dentro do Git
 │   ├── configuracao.py  o único arquivo que lê o .env
+│   ├── banco.py          o engine, a fábrica Sessao, a Base e o obter_sessao
+│   ├── esquema.sql       o desenho do banco, que o MySQL roda de uma vez
+│   ├── alembic.ini       a configuração do Alembic, sem a senha
+│   ├── migracoes/        o env.py, onde o Alembic acha os modelos e o banco
+│   │   └── versions/     uma migration por arquivo, e elas vão para o Git
+│   ├── modelos/          o desenho das tabelas, uma classe por entidade
 │   ├── main.py          cria o app, registra o CORS e liga os routers
 │   ├── rotas/           o que conhece HTTP
 │   ├── servicos/        as decisões e a regra da cartilha
-│   ├── repositorios/    a lista em memória
+│   ├── repositorios/    as funções que leem e gravam no banco
 │   │   └── cliente.py       o nome de quem é dona da tatuagem
 │   └── esquemas/        o formato de entrada e de saída
 ├── REGRAS.md        as regras do projeto para a IA
@@ -81,11 +88,39 @@ cópia nenhuma dentro do front.
 
 O back é o FastAPI, na pasta `backend/`. A documentação automática fica em `/docs`.
 
+O banco é o **MySQL**, e ele precisa existir antes do back subir. O desenho dele está em
+`backend/esquema.sql`, que cria as três tabelas e já entra com os dados de demonstração:
+
+```bash
+mysql -u root -p < esquema.sql
+```
+
+A senha é pedida pelo próprio `mysql`, não vai no comando.
+
+Depois, o ambiente do Python. São sete pacotes, e cada um tem um porquê:
+
 ```bash
 cd backend
 python -m venv venv
 venv\Scripts\activate
-pip install fastapi "uvicorn[standard]" python-dotenv
+pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy mysql-connector-python python-dotenv alembic
+```
+
+| pacote | por que |
+| --- | --- |
+| `fastapi` | `FastAPI`, `APIRouter`, `HTTPException`, `Query` e `Depends`, em `main.py` e `rotas/` |
+| `fastapi-cli` | o comando `fastapi dev`. Sem ele o `fastapi.exe` avisa que falta o `fastapi[standard]` |
+| `uvicorn[standard]` | o servidor que o `fastapi dev` sobe, e o `watchfiles`, que é o auto-reload |
+| `sqlalchemy` | `create_engine`, `sessionmaker`, `DeclarativeBase`, `Column`, `ForeignKey` e `relationship`, em `banco.py` e `modelos/` |
+| `mysql-connector-python` | o driver `mysql+mysqlconnector`, que é o que o `configuracao.py` monta |
+| `python-dotenv` | o `load_dotenv()` do `configuracao.py` |
+| `alembic` | o comando `alembic` e o `migracoes/env.py`, para as migrations |
+
+O `pydantic` não está na lista porque vem junto com o `fastapi`, e o `starlette` também.
+
+E aí o back sobe:
+
+```bash
 fastapi dev main.py
 ```
 
@@ -94,13 +129,49 @@ Com o back no ar, o esperado é:
 - o terminal mostrar `http://localhost:8000`;
 - abrir `http://localhost:8000/docs` e ver as cinco rotas da tabela acima;
 - `GET http://localhost:8000/tatuagens` responder com as **oito tatuagens de demonstração**, e
-  `?etapa=em sessões` devolver só três. A lista em memória morre quando o processo reinicia.
+  `?etapa=em sessões` devolver só três.
 
 A raiz `http://localhost:8000` responde **404**, e isso é de propósito: as REGRAS proíbem rota no
 `main.py`.
 
 O `.env` precisa ter `ORIGEM_FRONTEND` com o endereço exato do front, porque é dele que sai o CORS.
 Se o endereço mudar, mude no `.env` e reinicie o back.
+
+## Mudança no banco: migrations
+
+O banco é o MySQL, e o desenho dele mora nos modelos, em `backend/modelos/`. O problema do
+`Base.metadata.create_all` é que ele **só cria a tabela que ainda não existe**: tabela que já
+existe, ele não toca. Mudar uma coluna ou acrescentar uma chave estrangeira numa tabela que já tem
+dado de alguém não pode ser `DROP TABLE` nem `ALTER TABLE` escrito à mão, porque um funciona só na
+máquina de quem escreveu e o outro ninguém lembra.
+
+É para isso que o projeto usa o **Alembic**, que é o commit do banco: um arquivo `.py` por mudança,
+em `backend/migracoes/versions/`, que vai para o Git. O endereço do banco **não** fica no
+`alembic.ini`: ele vem do `.env`, pelo `configuracao.py`, e o `migracoes/env.py` entrega ao Alembic o
+mesmo `engine` que a API usa.
+
+Os quatro comandos, rodados no terminal de `backend/`, com o venv ativo:
+
+| comando | quando usar |
+| --- | --- |
+| `alembic revision --autogenerate -m "o que mudou"` | mudou um modelo: o Alembic compara os modelos com o banco e escreve a migration com a diferença |
+| `alembic upgrade head` | aplica no banco o que ainda falta |
+| `alembic current` | diz em que migration o banco está |
+| `alembic history` | lista as migrations, da mais nova para a mais velha |
+
+O passo é sempre o mesmo, e a ordem importa: mudo o modelo, gero a migration, **leio o arquivo
+gerado** e só então aplico com `alembic upgrade head`. O `--autogenerate` acerta tabela, coluna e
+chave; em troca de nome de coluna ele não é confiável, porque lê como apagar uma e criar outra.
+
+**O banco atual ainda não tem migration.** As duas chaves estrangeiras (`fk_tatuagens_cliente` e
+`fk_passos_tatuagem`) já estão no MySQL, e `backend/esquema.sql` é o desenho que as criou. A pasta
+`migracoes/versions/` começa vazia de propósito: o banco foi montado direto do desenho, sem passar
+por migration, e a primeira migration vai nascer da **primeira mudança de verdade** que vier. Como o
+Alembic compara os modelos com o banco que está rodando, e não com a pasta de migrations, essa
+primeira migration sai com só a diferença do dia, sem nada do que já estava lá.
+
+Conferindo o estado sem escrever nada: `alembic check` responde `No new upgrade operations detected`
+quando o banco bate com os modelos.
 
 ## Como rodar o front
 
@@ -181,7 +252,10 @@ As duas paletas e os contrastes de cada uma estão no `docs/styleguide/styleguid
 ## Regras de ouro deste repositório
 
 - Rota chama serviço, serviço chama repositório. Nunca o contrário.
-- Os dados ficam em lista na memória, dentro do repositório. Sem banco, sem ORM.
+- Os dados ficam no MySQL, e o desenho do banco mora nos modelos, em `modelos/`. A sessão nasce na
+  rota, pelo `Depends(obter_sessao)`, e passa de mão em mão.
+- Mudança numa tabela que já existe é migration, em `migracoes/versions/`, versionada no Git. Nunca
+  `DROP TABLE` e nunca `ALTER TABLE` escrito à mão.
 - A regra da cartilha mora no serviço. Quando ela recusa, o serviço devolve `None` ou o motivo, e
   é a rota que escolhe o status.
 - `async def` não entra. Rota é `def` normal.

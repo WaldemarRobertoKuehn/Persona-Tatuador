@@ -12,6 +12,12 @@ import os
 # do processo. Sem essa chamada, o os.getenv lá embaixo não encontraria nada.
 from dotenv import load_dotenv
 
+# URL é a classe do SQLAlchemy que representa o endereço do banco já em partes:
+# driver, usuário, senha, host, porta e nome. Montar o endereço com URL.create, em
+# vez de escrever o texto na mão, é o que resolve o problema da senha com caractere
+# estranho: o SQLAlchemy escapa o valor na hora de montar o texto, e não a gente.
+from sqlalchemy.engine import URL
+
 load_dotenv()
 
 
@@ -25,25 +31,32 @@ def endereco_do_front() -> str:
     return os.getenv("ORIGEM_FRONTEND", "http://localhost:5173")
 
 
-def endereco_do_banco() -> dict:
-    """Devolve os dados de conexão do MySQL, lidos do .env.
+def endereco_do_banco() -> URL:
+    """Devolve o endereço do MySQL como URL, montado a partir do .env.
 
-    A chave da senha é BANCO_SENHA, e o valor padrão é a string vazia. O valor
-    padrão existe pelo mesmo motivo do da origem do front: o back sobe mesmo numa
-    máquina sem .env. Quem manda é o valor do .env, e num projeto de verdade o
-    .env é o que tem a senha.
+    O endereço é devolvido em partes e não como um texto pronto, e o motivo é a
+    senha: o .env é um arquivo texto, e a senha pode ter @, : ou /, que são os
+    caracteres que separam as partes do endereço. Escrevendo o endereço inteiro num
+    só texto, o SQLAlchemy não teria como saber onde acaba a senha, e a conexão
+    falharia. Com URL.create, cada parte entra no seu lugar, com o nome do
+    argumento, e quem monta o texto é o SQLAlchemy.
 
-    A porta é lida com int(), e não como texto. O pymysql espera a porta como
-    número, e o os.getenv devolve sempre texto: sem o int() a conexão falharia.
+    drivername é o par driver+dialeto, escrito no formato do SQLAlchemy: o
+    "mysql+" é o nome do dialeto e o que vem depois é o driver que fala com o
+    MySQL, que aqui é o mysql-connector-python. A regra do projeto é esse driver, e
+    não o pymysql.
 
-    Este arquivo devolve um dicionário em vez de vários argumentos soltos porque
-    são cinco valores que sempre viajam juntos, e um dicionário não permite
-    trocar a ordem deles na chamada.
+    A porta é lida com int(), e não como texto, porque o os.getenv devolve sempre
+    texto e o número da porta é número.
+
+    Os valores padrão seguem o mesmo motivo do da origem do front: o back sobe
+    mesmo numa máquina sem .env. Quem manda é o valor do .env.
     """
-    return {
-        "host": os.getenv("BANCO_HOST", "localhost"),
-        "porta": int(os.getenv("BANCO_PORTA", "3306")),
-        "banco": os.getenv("BANCO_NOME", "traco_fino"),
-        "usuario": os.getenv("BANCO_USUARIO", "root"),
-        "senha": os.getenv("BANCO_SENHA", ""),
-    }
+    return URL.create(
+        drivername="mysql+mysqlconnector",
+        username=os.getenv("BANCO_USUARIO", "root"),
+        password=os.getenv("BANCO_SENHA", ""),
+        host=os.getenv("BANCO_HOST", "localhost"),
+        port=int(os.getenv("BANCO_PORTA", "3306")),
+        database=os.getenv("BANCO_NOME", "traco_fino"),
+    )

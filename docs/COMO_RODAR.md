@@ -7,10 +7,39 @@ fechar a aba.
 
 ## O que precisa existir na máquina
 
+- **MySQL**, para o banco. Precisa estar no ar e o banco `traco_fino` precisa existir.
 - **Python**, para o back. O `venv` já está criado em `backend/venv`, então não é
   preciso instalar nada: é só ativar.
 - **Node.js**, para o front. O `node_modules` já está em `frontend/`, então
   `npm install` só é preciso se você apagar essa pasta.
+
+### Se o banco não existir ainda
+
+O back não sobe sem o MySQL, porque é nele que os dados moram. O desenho do banco
+está em `backend/esquema.sql`, que cria as três tabelas e já entra com os dados de
+demonstração:
+
+```powershell
+cd backend
+mysql -u root -p < esquema.sql
+```
+
+A senha é pedida pelo próprio `mysql`, não vai no comando.
+
+### Se o `venv` for apagado
+
+São sete pacotes, e o README explica o porquê de cada um:
+
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\activate
+pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy mysql-connector-python python-dotenv alembic
+```
+
+O `fastapi-cli` é o que dá o comando `fastapi dev`: sem ele, o `fastapi.exe`
+responde que falta o `fastapi[standard]` e não sobe nada. O `alembic` é o que dá o
+comando `alembic`, para escrever e aplicar migration.
 
 ## Abrir o back
 
@@ -81,14 +110,41 @@ Sem resultado é sinal de que os dois estão parados. Com resultado, a coluna
 
 ## O que acontece com os dados quando o back fecha
 
-A lista de tatuagens fica **na memória do processo**, dentro dos arquivos de
-`repositorios/`. Ela não está em disco: quando o uvicorn para, a lista morre com
-ele, e na volta seguinte o back abre com as oito tatuagens de demonstração de
-novo. Isso é o que a REGRAS pede, e é o motivo de não existir banco de dados no
-projeto.
+**Nada: eles continuam onde estão.** Os dados das tatuagens, das clientes e dos
+passos estão no MySQL, e fechar o back não toca em nada disso. É a diferença entre
+guardar em lista na memória e guardar em banco: a lista morre com o processo, a
+tabela não.
 
-Se você quiser a API vazia para testar o pedido de tatuagem do zero, apague o
-bloco `..._de_exemplo` no fim de cada arquivo de `repositorios/`.
+Consequência prática: o que você grava pela API continua lá depois de reiniciar o
+back, e continua lá depois de trocar de máquina. Para desfazer, apaga o banco e
+roda o `esquema.sql` de novo:
+
+```powershell
+mysql -u root -p -e "DROP DATABASE traco_fino"
+cd backend
+mysql -u root -p < esquema.sql
+```
+
+Isso apaga os dados de demonstração **e** tudo que você tenha criado pela API, e
+só é seguro porque é um banco de estudo.
+
+Se você quer a API vazia, sem apagar nada: `DELETE FROM passos; DELETE FROM
+tatuagens; DELETE FROM clientes;`, nessa ordem, porque o passo aponta para a
+tatuagem e a tatuagem aponta para a cliente.
+
+## Mudança no banco depois que ele já existe
+
+Não se mexe no banco com `ALTER TABLE` escrito à mão. O desenho mora nos modelos,
+em `backend/modelos/`, e a mudança vira uma migration, que é um arquivo `.py` no
+Git. Do terminal de `backend/`, com o venv ativo:
+
+```powershell
+alembic revision --autogenerate -m "o que mudou"   # escreve a migration
+alembic upgrade head                              # aplica no banco
+```
+
+Sempre na mesma ordem, e **lendo o arquivo gerado antes de aplicar**. O README
+explica o porquê de cada comando.
 
 ## Resumo em uma tela
 

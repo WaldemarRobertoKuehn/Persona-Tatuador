@@ -1,24 +1,14 @@
 # Regras do projeto para a IA
 
-Atualizado até a **aula 7** da UC4. Salve na raiz do repositório da cartilha com o nome `REGRAS.md`,
+Atualizado até a **aula 6** da UC4. Salve na raiz do repositório da cartilha com o nome `REGRAS.md`,
 por cima da versão anterior.
-
-## A cartilha sorteada
-
-**Cartilha 4 · Traço Fino, estúdio de tatuagem.**
-
-Quem toca o negócio: o estúdio Traço Fino, pequeno, com dois tatuadores, e o dono é o **Vitor**,
-que também tatua. A regra é que a tatuagem nasce **pedida** e só anda por **desenho aprovado**,
-**sessão** e **retoque**, nessa ordem, mudando de etapa a cada passo aceito. A cliente do sistema é
-a **Bruna**.
 
 ## O projeto
 
 - Repositório só para a cartilha sorteada na aula 5. É o meu projeto até o fim do curso.
-- Na raiz: `docs/`, `frontend/`, `backend/` e um `README.md` que diz como rodar o front e o back,
-  como montar o banco do zero, quais rotas a API tem e como a regra da cartilha recusa.
+- Na raiz: `docs/`, `frontend/`, `backend/` e um `README.md` que diz como rodar o front e o back.
 - `docs/` guarda o que não é código:
-  - `CARTILHA.md`: a cartilha sorteada, sem alteração. É a fonte de que o sistema precisa fazer.
+  - `CARTILHA.md`: a cartilha sorteada, sem alteração. É a fonte do que o sistema precisa fazer.
   - `BRIEFING.md`: o briefing, escrito por mim.
   - `marca/` e `styleguide/`, ou o link do Figma no `README.md`.
   - O DER das três entidades da cartilha, com o tipo e a restrição de cada coluna.
@@ -29,15 +19,11 @@ a **Bruna**.
   - `configuracao.py`: o único arquivo que lê o `.env`, com `load_dotenv()` e `os.getenv`.
   - `banco.py`: o `engine`, a fábrica `Sessao`, a classe `Base` e a função `obter_sessao`. Nada mais.
   - `criar_tabelas.py`: importa os três modelos e roda `Base.metadata.create_all(engine)`. Rodado à mão
-    no terminal, com `python criar_tabelas.py`, e não pelo `main.py`. Serve para o banco vazio.
-  - `alembic.ini` e `migracoes/`: a configuração do Alembic, o `env.py` e as migrations em
-    `migracoes/versions/`. Toda mudança numa tabela que já existe é uma migration.
-  - `main.py`: cria o `app`, registra o CORS lendo a configuração, liga os routers
-    com `include_router` e pode ter os `exception_handler` das exceções da regra. Nenhuma rota nele.
+    no terminal, com `python criar_tabelas.py`, e não pelo `main.py`.
+  - `main.py`: cria o `app`, registra o CORS lendo a configuração e liga os routers
+    com `include_router`. Nenhuma rota nele.
   - `rotas/<recurso>.py`, no plural: o `APIRouter`, as rotas do recurso e nada mais.
-  - `servicos/<recurso>.py`, no singular: as decisões, as contas e a regra da cartilha, numa função
-    com o nome da regra.
-  - `servicos/excecoes.py`: uma classe por motivo de recusa da regra, herdando de `Exception`.
+  - `servicos/<recurso>.py`, no singular: as decisões, as contas e a regra da cartilha.
   - `repositorios/<recurso>.py`, no singular: as funções que leem e gravam no banco. Recebem a sessão
     como primeiro parâmetro.
   - `esquemas/<recurso>.py`, no singular: os esquemas Pydantic de entrada e de saída.
@@ -50,9 +36,6 @@ a **Bruna**.
 - **Esquema** é a classe Pydantic, em `esquemas/`. **Modelo** é a classe SQLAlchemy, em `modelos/`.
   Não troque uma palavra pela outra.
 - Código, nomes de variáveis, comentários e respostas sempre em português do Brasil.
-- O serviço recusa com `raise` de uma exceção de `servicos/excecoes.py`, com uma frase para a tela.
-  Ele não importa `HTTPException` e não escreve número de status. Quem escolhe o status é a rota,
-  com `try`/`except`, ou o `main.py`, com `exception_handler`.
 - Cartilha: escreva aqui o número e o nome, e em uma linha a pessoa, quem toca o negócio e a regra.
 
 ## O que já foi visto, e pode usar
@@ -88,25 +71,16 @@ a **Bruna**.
     Paginação com `pagina: int = Query(default=1, ge=1)` na rota.
   - Transação: a regra que muda mais de uma tabela grava tudo num commit só. Erro antes do commit
     desfaz tudo, porque fechar a sessão sem commit é `rollback`.
-- Alembic: `alembic init migracoes`, o `env.py` com `target_metadata = Base.metadata` e
-  `connectable = engine`, `ForeignKey(..., name="...")` para a chave entrar numa tabela que já existe,
-  `alembic revision --autogenerate -m "..."`, `alembic upgrade head`, `alembic current`,
-  `alembic history` e, para o banco do zero, `python criar_tabelas.py` seguido de `alembic stamp head`.
 - O repositório devolve objeto do modelo, e o serviço lê com ponto: `registro.campo`, não `registro["campo"]`.
-- `try`/`except ... as erro`, `raise` e exceção própria com `class Motivo(Exception): pass`.
-- Exceção de domínio traduzida para status: `except Motivo as erro:` seguido de
-  `raise HTTPException(status_code=..., detail=str(erro))` na rota, ou
-  `@app.exception_handler(Motivo)` com `def` e `JSONResponse` no `main.py`.
-- Documentação no `/docs`: `summary=` e `responses={status: {"description": ...}}` no decorador,
-  docstring na função da rota, `Field(description=..., examples=[...])` no esquema.
 
 ## O que ainda não foi visto, e não deve aparecer
 
-- `finally`, `else` no `try` e `except Exception` genérico. Pegue só a exceção da regra, pelo nome.
+- `try`/`except`. O rollback acontece porque a sessão fecha sem commit, e isso basta por enquanto.
 - Função de repositório que abre a própria sessão com `Sessao()`. Toda sessão vem do `Depends`.
 - `back_populates`, `backref`, `lazy=`, `joinedload`, `selectinload`, `cascade`. O `relationship` simples basta.
-- Migration escrita à mão, `op.execute` com SQL, `bulk_insert`, `alembic downgrade` em banco que tem
-  dado de verdade. Se o autogenerate não gerar o que você esperava, pare e me avise. Nunca apague tabela.
+- Migrations e Alembic. As tabelas nascem do `criar_tabelas.py`. Se uma mudança precisar alterar uma
+  tabela que já existe, como uma chave estrangeira nova na principal, **não apague a tabela e me avise**:
+  isso é o assunto da próxima aula.
 - SQL escrito à mão no código Python, `mysql.connector` direto, `text()` do SQLAlchemy.
 - SQLite ou qualquer banco que não seja o MySQL.
 - `orm_mode` e `class Config` do Pydantic 1. Se o esquema de saída precisar ler de objeto, o FastAPI
@@ -115,8 +89,8 @@ a **Bruna**.
 - `Mapped[...]` e `mapped_column`. Use `Column`, que é o que o curso mostrou. Se você preferir o outro
   estilo, avise antes e explique a diferença.
 - Login, senha, hash, JWT, token, rota protegida. A tela da pessoa informa quem ela é na própria requisição.
-- Hierarquia de exceções, exceção com `__init__` próprio ou com atributos. A classe vazia basta.
-- `HTTPException` dentro do serviço ou do repositório.
+- Exceção criada por mim, do tipo `class LimiteExcedido(Exception)`. Quando a regra da cartilha recusa,
+  o serviço devolve algo que a rota consiga testar com `if`, e a rota escolhe o status.
 - Regra de negócio que não está na cartilha.
 - `allow_origins=["*"]`. Isso é erro, e foi apresentado como erro em aula.
 - `pydantic-settings`, `BaseSettings`, classe de configuração.
@@ -142,7 +116,4 @@ a **Bruna**.
 - Antes de escrever uma função, diga em qual camada ela entra e por quê.
 - No DER e no modelo, me pergunte o tamanho e a restrição de cada coluna antes de decidir por mim.
   Essas escolhas são avaliadas como minhas.
-- Antes de escolher o status de uma recusa, me diga as opções e por que uma serve melhor. A escolha é minha.
-- Na documentação, marque com `?` tudo que você deduziu sem ver no código, e não liste status que a rota
-  não devolve.
 - Justifique cada decisão em uma linha. Eu preciso conseguir defender esse código na apresentação.
