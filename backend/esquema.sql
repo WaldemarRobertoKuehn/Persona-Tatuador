@@ -68,8 +68,11 @@ USE traco_fino;
 --  nome, que é o mesmo cuidado que o esquema de saída do back tem ao exigir
 --  string.
 CREATE TABLE IF NOT EXISTS clientes (
-    id   INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    nome       VARCHAR(100) NOT NULL,
+    email      VARCHAR(254) NULL,
+    senha_hash VARCHAR(255) NULL,
+    UNIQUE KEY uq_clientes_email (email)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;

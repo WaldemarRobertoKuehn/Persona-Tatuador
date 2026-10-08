@@ -34,6 +34,41 @@ O que mudou quando os dados foram para o banco
 import banco
 
 
+def buscar_por_email(email: str) -> dict | None:
+    """Busca uma conta pelo email, sem devolver dados além dos necessários."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, nome, email, senha_hash FROM clientes WHERE email = %s",
+            (email,),
+        )
+        return cursor.fetchone()
+
+
+def criar_usuario(nome: str, email: str, senha_hash: str) -> dict:
+    """Cria a conta e devolve seus dados públicos e o hash para uso interno."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO clientes (nome, email, senha_hash) VALUES (%s, %s, %s)",
+            (nome, email, senha_hash),
+        )
+        usuario_id = cursor.lastrowid
+        cursor.execute(
+            "SELECT id, nome, email, senha_hash FROM clientes WHERE id = %s",
+            (usuario_id,),
+        )
+        return cursor.fetchone()
+
+
+def buscar_usuario_por_id(usuario_id: int) -> dict | None:
+    """Busca conta por id, incluindo o hash somente para validação interna."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, nome, email, senha_hash FROM clientes WHERE id = %s",
+            (usuario_id,),
+        )
+        return cursor.fetchone()
+
+
 def buscar_cliente(cliente_id: int) -> dict | None:
     """Devolve a cliente de um id, ou None se esse id não existir.
 

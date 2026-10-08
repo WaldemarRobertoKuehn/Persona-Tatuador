@@ -55,7 +55,10 @@ class Base(DeclarativeBase):
 # O engine nasce quando este arquivo é importado, e não dentro de função, porque ele
 # não muda de requisição para requisição: mudar isso abriria um pool novo a cada
 # pedido. O endereço vem do configuracao.py, que é quem leu o .env.
-engine = create_engine(configuracao.endereco_do_banco())
+engine = create_engine(
+    configuracao.endereco_do_banco(),
+    connect_args={"connection_timeout": 5},
+)
 
 
 @contextmanager
@@ -68,6 +71,7 @@ def cursor():
         user=endereco.username,
         password=endereco.password,
         database=endereco.database,
+        connection_timeout=5,
     )
     try:
         with conexao.cursor(dictionary=True) as cursor_banco:

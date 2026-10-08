@@ -60,3 +60,19 @@ def endereco_do_banco() -> URL:
         port=int(os.getenv("BANCO_PORTA", "3306")),
         database=os.getenv("BANCO_NOME", "traco_fino"),
     )
+
+
+def segredo_token() -> str:
+    """Devolve o segredo local usado para assinar os tokens de acesso."""
+    segredo = os.getenv("JWT_SEGREDO", "")
+    if len(segredo) < 32:
+        raise ValueError("Configure JWT_SEGREDO com ao menos 32 caracteres no .env.")
+    return segredo
+
+
+def validade_token_segundos() -> int:
+    """Devolve a validade do token, em segundos."""
+    minutos = int(os.getenv("JWT_MINUTOS", "60"))
+    if minutos < 1:
+        raise ValueError("JWT_MINUTOS precisa ser maior que zero.")
+    return minutos * 60

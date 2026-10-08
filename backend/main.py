@@ -15,6 +15,7 @@ import configuracao
 # Os dois routers são importados pelo módulo. O main não sabe o que tem dentro de
 # nenhum dos dois: ele só os liga no app.
 from rotas import passos as rotas_passos
+from rotas import autenticacao as rotas_autenticacao
 from rotas import tatuagens as rotas_tatuagens
 from rotas import usuarios as rotas_usuarios
 
@@ -43,3 +44,4 @@ app.add_middleware(
 app.include_router(rotas_tatuagens.roteador_tatuagens)
 app.include_router(rotas_passos.roteador_passos)
 app.include_router(rotas_usuarios.roteador_usuarios)
+app.include_router(rotas_autenticacao.roteador_autenticacao)
