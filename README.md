@@ -103,7 +103,7 @@ Depois, o ambiente do Python. São sete pacotes, e cada um tem um porquê:
 cd backend
 python -m venv venv
 venv\Scripts\activate
-pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy mysql-connector-python python-dotenv alembic
+pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy pymysql python-dotenv alembic
 ```
 
 | pacote | por que |
@@ -112,7 +112,7 @@ pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy mysql-connector-p
 | `fastapi-cli` | o comando `fastapi dev`. Sem ele o `fastapi.exe` avisa que falta o `fastapi[standard]` |
 | `uvicorn[standard]` | o servidor que o `fastapi dev` sobe, e o `watchfiles`, que é o auto-reload |
 | `sqlalchemy` | `create_engine`, `sessionmaker`, `DeclarativeBase`, `Column`, `ForeignKey` e `relationship`, em `banco.py` e `modelos/` |
-| `mysql-connector-python` | o driver `mysql+mysqlconnector`, que é o que o `configuracao.py` monta |
+| `pymysql` | o driver `mysql+pymysql`, que é o que o `configuracao.py` monta |
 | `python-dotenv` | o `load_dotenv()` do `configuracao.py` |
 | `alembic` | o comando `alembic` e o `migracoes/env.py`, para as migrations |
 

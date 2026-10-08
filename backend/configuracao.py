@@ -43,8 +43,7 @@ def endereco_do_banco() -> URL:
 
     drivername é o par driver+dialeto, escrito no formato do SQLAlchemy: o
     "mysql+" é o nome do dialeto e o que vem depois é o driver que fala com o
-    MySQL, que aqui é o mysql-connector-python. A regra do projeto é esse driver, e
-    não o pymysql.
+    MySQL. O driver PyMySQL é usado tanto pelos repositórios como pelo SQLAlchemy.
 
     A porta é lida com int(), e não como texto, porque o os.getenv devolve sempre
     texto e o número da porta é número.
@@ -53,7 +52,7 @@ def endereco_do_banco() -> URL:
     mesmo numa máquina sem .env. Quem manda é o valor do .env.
     """
     return URL.create(
-        drivername="mysql+mysqlconnector",
+        drivername="mysql+pymysql",
         username=os.getenv("BANCO_USUARIO", "root"),
         password=os.getenv("BANCO_SENHA", ""),
         host=os.getenv("BANCO_HOST", "localhost"),

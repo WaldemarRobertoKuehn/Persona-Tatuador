@@ -34,7 +34,7 @@ São sete pacotes, e o README explica o porquê de cada um:
 cd backend
 python -m venv venv
 .\venv\Scripts\activate
-pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy mysql-connector-python python-dotenv alembic
+pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy pymysql python-dotenv alembic
 ```
 
 O `fastapi-cli` é o que dá o comando `fastapi dev`: sem ele, o `fastapi.exe`
