@@ -16,6 +16,7 @@ import configuracao
 # nenhum dos dois: ele só os liga no app.
 from rotas import passos as rotas_passos
 from rotas import tatuagens as rotas_tatuagens
+from rotas import usuarios as rotas_usuarios
 
 # O FastAPI é o objeto que carrega a aplicação e onde as rotas vão ser registradas.
 # Ele nasce vazio, e o include_router é quem vai preencher.
@@ -41,3 +42,4 @@ app.add_middleware(
 # main continua sem nenhuma rota em si: ele só amarra as peças.
 app.include_router(rotas_tatuagens.roteador_tatuagens)
 app.include_router(rotas_passos.roteador_passos)
+app.include_router(rotas_usuarios.roteador_usuarios)

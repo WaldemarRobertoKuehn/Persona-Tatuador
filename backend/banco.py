@@ -25,10 +25,13 @@ Por que a sessão nasce aqui e não dentro do repositório
     decide a transação é a rota, e o motivo está em criar_tabelas.py e no serviço.
 """
 
+from contextlib import contextmanager
+
 # create_engine é o que cria o engine: o objeto que sabe falar com o banco e que
 # guarda o pool de conexões. O pool é o conjunto de conexões que o SQLAlchemy abre
 # e reaproveita, para não abrir uma conexão nova a cada requisição.
 from sqlalchemy import create_engine
+import mysql.connector
 
 # sessionmaker é a fábrica de sessões: chamar Sessao() devolve uma sessão nova, e é
 # por isso que ela se chama Sessao, com S maiúsculo, como a regra do projeto pede.
@@ -53,6 +56,28 @@ class Base(DeclarativeBase):
 # não muda de requisição para requisição: mudar isso abriria um pool novo a cada
 # pedido. O endereço vem do configuracao.py, que é quem leu o .env.
 engine = create_engine(configuracao.endereco_do_banco())
+
+
+@contextmanager
+def cursor():
+    """Abre um cursor MySQL em formato de dicionário para os repositórios."""
+    endereco = configuracao.endereco_do_banco()
+    conexao = mysql.connector.connect(
+        host=endereco.host,
+        port=endereco.port,
+        user=endereco.username,
+        password=endereco.password,
+        database=endereco.database,
+    )
+    try:
+        with conexao.cursor(dictionary=True) as cursor_banco:
+            yield cursor_banco
+        conexao.commit()
+    except Exception:
+        conexao.rollback()
+        raise
+    finally:
+        conexao.close()
 
 
 # Sessao é a fábrica, e não a sessão: o nome Sessao() na rota entrega uma sessão
