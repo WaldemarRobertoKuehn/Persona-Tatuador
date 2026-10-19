@@ -28,45 +28,11 @@ O que mudou quando os dados foram para o banco
     e é por isso que nem o serviço nem a rota precisaram ser mexidos.
 """
 
-# A lista de clientes some daqui: no banco ela é a tabela clientes do esquema.sql.
+# A lista de clientes some daqui: no banco ela é a tabela clientes, desenhada no
+# modelo de backend/modelos/cliente.py.
 # Este import é o mesmo que o main.py faz, por módulo e com `as`, e o apelido deixa
 # claro que o que está do outro lado é o banco, e não uma lista na memória.
 import banco
-
-
-def buscar_por_email(email: str) -> dict | None:
-    """Busca uma conta pelo email, sem devolver dados além dos necessários."""
-    with banco.cursor() as cursor:
-        cursor.execute(
-            "SELECT id, nome, email, senha_hash FROM clientes WHERE email = %s",
-            (email,),
-        )
-        return cursor.fetchone()
-
-
-def criar_usuario(nome: str, email: str, senha_hash: str) -> dict:
-    """Cria a conta e devolve seus dados públicos e o hash para uso interno."""
-    with banco.cursor() as cursor:
-        cursor.execute(
-            "INSERT INTO clientes (nome, email, senha_hash) VALUES (%s, %s, %s)",
-            (nome, email, senha_hash),
-        )
-        usuario_id = cursor.lastrowid
-        cursor.execute(
-            "SELECT id, nome, email, senha_hash FROM clientes WHERE id = %s",
-            (usuario_id,),
-        )
-        return cursor.fetchone()
-
-
-def buscar_usuario_por_id(usuario_id: int) -> dict | None:
-    """Busca conta por id, incluindo o hash somente para validação interna."""
-    with banco.cursor() as cursor:
-        cursor.execute(
-            "SELECT id, nome, email, senha_hash FROM clientes WHERE id = %s",
-            (usuario_id,),
-        )
-        return cursor.fetchone()
 
 
 def buscar_cliente(cliente_id: int) -> dict | None:

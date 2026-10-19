@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter, HTTPException
 
-import repositorios.cliente as repositorio_clientes
 import servicos.usuario as servico_usuarios
 from esquemas.usuario import UsuarioCadastro, UsuarioSaida
 from rotas.autenticacao import obter_usuario_atual
@@ -30,7 +29,7 @@ def buscar_usuario_atual(usuario: dict = Depends(obter_usuario_atual)) -> dict:
 @roteador_usuarios.get("/{usuario_id}")
 def buscar_usuario(usuario_id: int) -> dict:
     """Busca um usuário pelo identificador ou responde 404 se não existir."""
-    usuario = repositorio_clientes.buscar_cliente(usuario_id)
+    usuario = servico_usuarios.buscar_por_id(usuario_id)
 
     if usuario is None:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")

@@ -37,8 +37,9 @@ class Passo(Base):
     # escrito para o banco não deixar o dado quebrado. Este CASCADE é o do SQL, na
     # chave estrangeira, e não o cascade do ORM, que é outra coisa e não é usado.
     #
-    # O name="fk_passos_tatuagem" dá o nome da chave no MySQL, que é o mesmo que o
-    # esquema.sql já deu à constraint. Sem o name, o Alembic não sabe desfazer a chave.
+    # O name="fk_passos_tatuagem" dá o nome da chave no MySQL, e os dois lados do
+    # projeto leem o mesmo desenho: criar_tabelas.py e o Alembic. Sem o name, o
+    # Alembic não sabe desfazer a chave.
     tatuagem_id = Column(
         Integer,
         ForeignKey("tatuagens.id", name="fk_passos_tatuagem", ondelete="CASCADE"),

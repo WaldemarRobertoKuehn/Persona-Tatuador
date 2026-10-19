@@ -40,8 +40,8 @@ class Tatuagem(Base):
     #
     # O name="fk_tatuagens_cliente" é o nome da chave no MySQL, e ele não é enfeite:
     # sem ele o Alembic não sabe o nome da restrição que criou, e avisa que não
-    # consegue desfazer a chave numa migration. É o mesmo nome que o esquema.sql já
-    # deu à constraint, e o mesmo que a migration usa no op.create_foreign_key.
+    # consegue desfazer a chave numa migration. É o mesmo nome que o criar_tabelas
+    # grava no banco, porque os dois leem o desenho daqui do modelo.
     cliente_id = Column(
         Integer,
         ForeignKey("clientes.id", name="fk_tatuagens_cliente"),
