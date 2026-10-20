@@ -54,7 +54,7 @@ cópia nenhuma dentro do front.
 │   │   ├── estilos/      os tokens do styleguide e o CSS das telas
 │   │   ├── fontes/       a Playfair Display, com a licença e a procedência
 │   │   ├── imagens/      as fotos do ateliê, da vitrine e dos dois perfis
-│   │   ├── telas/        as quatro telas da cartilha e a escolha de perfil
+│   │   ├── telas/        as quatro telas da cartilha e a tela de login
 │   │   ├── api.js        o único lugar do front que fala com o back
 │   │   ├── datas.js      ISO do back virando dd/mm/aaaa na tela
 │   │   ├── perfis.js     os perfis fixos e a ordem das telas de cada um
@@ -185,8 +185,9 @@ npm install
 npm run dev
 ```
 
-O esperado é o Vite abrir `http://localhost:5173` e a tela de escolha de perfil aparecer, com a
-Bruna e o Vitor. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
+O esperado é o Vite abrir `http://localhost:5173` e a tela de login aparecer. Entre com uma conta
+existente: os IDs 1 e 2 são associados aos perfis de cliente e tatuador. Esse endereço tem que ser
+igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
 navegador bloqueia a chamada por CORS.
 
 As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as cinco
@@ -260,7 +261,9 @@ As duas paletas e os contrastes de cada uma estão no `docs/styleguide/styleguid
   é a rota que escolhe o status.
 - `async def` não entra. Rota é `def` normal.
 - CORS liberado só para o endereço do front, lido do `.env`. Nunca `["*"]`.
-- Perfil é escolhido numa lista, sem senha. A tela da pessoa diz quem ela é na requisição.
+- O login usa token Bearer, armazenado na sessão da aba; os IDs 1 e 2 definem os perfis atuais.
+- O backend ainda não exige autenticação nas rotas de tatuagens e passos. O token enviado pelo
+  front não substitui essa validação no servidor.
 - Cor mora em token, em `estilos/tokens.css`. Nenhuma tela escreve um código de cor, e nenhum
   hexadecimal sobrou no CSS: até o branco do botão principal é `--cor-sobre-acento`.
 - A marca não é duplicada no front, e a fonte não vem de link. As duas coisas vêm do repositório.

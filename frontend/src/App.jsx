@@ -1,6 +1,6 @@
-/* O App: quem está usando, em que tela, e de qual tatuagem.
+/* O App: quem está autenticado, em que tela, e de qual tatuagem.
  *
- * O App guarda três coisas, e só três: o perfil escolhido, a tela atual e a
+ * O App guarda três coisas, e só três: o perfil autenticado, a tela atual e a
  * tatuagem aberta na ficha. Não há biblioteca de rotas no projeto, porque a
  * cartilha tem quatro telas e elas são uma coisa só: o estado uma da outra. Um
  * useState para a tela resolve, e evita trazer um pacote novo para um problema de
@@ -19,44 +19,119 @@
  * botão de tema em lugares diferentes.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { TELAS, TEXTOS_DAS_TELAS } from "./perfis";
+import { PERFIS, TELAS, TEXTOS_DAS_TELAS } from "./perfis";
 import AlternadorTema from "./componentes/AlternadorTema";
 import Logo from "./componentes/Logo";
 import { ESCURO, useTema } from "./tema";
+import {
+  autenticar,
+  buscarUsuarioAtual,
+  limparToken,
+  milissegundosAteExpirar,
+  tokenSalvo,
+} from "./api";
 import Agenda from "./telas/Agenda";
-import EscolhaPerfil from "./telas/EscolhaPerfil";
 import Ficha from "./telas/Ficha";
+import Login from "./telas/Login";
 import MinhasTatuagens from "./telas/MinhasTatuagens";
 import PedirTatuagem from "./telas/PedirTatuagem";
 
 export default function App() {
-  /* null significa que ninguém escolheu perfil ainda, e a tela de escolha
-   * aparece. Guardar o perfil inteiro, e não só o id, é para o nome, o tipo e o
-   * retrato ficarem disponíveis sem voltar na lista. */
+  /* O perfil só passa a existir depois de o back validar a conta e seu token. */
   const [perfil, setPerfil] = useState(null);
   const [tela, setTela] = useState(null);
   const [tatuagemAberta, setTatuagemAberta] = useState(null);
+  const [estadoAutenticacao, setEstadoAutenticacao] = useState(() =>
+    tokenSalvo() ? "verificando" : "desconectado",
+  );
+  const [entrando, setEntrando] = useState(false);
+  const [erroAutenticacao, setErroAutenticacao] = useState("");
 
   /* O tema é do App e não de cada tela, porque o botão fica na barra, que é
    * compartilhada. Se cada tela guardasse o seu, o botão de uma tela trocaria
    * só aquela tela, e a pessoa teria um site com dois temas ao mesmo tempo. */
   const { tema, trocarTema } = useTema();
 
-  /* Escolher o perfil também abre a primeira tela dele. Sem isso, a Bruna
-   * cairia na tela do Vitor, que não é dela. */
-  function escolherPerfil(perfilEscolhido) {
-    setPerfil(perfilEscolhido);
-    setTela(TELAS[perfilEscolhido.tipo][0]);
+  function ativarConta(usuario) {
+    const perfilBase = PERFIS.find(
+      (perfilExistente) => perfilExistente.id === usuario.id,
+    );
+
+    if (!perfilBase) {
+      throw new Error(
+        "Esta conta ainda não está associada a um perfil do sistema. Os perfis atuais usam os IDs 1 (cliente) e 2 (tatuador).",
+      );
+    }
+
+    const perfilAutenticado = { ...perfilBase, nome: usuario.nome };
+    setPerfil(perfilAutenticado);
+    setTela(TELAS[perfilAutenticado.tipo][0]);
+    setTatuagemAberta(null);
+    setErroAutenticacao("");
+    setEstadoAutenticacao("autenticado");
   }
 
-  /* Sair do perfil devolve para a lista e limpa a tela e a tatuagem aberta, para o
-   * próximo perfil começar do começo dele. */
-  function sairDoPerfil() {
+  useEffect(() => {
+    const token = tokenSalvo();
+
+    if (!token) {
+      return;
+    }
+
+    buscarUsuarioAtual(token)
+      .then(ativarConta)
+      .catch((erroRecebido) => {
+        limparToken();
+        setErroAutenticacao(
+          `Não foi possível restaurar a sessão. Entre novamente. (${erroRecebido.message})`,
+        );
+        setEstadoAutenticacao("desconectado");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (estadoAutenticacao !== "autenticado") {
+      return undefined;
+    }
+
+    const token = tokenSalvo();
+    const temporizador = setTimeout(() => {
+      limparToken();
+      setPerfil(null);
+      setTela(null);
+      setTatuagemAberta(null);
+      setErroAutenticacao("Sua sessão expirou. Entre novamente.");
+      setEstadoAutenticacao("desconectado");
+    }, milissegundosAteExpirar(token));
+
+    return () => clearTimeout(temporizador);
+  }, [estadoAutenticacao]);
+
+  async function entrar(email, senha) {
+    setEntrando(true);
+    setErroAutenticacao("");
+
+    try {
+      await autenticar(email, senha);
+      const usuario = await buscarUsuarioAtual();
+      ativarConta(usuario);
+    } catch (erroRecebido) {
+      limparToken();
+      setErroAutenticacao(erroRecebido.message);
+    } finally {
+      setEntrando(false);
+    }
+  }
+
+  function sair() {
+    limparToken();
     setPerfil(null);
     setTela(null);
     setTatuagemAberta(null);
+    setErroAutenticacao("");
+    setEstadoAutenticacao("desconectado");
   }
 
   /* Abrir a ficha é sempre a mesma coisa: guardar a tatuagem e trocar de tela. A
@@ -66,12 +141,21 @@ export default function App() {
     setTela("ficha");
   }
 
-  /* A escolha de perfil não tem barra: ela é a entrada do sistema, e a barra só
-   * faz sentido depois que há alguém usando. */
-  if (!perfil) {
+  if (estadoAutenticacao === "verificando") {
     return (
-      <EscolhaPerfil
-        aoEscolher={escolherPerfil}
+      <main className="tela">
+        <p className="aviso">Verificando sua sessão...</p>
+      </main>
+    );
+  }
+
+  /* A barra só aparece depois que as credenciais e a identidade foram validadas. */
+  if (estadoAutenticacao !== "autenticado" || !perfil) {
+    return (
+      <Login
+        aoEntrar={entrar}
+        erro={erroAutenticacao}
+        entrando={entrando}
         tema={tema}
         trocarTema={trocarTema}
       />
@@ -127,8 +211,8 @@ export default function App() {
           ))}
 
           <li>
-            <button type="button" className="tela-link" onClick={sairDoPerfil}>
-              Trocar de perfil
+            <button type="button" className="tela-link" onClick={sair}>
+              Sair
             </button>
           </li>
         </ul>

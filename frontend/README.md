@@ -1,8 +1,7 @@
 # Front do Traço Fino
 
 O React do estúdio de tatuagem, em `src/`. São quatro telas, e cada uma é um componente em
-`src/telas/`. Quem decide qual tela aparece é o `src/App.jsx`, e ele só tem dois estados: o perfil
-escolhido e a tela atual.
+`src/telas/`. Quem decide qual tela aparece é o `src/App.jsx`: a conta autenticada, a tela atual e a tatuagem aberta.
 
 ## Como rodar
 
@@ -30,9 +29,9 @@ chamada e a tela fica mostrando o aviso de erro.
 | arquivo | o que é |
 | --- | --- |
 | `main.jsx` | o ponto de entrada, e a ordem em que o CSS entra |
-| `App.jsx` | o perfil escolhido e a tela atual |
-| `perfis.js` | a lista fixa de perfis e a ordem das telas de cada um |
-| `api.js` | o único arquivo que sabe a porta do back e o único que usa `fetch` |
+| `App.jsx` | a conta autenticada e a tela atual |
+| `perfis.js` | a associação dos IDs existentes aos papéis e às telas |
+| `api.js` | chamadas ao back, envio do token e tratamento de erros |
 | `componentes/Etiqueta.jsx` | a etiqueta colorida da etapa |
 | `componentes/Avisos.jsx` | os avisos de carregando, de erro e de lista vazia |
 | `telas/` | as telas |
@@ -48,8 +47,16 @@ chamada e a tela fica mostrando o aviso de erro.
 | A agenda | Vitor | computador | `telas/Agenda.jsx` |
 | A ficha | Vitor | computador | `telas/Ficha.jsx` |
 
-A escolha de perfil, `telas/EscolhaPerfil.jsx`, não é uma das quatro telas da cartilha, mas a
-cartilha pede: enquanto o login não chega, o front deixa escolher o perfil numa lista, sem senha.
+`telas/Login.jsx` recebe e-mail e senha em `POST /autenticacao/login`, valida a identidade em
+`GET /usuarios/eu` e mantém o token na sessão da aba. Ao reabrir ou atualizar a página, o front
+valida o token novamente; quando o prazo informado no token vence, limpa a sessão e pede novo
+login. As contas existentes com ID 1 e 2 são associadas respectivamente aos papéis de cliente e
+tatuador; essas linhas precisam ter e-mail e senha cadastrados no banco. Não há cadastro de contas
+pelo front, e outros IDs ainda não têm papel associado.
+
+O front envia `Authorization: Bearer ...` nas chamadas da API. No estado atual, porém, o backend
+exige token apenas em `/usuarios/eu`; as rotas de tatuagens e passos continuam públicas. Enviar
+token pelo front não substitui a proteção dessas rotas no servidor.
 
 **As telas do Vitor são as do computador, e isso muda o desenho.** O filtro da agenda são abas na
 horizontal e a lista é uma tabela com a coluna da cliente. No celular a mesma tabela vira uma lista

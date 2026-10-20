@@ -1,16 +1,13 @@
-/* A lista de perfis.
+/* A lista de perfis e a ordem das telas de cada papel.
  *
- * A cartilha diz que, enquanto o login não chega, o front deixa escolher o
- * perfil numa lista, sem senha. Essa lista é fixa aqui, com os dois perfis do
- * sistema: a Bruna, que é cliente, e o Vitor, que é tatuador e dono do Traço
- * Fino. Não existe rota de usuário no back, porque a cartilha não pede uma, e
- * o perfil já é escolhido aqui na tela.
+ * O login associa os IDs 1 e 2 aos dois papéis existentes: cliente e tatuador.
+ * Os IDs também são os cliente_id usados nas tatuagens da Bruna.
  *
  * O id da Bruna é o mesmo cliente_id que o back exige em qualquer tatuagem
  * dela. O id do Vitor não viaja para o back em lugar nenhum: ele é tatuador, e
  * tatuador não é dono de tatuagem.
  *
- * O retrato de cada um é importado como arquivo, e não escrito como caminho de
+ * O retrato de cada papel é importado como arquivo, e não escrito como caminho de
  * "/src/...". O import é o que faz o Vite copiar a foto para dentro do build com
  * um nome próprio: um caminho escrito à mão funciona em desenvolvimento e some
  * quando o projeto é construído para publicar. O alt do retrato é o nome da

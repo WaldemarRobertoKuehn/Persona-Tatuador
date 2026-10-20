@@ -787,10 +787,8 @@ p {
   text-align: center;
 }
 
-/* A tela de escolha de perfil: a imagem do ateliê em cima, e os dois cartões de
- * perfil embaixo. A imagem é o que dá a cara do estúdio antes de qualquer dado
- * aparecer, e ela não tem texto sobreposto. O texto da tela de entrada fica na
- * superfície, e é por isso que ele passa no contraste da tabela do styleguide. */
+/* A entrada do estúdio: imagem e texto ficam em superfícies separadas para
+ * preservar o contraste exigido pelo styleguide. */
 .entrada {
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio);

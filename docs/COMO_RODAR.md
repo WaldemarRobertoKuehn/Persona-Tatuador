@@ -73,8 +73,9 @@ cd frontend
 npm run dev
 ```
 
-O Vite abre `http://localhost:5173` e a tela de escolha de perfil aparece, com a
-Bruna e o Vitor. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do
+O Vite abre `http://localhost:5173` e a tela de login aparece. Entre com uma conta
+existente: as contas de ID 1 e 2 são associadas aos papéis de cliente e tatuador.
+Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do
 `backend/.env`, senão o navegador bloqueia a chamada por CORS.
 
 Para conferir o front sem depender do navegador:
