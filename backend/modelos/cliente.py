@@ -36,7 +36,11 @@ class Cliente(Base):
     # esquema de saída tem ao exigir string.
     nome = Column(String(100), nullable=False)
 
-    # Campos de autenticação. Permanecem nulos para preservar os registros antigos
-    # até que cada pessoa cadastre email e senha.
+    # Campos de autenticação, que ficaram vazios quando a conta passou a morar na
+    # tabela usuarios. As duas colunas continuam no desenho porque a regra do
+    # projeto proíbe apagar coluna de tabela que já existe: o caminho é a
+    # migration, e nenhuma coluna sai do MySQL sem que isso seja decidido e
+    # versionado. O que importa é que ninguém grave mais nelas: quem guarda
+    # email e hash de senha é a tabela usuarios, e só ela.
     email = Column(String(254), nullable=True)
     senha_hash = Column(String(255), nullable=True)

@@ -59,3 +59,81 @@ def buscar_cliente(cliente_id: int) -> dict | None:
         )
 
         return cursor.fetchone()
+
+
+def buscar_cliente_por_nome(nome: str) -> dict | None:
+    """Devolve a cliente com esse nome, ou None se ninguém tiver esse nome.
+
+    A comparação é feita com LOWER, porque o nome escrito na tela e o nome que
+    está gravado podem ter diferença de maiúscula, e a pessoa é a mesma. Sem
+    isso, a mesma cliente entraria duas vezes na tabela, e o nome dela passaria
+    a estar escrito em dois lugares.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, nome FROM clientes WHERE LOWER(nome) = LOWER(%s)",
+            (nome,),
+        )
+
+        return cursor.fetchone()
+
+
+def criar_cliente(nome: str) -> int:
+    """Cria a cliente e devolve o id que o MySQL escolheu para ela."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO clientes (nome) VALUES (%s)",
+            (nome,),
+        )
+
+        return cursor.lastrowid
+
+
+def buscar_acesso(cliente_id: int) -> dict | None:
+    """Devolve o email e o hash de senha que ficaram na tabela clientes.
+
+    Essas duas colunas esvaziaram quando a conta passou a morar na tabela
+    usuarios, mas elas continuam no desenho da tabela, porque a regra do
+    projeto proíbe apagar coluna. A função existe para a conta que ainda está
+    nestas colunas ser levada para a tabela usuarios sem que a senha mude: o
+    hash é copiado como está, e a senha que a pessoa já conhece continua
+    valendo.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, nome, email, senha_hash FROM clientes WHERE id = %s",
+            (cliente_id,),
+        )
+
+        return cursor.fetchone()
+
+
+def buscar_conta_antiga() -> dict | None:
+    """Devolve a linha de clientes que ainda tem conta nestas colunas.
+
+    O email e o hash são a pista: a conta do dono do estúdio foi criada
+    quando o login morava na tabela clientes, e é a única linha que ficou com
+    as duas colunas preenchidas. O LIMIT 1 é porque só existe uma conta
+    antiga, e o primeiro achado é a linha procurada.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, nome, email, senha_hash FROM clientes "
+            "WHERE email IS NOT NULL AND senha_hash IS NOT NULL LIMIT 1"
+        )
+
+        return cursor.fetchone()
+
+
+def esvaziar_acesso(cliente_id: int) -> None:
+    """Esvazia as colunas de acesso da cliente, depois que a conta foi movida.
+
+    Sem esta limpeza, o mesmo email e o mesmo hash ficariam escritos em dois
+    lugares, e a divergência apareceria na primeira correção: um dos dois
+    lados mudaria, e o outro continuaria com o valor velho.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "UPDATE clientes SET email = NULL, senha_hash = NULL WHERE id = %s",
+            (cliente_id,),
+        )

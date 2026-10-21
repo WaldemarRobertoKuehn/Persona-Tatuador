@@ -24,9 +24,10 @@ O back entrega as cinco coisas que a cartilha pede:
 | Registrar um passo numa tatuagem | `POST /tatuagens/{tatuagem_id}/passos` |
 
 A agenda abre com **oito tatuagens de demonstração** — cinco da Bruna e três da Camila — e os
-históricos delas estão coerentes com a regra. Esses dados estão no MySQL, e foram criados pelo
-`backend/esquema.sql`, no bloco `DADOS DE DEMONSTRAÇÃO` do fim do arquivo. Para a API nascer vazia,
-rode o `esquema.sql` sem aquele bloco.
+históricos delas estão coerentes com a regra. Esses dados estão no MySQL, e as contas que entram
+nele estão na tabela `usuarios`: são criadas por `backend/criar_contas_de_demonstracao.py`, que é
+o mesmo caminho do `criar_tabelas.py` e do `alembic upgrade head`, ou seja, montagem de banco, e
+não rota da API.
 
 A agenda também mostra o nome da cliente, e não o `cliente_id`. O nome mora no back, em
 `repositorios/cliente.py`, e entra na resposta como `nome_da_cliente`. A cartilha lista o usuário
@@ -66,7 +67,8 @@ cópia nenhuma dentro do front.
 │   ├── .env.exemplo as mesmas chaves, sem os valores, dentro do Git
 │   ├── configuracao.py  o único arquivo que lê o .env
 │   ├── banco.py          o engine, a fábrica Sessao, a Base e o obter_sessao
-│   ├── esquema.sql       o desenho do banco, que o MySQL roda de uma vez
+│   ├── criar_tabelas.py  o desenho do banco, do zero, em um banco vazio
+│   ├── criar_contas_de_demonstracao.py  as contas de demonstração, na tabela usuarios
 │   ├── alembic.ini       a configuração do Alembic, sem a senha
 │   ├── migracoes/        o env.py, onde o Alembic acha os modelos e o banco
 │   │   └── versions/     uma migration por arquivo, e elas vão para o Git
@@ -88,14 +90,19 @@ cópia nenhuma dentro do front.
 
 O back é o FastAPI, na pasta `backend/`. A documentação automática fica em `/docs`.
 
-O banco é o **MySQL**, e ele precisa existir antes do back subir. O desenho dele está em
-`backend/esquema.sql`, que cria as três tabelas e já entra com os dados de demonstração:
+O banco é o **MySQL**, e ele precisa existir antes do back subir. O desenho dele mora nos modelos,
+em `backend/modelos/`, e o banco é montado em três passos:
 
 ```bash
-mysql -u root -p < esquema.sql
+cd backend
+mysql -u root -p -e "CREATE DATABASE traco_fino"
+python criar_tabelas.py
+alembic upgrade head
 ```
 
-A senha é pedida pelo próprio `mysql`, não vai no comando.
+O `criar_tabelas.py` cria as tabelas que ainda não existem, e o `alembic upgrade head` aplica as
+migrations que faltam, que é o que faz a tabela `usuarios` existir. A senha do banco é pedida pelo
+próprio `mysql`, não vai no comando.
 
 Depois, o ambiente do Python. São sete pacotes, e cada um tem um porquê:
 
@@ -136,6 +143,34 @@ A raiz `http://localhost:8000` responde **404**, e isso é de propósito: as REG
 
 O `.env` precisa ter `ORIGEM_FRONTEND` com o endereço exato do front, porque é dele que sai o CORS.
 Se o endereço mudar, mude no `.env` e reinicie o back.
+
+### As contas de demonstração
+
+Quem entra no sistema é uma **conta**, e a conta mora na tabela `usuarios`, com o papel dela
+escrito no banco: `cliente` ou `tatuador`. As contas de demonstração são criadas por um script, e
+não pela tela, porque a tela de login não tem cadastro e porque o papel `tatuador` é do estúdio, e
+não de quem se cadastrou:
+
+```bash
+cd backend
+python criar_contas_de_demonstracao.py
+```
+
+| conta | e-mail | senha | papel | o que ela vê |
+| --- | --- | --- | --- | --- |
+| Bruna | `bruna@tracofino.com.br` | `bruna123` | cliente | "Pedir tatuagem" e "Minhas tatuagens" |
+| Vitor | `vitor@tracofino.com.br` | `vitor123` | tatuador | "A agenda" e "A ficha" |
+| Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | tatuador | o dono do estúdio |
+
+A conta da Bruna fica ligada à cliente 1 da tabela `clientes`, que é a mesma pessoa: por isso ela
+enxerga as cinco tatuagens da Bruna. A conta do Vitor não tem cliente nenhuma, porque tatuador não é
+dono de tatuagem. O script pode rodar de novo: conta que já existe é pulada, e a senha do dono não
+muda, porque o hash que já estava na tabela `clientes` é copiado para a `usuarios`.
+
+O login devolve um **token Bearer**, e o front o guarda na sessão da aba. Quem entra manda esse
+token em `Authorization: Bearer ...`, e o back valida ele em `/usuarios/eu`, que é a rota que devolve
+o papel e o `cliente_id` da conta. O front é quem escolhe a tela a partir do papel, e o papel vem do
+back: o front não tem nenhum id de usuário escrito no código.
 
 ## Mudança no banco: migrations
 
@@ -185,9 +220,9 @@ npm install
 npm run dev
 ```
 
-O esperado é o Vite abrir `http://localhost:5173` e a tela de login aparecer. Entre com uma conta
-existente: os IDs 1 e 2 são associados aos perfis de cliente e tatuador. Esse endereço tem que ser
-igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
+O esperado é o Vite abrir `http://localhost:5173` e a tela de login aparecer. Entre com uma das
+contas de demonstração, que estão na tabela de contas do back: a Bruna entra como cliente e o Vitor
+como tatuador. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
 navegador bloqueia a chamada por CORS.
 
 As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as cinco
@@ -261,7 +296,10 @@ As duas paletas e os contrastes de cada uma estão no `docs/styleguide/styleguid
   é a rota que escolhe o status.
 - `async def` não entra. Rota é `def` normal.
 - CORS liberado só para o endereço do front, lido do `.env`. Nunca `["*"]`.
-- O login usa token Bearer, armazenado na sessão da aba; os IDs 1 e 2 definem os perfis atuais.
+- O login usa token Bearer, armazenado na sessão da aba. O papel da conta mora no banco, na
+  tabela `usuarios`, e é o back que devolve: o front não tem id de usuário escrito no código.
+- A conta é uma tabela só dela, e a cliente continua na tabela `clientes`. A ligação é a coluna
+  `usuarios.cliente_id`, e ela é vazia para o tatuador, que não é dono de tatuagem nenhuma.
 - O backend ainda não exige autenticação nas rotas de tatuagens e passos. O token enviado pelo
   front não substitui essa validação no servidor.
 - Cor mora em token, em `estilos/tokens.css`. Nenhuma tela escreve um código de cor, e nenhum

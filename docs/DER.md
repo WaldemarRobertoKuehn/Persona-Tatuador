@@ -1,37 +1,56 @@
 # DER · Traço Fino, estúdio de tatuagem
 
-Este documento é o desenho do banco do Traço Fino: as três entidades da cartilha, o que cada coluna
-guarda, e o tipo e a restrição de cada uma. A fonte de verdade do que o sistema precisa fazer continua
-sendo `docs/CARTILHA.md`, e este arquivo não inventa coluna: ele registra as escolhas de tipo e
-restrição, que são minhas, e que eu defendo na apresentação.
+Este documento é o desenho do banco do Traço Fino: as três entidades da cartilha, a tabela da conta
+que entrou depois, o que cada coluna guarda, e o tipo e a restrição de cada uma. A fonte de verdade do
+que o sistema precisa fazer continua sendo `docs/CARTILHA.md`, e este arquivo não inventa coluna: ele
+registra as escolhas de tipo e restrição, que são minhas, e que eu defendo na apresentação.
 
-## 1. As três entidades
+## 1. As três entidades da cartilha e a tabela da conta
 
 A cartilha nomeia três entidades: o **usuário**, a **tatuagem** e o **passo**. Neste projeto o usuário
-se chama **cliente**, e o nome é meu: por enquanto o único usuário que entra no sistema é a Bruna, que
-é cliente, porque o perfil é escolhido na tela sem senha e o login só chega no ciclo 4. Por isso a
-tabela é `clientes`, e não `usuarios`.
+se chama **cliente**, e o nome é meu: o usuário da cartilha é a pessoa que pede tatuagem, e o
+estúdio tem duas clientes, a Bruna e a Camila. Por isso a tabela é `clientes`, e não `usuarios`.
+
+A **conta que entra no sistema** mora em outra tabela, a `usuarios`. Ela veio com o login, e é o
+único acréscimo ao desenho da cartilha. A conta é a pessoa que tem senha, e o papel dela é
+`cliente` ou `tatuador`: o dono do estúdio é tatuador, e ele não é dono de tatuagem nenhuma. Com
+as duas coisas na mesma tabela, o tatuador precisaria de uma linha em `clientes` só para ter login.
 
 ```
-clientes ──1───< tatuagens ──1───< passos
+usuarios ──0..1──1───< clientes ──1───< tatuagens ──1───< passos
 ```
 
 | relacionamento | quem manda | o que significa |
 | --- | --- | --- |
+| `usuarios` → `clientes` | `usuarios.cliente_id` | a conta de papel "cliente" é a mesma pessoa que a cliente da cartilha; a conta de tatuador não tem cliente nenhuma |
 | `clientes` → `tatuagens` | `tatuagens.cliente_id` | uma cliente tem tatuagens; uma tatuagem pertence a exatamente uma cliente |
 | `tatuagens` → `passos` | `passos.tatuagem_id` | uma tatuagem tem passos; um passo pertence a exatamente uma tatuagem |
 
-Nenhuma das duas pontas é opcional: `cliente_id` e `tatuagem_id` são `NOT NULL`. A cartilha diz que a
-tatuagem **pertencece a** um cliente e que o passo **pertencece a** uma tatuagem, então não existe
-tatuagem sem dona nem passo sem tatuagem. Uma tatuagem sem nenhum passo é o caso normal, e significa
-que ela ainda está `pedida`, que é como a regra manda nascer.
+Das duas pontas da cartilha nenhuma é opcional: `tatuagens.cliente_id` e `passos.tatuagem_id` são
+`NOT NULL`. A cartilha diz que a tatuagem **pertencece a** um cliente e que o passo **pertencece a**
+uma tatuagem, então não existe tatuagem sem dona nem passo sem tatuagem. Uma tatuagem sem nenhum
+passo é o caso normal, e significa que ela ainda está `pedida`, que é como a regra manda nascer.
+
+Já a ponta `usuarios.cliente_id` é opcional de propósito, e é a única opcional do desenho: o
+tatuador não é cliente, e a coluna vazia é o que diz isso no banco, sem precisar de outra coluna
+para guardar o papel.
 
 ## 2. Diagrama
 
 ```mermaid
 erDiagram
+    USUARIOS ||--o| CLIENTES : "entra como"
     CLIENTES ||--o{ TATUAGENS : "tem"
     TATUAGENS ||--o{ PASSOS : "registra"
+
+    USUARIOS {
+        INT id PK
+        VARCHAR(100) nome NOT_NULL
+        VARCHAR(254) email NOT_NULL
+        VARCHAR(255) senha_hash NOT_NULL
+        VARCHAR(20) papel NOT_NULL
+        INT cliente_id FK
+    }
 
     CLIENTES {
         INT id PK
@@ -56,23 +75,55 @@ erDiagram
     }
 ```
 
-## 3. clientes
+## 3. usuarios
+
+| coluna | tipo | restrição | o que guarda |
+| --- | --- | --- | --- |
+| `id` | INT | `PRIMARY KEY`, `AUTO_INCREMENT` | o número que identifica a conta |
+| `nome` | VARCHAR(100) | `NOT NULL` | o nome da pessoa |
+| `email` | VARCHAR(254) | `NOT NULL`, `UNIQUE` | o login |
+| `senha_hash` | VARCHAR(255) | `NOT NULL` | a senha guardada como hash |
+| `papel` | VARCHAR(20) | `NOT NULL` | `cliente` ou `tatuador` |
+| `cliente_id` | INT | `FOREIGN KEY` → `clientes(id)` | a cliente da cartilha que é a mesma pessoa, quando a conta é de cliente |
+
+- **`email` como `VARCHAR(254)`** porque é o `max_length` do esquema Pydantic, e o 254 é o limite
+  que a RFC do correio eletrônico adota. O índice único se chama `uq_usuarios_email`: sem ele, dois
+  cadastros com o mesmo email dependeriam de uma varredura da tabela para serem recusados.
+- **`senha_hash` como `VARCHAR(255)`** porque o hash do argon2id, com o sal e os parâmetros, tem
+  esse tamanho. A senha em si nunca é gravada: o que fica no banco é o hash, e é com ele que a
+  senha digitada é comparada.
+- **`papel` como `VARCHAR(20)`, e não `ENUM`.** Os dois valores (`cliente` e `tatuador`) já estão
+  escritos no serviço, e a regra de quem entra é do back, não do banco. Fica em `VARCHAR`, pelo
+  mesmo motivo que a coluna `etapa` das tatuagens: a mesma lista em dois lugares diverge no dia
+  que alguém mexer num e esquecer do outro.
+- **`cliente_id` com `FOREIGN KEY` e sem `NOT NULL`** porque a conta do tatuador não tem cliente
+  nenhuma. A constraint se chama `fk_usuarios_cliente`, e é esse nome que o modelo declara com
+  `name=`: sem ele, o Alembic não sabe qual restrição criar e não sabe desfazê-la.
+- **A conta tem o seu id, e ele não é o id da cliente.** São dois números diferentes, e quem guarda
+  a ligação entre eles é a coluna `cliente_id`. Antes eles eram o mesmo número, e isso só
+  funcionava porque os ids da tela estavam escritos no front.
+
+## 4. clientes
 
 | coluna | tipo | restrição | o que guarda |
 | --- | --- | --- | --- |
 | `id` | INT | `PRIMARY KEY`, `AUTO_INCREMENT` | o número que identifica a cliente |
 | `nome` | VARCHAR(100) | `NOT NULL` | o nome da pessoa |
+| `email` | VARCHAR(254) | `NULL` | coluna vazia, que sobrou quando a conta foi para `usuarios` |
+| `senha_hash` | VARCHAR(255) | `NULL` | coluna vazia, que sobrou quando a conta foi para `usuarios` |
 
 - **`id` com `AUTO_INCREMENT`** porque quem escolhe o número é o banco, e não o código: foi assim que
   a lista em memória fazia, com `len(tatuagens) + 1`, e isso se repete se duas tatuagens nacem no
   mesmo instante.
 - **`nome` como `VARCHAR(100)`** porque o nome é dado do negócio e o limite é o mesmo que o
   `max_length` do esquema Pydantic: o back barra com 422 e o banco barra com o mesmo número.
-- **Só duas colunas.** A cartilha avisa que o login chega depois, e o tipo do usuário (cliente ou
-  tatuador) não entra agora, porque o perfil é escolhido na tela. Coluna guardando o que ninguém usa
-  é uma coluna que diverge.
+- **As duas últimas colunas estão vazias e continuam no desenho.** A conta morou aqui quando o
+  login chegou, e a regra do projeto proíbe apagar coluna de tabela que já existe: o caminho é a
+  migration, e nenhuma coluna sai do MySQL sem que isso seja decidido e versionado. O que importa é
+  que ninguém grave mais nelas, e a conta que ainda estava nelas foi levada para `usuarios` com o
+  hash copiado, para a senha de quem já tinha conta não mudar.
 
-## 4. tatuagens
+## 5. tatuagens
 
 | coluna | tipo | restrição | o que guarda |
 | --- | --- | --- | --- |
@@ -104,7 +155,7 @@ erDiagram
 - **`etapa` começa em `pedida`** e isso é o serviço que decide, no `pedir_tatuagem`, porque é a regra
   da cartilha que diz que a tatuagem nova nasce pedida.
 
-## 5. passos
+## 6. passos
 
 | coluna | tipo | restrição | o que guarda |
 | --- | --- | --- | --- |
@@ -127,21 +178,28 @@ erDiagram
   não deixar o dado quebrado. A constraint se chama `fk_passos_tatuagem`, pelo mesmo motivo da da
   tatuagem: é o nome que o modelo declara com `name=` e o que o Alembic precisa para desfazer a chave.
 
-## 6. Onde este DER vira código
+## 7. Onde este DER vira código
 
 | neste DER | no código |
 | --- | --- |
-| as três tabelas e colunas | `backend/modelos/cliente.py`, `tatuagem.py` e `passo.py`, uma classe por tabela |
+| as quatro tabelas e colunas | `backend/modelos/cliente.py`, `usuario.py`, `tatuagem.py` e `passo.py`, uma classe por tabela |
 | a criação das tabelas | `backend/criar_tabelas.py`, com `Base.metadata.create_all(engine)` |
 | a conexão e a sessão | `backend/banco.py`, com `engine`, `Sessao`, `Base` e `obter_sessao` |
-| as duas chaves estrangeiras | `ForeignKey(..., name="fk_...")` no modelo filha e `relationship` no modelo da tatuagem |
+| as três chaves estrangeiras | `ForeignKey(..., name="fk_...")` no modelo filha e `relationship` no modelo da tatuagem |
 | a mudança deste desenho depois que o banco já existe | `backend/migracoes/versions/`, uma migration por mudança, gerada pelo Alembic |
 | a regra da etapa | `backend/servicos/passo.py`, e não uma coluna do banco |
+| as contas de demonstração | `backend/criar_contas_de_demonstracao.py`, que chama o serviço |
 
 O `create_all` só cria a tabela que ainda não existe: tabela que já existe, ele não toca. Por isso
 mudança neste desenho, depois que o banco tem dado de alguém, é migration e não `ALTER TABLE`
 escrito à mão. E o `alembic.ini` fica sem senha de propósito, porque o endereço do banco é lido do
 `.env` pelo `configuracao.py`.
+
+A tabela `usuarios` entrou por migration, e a migration se chama
+`ea09ccd9493f_tabela_de_contas_de_usuario.py`: ela cria a tabela e a chave `fk_usuarios_cliente`, e
+não toca em nenhuma das outras. A migration anterior, `20261007_01`, é a que tinha posto `email` e
+`senha_hash` na tabela `clientes`: ela continua no histórico do banco porque é o que aconteceu, e as
+duas colunas ficaram vazias, como está escrito na seção 4.
 
 Um `esquema.sql` com o mesmo desenho não entra no projeto: dois lugares dizendo como o banco é dariam
 duas versões do mesmo desenho, e o banco nasceria de um deles enquanto o outro ficaria velho sem

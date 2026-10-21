@@ -1,43 +1,45 @@
-/* A lista de perfis e a ordem das telas de cada papel.
+/* Os perfis do sistema, um por papel.
  *
- * O login associa os IDs 1 e 2 aos dois papéis existentes: cliente e tatuador.
- * Os IDs também são os cliente_id usados nas tatuagens da Bruna.
+ * O papel é o que o back devolve em /usuarios/eu: "cliente" ou "tatuador". É o
+ * back que sabe o que cada pessoa é, e a tela só obedece: por isso o perfil é
+ * escolhido pelo papel, e não por um id escrito aqui.
  *
- * O id da Bruna é o mesmo cliente_id que o back exige em qualquer tatuagem
- * dela. O id do Vitor não viaja para o back em lugar nenhum: ele é tatuador, e
- * tatuador não é dono de tatuagem.
+ * O nome que aparece na tela também vem do back, da conta que entrou. Assim o
+ * mesmo perfil serve para as duas contas de tatuador do estúdio, o Vitor e o
+ * dono, e cada uma aparece com o próprio nome.
  *
- * O retrato de cada papel é importado como arquivo, e não escrito como caminho de
- * "/src/...". O import é o que faz o Vite copiar a foto para dentro do build com
- * um nome próprio: um caminho escrito à mão funciona em desenvolvimento e some
- * quando o projeto é construído para publicar. O alt do retrato é o nome da
- * pessoa, e a foto é decorativa: quem usa leitor de tela ouve o nome no texto ao
- * lado, e não a foto duas vezes.
+ * O id da cliente mora em outro lugar: ele vem da conta, no campo cliente_id,
+ * e é ele que a tela usa para filtrar "minhas tatuagens" e para dizer de quem
+ * é a tatuagem que está sendo pedida. O id da conta e o id da cliente são
+ * coisas diferentes, e o back é quem guarda a ligação entre as duas.
+ *
+ * O retrato de cada papel é importado como arquivo, e não escrito como caminho
+ * de "/src/...". O import é o que faz o Vite copiar a foto para dentro do build
+ * com um nome próprio: um caminho escrito à mão funciona em desenvolvimento e
+ * some quando o projeto é construído para publicar. O alt do retrato é o nome
+ * da pessoa, e a foto é decorativa: quem usa leitor de tela ouve o nome no
+ * texto ao lado, e não a foto duas vezes.
  */
 
 import retratoBruna from "./imagens/foto-bruna.jpg";
 import retratoVitor from "./imagens/foto-vitor.jpg";
 
-export const PERFIS = [
-  {
-    id: 1,
-    nome: "Bruna",
+export const PERFIS = {
+  cliente: {
     tipo: "cliente",
     aparelho: "celular",
     descricao:
       "Primeira tatuagem grande. Descreve a ideia pelo celular e acompanha cada etapa.",
     retrato: retratoBruna,
   },
-  {
-    id: 2,
-    nome: "Vitor",
+  tatuador: {
     tipo: "tatuador",
     aparelho: "computador",
     descricao:
       "Tatuador e dono. Organiza a agenda do estúdio e registra os passos de cada tatuagem.",
     retrato: retratoVitor,
   },
-];
+};
 
 /* As quatro telas da cartilha. Cada perfil só enxerga as dele: quem é cliente
  * não tem a agenda, e quem é tatuador não tem o formulário de pedido. */

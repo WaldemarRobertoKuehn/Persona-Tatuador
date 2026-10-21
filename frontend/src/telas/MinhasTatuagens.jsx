@@ -69,14 +69,15 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
   const [erro, setErro] = useState("");
   const [aberta, setAberta] = useState(null);
 
-  /* O filtro de cliente vai na requisição, e ele é o id do perfil escolhido. É
-   * por isso que a Bruna não vê a tatuagem de ninguém mais.
+  /* O filtro de cliente vai na requisição, e ele é o id da cliente da conta que
+   * entrou, que veio do back no campo cliente_id. É por isso que a Bruna não vê
+   * a tatuagem de ninguém mais.
    *
    * O estado já nasce em carregando e o efeito não precisa voltar para
-   * carregando: o efeito só roda de novo quando o id do perfil muda, e trocar de
-   * perfil desmonta a tela, então o estado novo nasce limpo de qualquer jeito. */
+   * carregando: o efeito só roda de novo quando o id da cliente muda, e trocar
+   * de conta desmonta a tela, então o estado novo nasce limpo de qualquer jeito. */
   useEffect(() => {
-    buscarTatuagens({ clienteId: perfil.id })
+    buscarTatuagens({ clienteId: perfil.clienteId })
       .then((dados) => {
         setTatuagens(dados);
         setEstado("pronto");
@@ -85,7 +86,7 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
         setErro(erroRecebido.message);
         setEstado("erro");
       });
-  }, [perfil.id]);
+  }, [perfil.clienteId]);
 
   return (
     <main className="tela">

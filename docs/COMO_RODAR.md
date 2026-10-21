@@ -15,16 +15,54 @@ fechar a aba.
 
 ### Se o banco não existir ainda
 
-O back não sobe sem o MySQL, porque é nele que os dados moram. O desenho do banco
-está em `backend/esquema.sql`, que cria as três tabelas e já entra com os dados de
-demonstração:
+O back não sobe sem o MySQL, porque é nele que os dados moram. O desenho do
+banco mora nos modelos, em `backend/modelos/`, e o banco é montado em três
+passos:
 
 ```powershell
 cd backend
-mysql -u root -p < esquema.sql
+mysql -u root -p -e "CREATE DATABASE traco_fino"
+python criar_tabelas.py
+alembic upgrade head
 ```
 
-A senha é pedida pelo próprio `mysql`, não vai no comando.
+O `criar_tabelas.py` cria as tabelas que ainda não existem, e o `alembic
+upgrade head` aplica as migrations que faltam, que é o que faz a tabela
+`usuarios` existir. A senha é pedida pelo próprio `mysql`, não vai no comando.
+
+### Se as contas de demonstração não existirem
+
+Quem entra no sistema é uma conta da tabela `usuarios`, e elas são criadas por
+um script, e não pela tela:
+
+```powershell
+cd backend
+python criar_contas_de_demonstracao.py
+```
+
+| conta | e-mail | senha | papel |
+| --- | --- | --- | --- |
+| Bruna | `bruna@tracofino.com.br` | `bruna123` | cliente |
+| Vitor | `vitor@tracofino.com.br` | `vitor123` | tatuador |
+| Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | tatuador |
+
+O script pode rodar de novo sem quebrar nada: conta que já existe é pulada, e
+a senha do dono não muda, porque o hash que já estava na tabela `clientes` é
+copiado para a `usuarios`.
+
+### Se a senha de uma conta se perdeu
+
+O hash da senha não tem volta. A senha nova é gerada por um comando, que
+chama o serviço e grava o hash novo:
+
+```powershell
+cd backend
+python trocar_senha.py waldemarroberto.kuehn@gmail.com waldemar123
+```
+
+O primeiro argumento é o e-mail da conta e o segundo é a senha nova, com pelo
+menos oito caracteres. A senha em texto nunca vai para o banco: o que é
+gravado é o hash.
 
 ### Se o `venv` for apagado
 
@@ -73,10 +111,11 @@ cd frontend
 npm run dev
 ```
 
-O Vite abre `http://localhost:5173` e a tela de login aparece. Entre com uma conta
-existente: as contas de ID 1 e 2 são associadas aos papéis de cliente e tatuador.
-Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do
-`backend/.env`, senão o navegador bloqueia a chamada por CORS.
+O Vite abre `http://localhost:5173` e a tela de login aparece. Entre com uma das
+contas de demonstração: a Bruna entra como cliente e o Vitor como tatuador, e
+cada um vê as telas do papel dele. Esse endereço tem que ser igual ao
+`ORIGEM_FRONTEND` do `backend/.env`, senão o navegador bloqueia a chamada por
+CORS.
 
 Para conferir o front sem depender do navegador:
 
@@ -131,7 +170,10 @@ só é seguro porque é um banco de estudo.
 
 Se você quer a API vazia, sem apagar nada: `DELETE FROM passos; DELETE FROM
 tatuagens; DELETE FROM clientes;`, nessa ordem, porque o passo aponta para a
-tatuagem e a tatuagem aponta para a cliente.
+tatuagem e a tatuagem aponta para a cliente. As contas ficam na tabela
+`usuarios`, que não é apagada junto: o `DELETE FROM clientes` esvazia o
+`cliente_id` das contas de cliente, e quem recria a ligação é o
+`criar_contas_de_demonstracao.py`.
 
 ## Mudança no banco depois que ele já existe
 

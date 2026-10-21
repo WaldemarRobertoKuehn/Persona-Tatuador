@@ -34,8 +34,8 @@ from alembic import context
 from banco import Base, engine
 
 # Um import por modelo do projeto. Os nomes são o caminho dentro de modelos/:
-# cliente.py, tatuagem.py e passo.py.
-from modelos import cliente, passo, tatuagem
+# cliente.py, tatuagem.py, passo.py e usuario.py.
+from modelos import cliente, passo, tatuagem, usuario
 
 # config é o objeto que lê o alembic.ini, o arquivo de configuração do Alembic.
 config = context.config

@@ -44,6 +44,12 @@ class UsuarioSaida(BaseModel):
     id: int
     nome: str
     email: str | None
+    # papel é o que a pessoa é no estúdio: "cliente" ou "tatuador". É o back que
+    # decide, e a tela só obedece: por isso ele sai daqui, e não da tela.
+    papel: str
+    # cliente_id é o elo com a tabela clientes, e ele é vazio para o tatuador.
+    # A tela da cliente usa esse id para filtrar as tatuagens dela.
+    cliente_id: int | None = None
 
 
 class TokenSaida(BaseModel):

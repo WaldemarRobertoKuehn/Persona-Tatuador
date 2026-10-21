@@ -61,8 +61,12 @@ export default function PedirTatuagem({ perfil, aoConcluir }) {
      * numérico, e o Number() deixa o valor do JavaScript com o mesmo tipo do
      * esquema. O que impede o campo vazio de chegar no back é o required e o
      * min do input, explicados mais abaixo. */
+    /* O cliente_id é o da cliente da conta que entrou, e ele vem do back, no
+     * campo cliente_id. A tatuagem nasce pertencendo à cliente que pediu, e é
+     * por isso que o id da conta não serve aqui: a conta e a cliente são duas
+     * coisas diferentes, e quem guarda a ligação entre elas é o back. */
     criarTatuagem({
-      cliente_id: perfil.id,
+      cliente_id: perfil.clienteId,
       ideia: formulario.ideia,
       local_do_corpo: formulario.local_do_corpo,
       tamanho: Number(formulario.tamanho),

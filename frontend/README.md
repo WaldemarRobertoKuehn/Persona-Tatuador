@@ -30,7 +30,7 @@ chamada e a tela fica mostrando o aviso de erro.
 | --- | --- |
 | `main.jsx` | o ponto de entrada, e a ordem em que o CSS entra |
 | `App.jsx` | a conta autenticada e a tela atual |
-| `perfis.js` | a associação dos IDs existentes aos papéis e às telas |
+| `perfis.js` | o perfil de cada papel, com o retrato e a ordem das telas |
 | `api.js` | chamadas ao back, envio do token e tratamento de erros |
 | `componentes/Etiqueta.jsx` | a etiqueta colorida da etapa |
 | `componentes/Avisos.jsx` | os avisos de carregando, de erro e de lista vazia |
@@ -50,9 +50,13 @@ chamada e a tela fica mostrando o aviso de erro.
 `telas/Login.jsx` recebe e-mail e senha em `POST /autenticacao/login`, valida a identidade em
 `GET /usuarios/eu` e mantém o token na sessão da aba. Ao reabrir ou atualizar a página, o front
 valida o token novamente; quando o prazo informado no token vence, limpa a sessão e pede novo
-login. As contas existentes com ID 1 e 2 são associadas respectivamente aos papéis de cliente e
-tatuador; essas linhas precisam ter e-mail e senha cadastrados no banco. Não há cadastro de contas
-pelo front, e outros IDs ainda não têm papel associado.
+login. O perfil vem pelo **papel** que o back devolve em `/usuarios/eu`, que é `cliente` ou
+`tatuador`: o front não tem nenhum id de usuário escrito no código, e é por isso que o mesmo
+perfil serve para as duas contas de tatuador do estúdio. O nome que aparece na barra também vem do
+back, da conta que entrou. Não há cadastro de contas pelo front.
+
+A tela da cliente usa o `cliente_id` que vem na mesma resposta, e não o id da conta: a conta e a
+cliente da cartilha são duas coisas diferentes, e quem guarda a ligação entre elas é o back.
 
 O front envia `Authorization: Bearer ...` nas chamadas da API. No estado atual, porém, o backend
 exige token apenas em `/usuarios/eu`; as rotas de tatuagens e passos continuam públicas. Enviar

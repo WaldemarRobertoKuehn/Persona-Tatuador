@@ -55,17 +55,26 @@ export default function App() {
   const { tema, trocarTema } = useTema();
 
   function ativarConta(usuario) {
-    const perfilBase = PERFIS.find(
-      (perfilExistente) => perfilExistente.id === usuario.id,
-    );
+    /* O perfil vem pelo papel, e não por id: o back é quem sabe o que a pessoa
+     * é no estúdio, e a tela só obedece. O nome também vem do back, da conta
+     * que entrou, e não deste arquivo. */
+    const perfilBase = PERFIS[usuario.papel];
 
     if (!perfilBase) {
       throw new Error(
-        "Esta conta ainda não está associada a um perfil do sistema. Os perfis atuais usam os IDs 1 (cliente) e 2 (tatuador).",
+        "Esta conta ainda não está associada a um perfil do sistema. Os papéis do sistema são cliente e tatuador.",
       );
     }
 
-    const perfilAutenticado = { ...perfilBase, nome: usuario.nome };
+    /* O clienteId é a ligação com a cliente da cartilha, e ela vem da conta.
+     * Sem ele, a tela da cliente não saberia de quem são as tatuagens que ela
+     * está olhando, e o filtro "minhas tatuagens" não teria o que enviar. */
+    const perfilAutenticado = {
+      ...perfilBase,
+      nome: usuario.nome,
+      clienteId: usuario.cliente_id,
+    };
+
     setPerfil(perfilAutenticado);
     setTela(TELAS[perfilAutenticado.tipo][0]);
     setTatuagemAberta(null);
