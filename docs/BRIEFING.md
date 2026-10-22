@@ -125,10 +125,9 @@ Já decidi:
 - **os nomes das rotas da API.** São `/tatuagens` e `/tatuagens/{tatuagem_id}/passos`, e os status
   `pedida`, `desenho aprovado`, `em sessões` e `finalizada` são os da cartilha. O caminho aninhado
   dos passos existe porque um passo sem tatuagem dona não tem onde ficar.
-- **de onde sai a lista de perfis.** Ela fica fixa no front, com os dois perfis do sistema: **Bruna,
-  cliente**, e **Vitor, tatuador e dono do Traço Fino**. Não entra rota de usuário no back, porque a
-  cartilha não pede isso e o perfil já é escolhido na tela, sem senha. O tipo de cada um viaja junto
-  com o id: a Bruna manda o `cliente_id` dela no pedido, e o Vitor não manda nada disso.
+- **decisão original sobre a lista de perfis, substituída.** O briefing previa os dois perfis fixos
+  no front, sem senha. A decisão atual é usar login e senhas por grupos de usuários; os detalhes e
+  motivos informados estão em [O que mudou](#o-que-mudou).
 - **de onde sai o nome da cliente.** A agenda do Vitor precisa mostrar de quem é cada tatuagem, e o
   nome mora no back, em `repositorios/cliente.py`, entrando na resposta como `nome_da_cliente`. A
   cartilha lista o usuário como uma das três entidades, e nome é dado do negócio: se o nome ficasse
@@ -189,5 +188,76 @@ estão anotados no fim de `docs/marca.md`.
 - **Três entidades:** usuário (cliente ou tatuador), tatuagem (pertence a um cliente) e passo
   (pertence a uma tatuagem).
 - **Fora de escopo:** orçamento, sinal, pagamento, portfólio e aviso por mensagem.
-- **Sem senha:** enquanto o login não chega, o perfil é escolhido numa lista, sem senha, e a tela da
-  pessoa diz quem ela é na própria requisição.
+- **Login:** a escolha de perfil sem senha era a decisão original do briefing; foi substituída por
+  login com e-mail e senha, com o perfil definido pelo papel recebido do backend.
+
+## O que mudou
+
+- **Login e perfis:** a escolha de perfil sem senha descrita originalmente foi substituída por
+  login com e-mail e senha. O backend autentica em `POST /autenticacao/login`; o frontend consulta
+  `GET /usuarios/eu`, e `frontend/src/App.jsx` escolhe as telas conforme o papel autenticado. A tela
+  de login está em `frontend/src/telas/Login.jsx`. **Motivo confirmado:** agora o sistema precisa
+  de login e senhas por grupos de usuários.
+- **Rotas de usuários e grupos:** além das rotas centrais de tatuagens e passos, há rotas de
+  usuários (`/usuarios`) e de grupos/permissões (`/grupos`), em `backend/rotas/usuarios.py` e
+  `backend/rotas/grupos.py`. A gestão de grupos é por API; não há tela React para isso.
+  **Motivo informado:** essas rotas agora são necessárias.
+- **Persistência:** o sistema atual usa MySQL e migrations Alembic, embora a cartilha descreva a
+  ida da memória ao MySQL como etapa posterior. **Orientação confirmada:** mantê-los incorporados.
+  O motivo original para antecipá-los não foi detalhado: **?**
+
+## Funcionalidade planejada com IA
+
+**Status: planejada, sem implementação no sistema atual.** Esta proposta segue as decisões e os
+testes ainda pendentes em [.docs/ia.md](../.docs/ia.md); não descreve uma funcionalidade disponível.
+
+### Perfil e problema
+
+Bruna, como cliente, poderia solicitar um resumo em **Minhas tatuagens**; Vitor, como tatuador,
+poderia solicitá-lo na **Ficha**. A cliente pode ter dificuldade para entender o andamento da
+tatuagem, enquanto o tatuador pode perder tempo procurando mensagens e reconstruindo o histórico.
+
+### Funcionamento, entrada e saída
+
+Ao receber a solicitação, o backend consultaria a etapa atual e os passos registrados, incluindo
+tipo, data e observação. Enviaria ao modelo somente os dados necessários ao resumo: etapa e passos
+numerados. Nome, identificador de pessoa, credenciais e tokens não seriam enviados. As observações
+são dados do histórico, não instruções para o modelo.
+
+O modelo resumiria em português, de forma breve, com referências numeradas aos passos que sustentam
+as afirmações e sinalizaria se os registros não permitirem um resumo confiável. Usaria apenas fatos
+fornecidos: não inventaria datas ou informações ausentes, não daria recomendações de saúde e não
+determinaria nem alteraria etapas ou passos.
+
+### Revisão humana e falhas
+
+O resultado seria apenas um rascunho. A pessoa que o solicitou poderia revisá-lo, editá-lo e
+confirmá-lo explicitamente. Somente depois dessa confirmação o backend guardaria o resumo, separado
+dos passos oficiais.
+
+Se a IA falhasse, o histórico continuaria disponível, a tela informaria o erro e permitiria tentar
+novamente. Não seria apresentado um resumo fabricado como alternativa.
+
+### Modelo, agentes, dados e provedor
+
+A proposta usa um único modelo resumidor, sem outros agentes e sem ferramentas disponíveis para o
+modelo. O backend consultaria os registros, faria a chamada ao provedor e cuidaria da persistência
+somente após a confirmação humana. O modelo não consultaria banco de dados nem APIs e não gravaria
+informações.
+
+A escolha do provedor de API continua em aberto. A proposta é comparar candidatos com exemplos
+fictícios e verificar as condições aplicáveis ao tratamento de dados; preço, disponibilidade ou
+capacidade de qualquer provedor não estão presumidos.
+
+### Decisões em aberto
+
+- **?** Definir como marcar um resumo anterior como desatualizado depois que um novo passo for
+  registrado e como substituí-lo somente após nova geração, revisão e confirmação.
+- **?** Definir como o resumo vinculará cada informação aos passos que a sustentam e como explicitará
+  lacunas no histórico.
+- **?** Escolher o provedor após comparar candidatos com exemplos fictícios e verificar as
+  condições de tratamento de dados.
+
+Os testes manuais descritos em [.docs/ia.md](../.docs/ia.md) continuam pendentes; nenhum resultado
+foi informado. Eles não validam integração via API, ferramentas ou coordenação de agentes. A
+funcionalidade permanece sem rota ou tela implementada.

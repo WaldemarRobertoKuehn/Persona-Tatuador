@@ -15,8 +15,7 @@ from pydantic import BaseModel, Field
 class TatuagemEntrada(BaseModel):
     """O que o front manda quando Bruna pede uma tatuagem nova."""
 
-    # cliente_id: a tela da Bruna diz quem ela é na própria requisição, porque
-    # enquanto não existe login é assim que o back sabe de quem é a tatuagem.
+    # cliente_id: a requisição informa qual cliente pediu a tatuagem.
     cliente_id: int = Field(gt=0, description="Quem pediu a tatuagem.")
 
     # min_length e max_length são restrições de tamanho de texto do Pydantic: se a

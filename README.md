@@ -134,9 +134,9 @@ fastapi dev main.py
 Com o back no ar, o esperado é:
 
 - o terminal mostrar `http://localhost:8000`;
-- abrir `http://localhost:8000/docs` e ver as cinco rotas da tabela acima;
-- `GET http://localhost:8000/tatuagens` responder com as **oito tatuagens de demonstração**, e
-  `?etapa=em sessões` devolver só três.
+- abrir `http://localhost:8000/docs` e ver as rotas principais e administrativas da API;
+- fazer login em `/autenticacao/login` e enviar o token Bearer em `Authorization` para acessar
+  as rotas de usuários, tatuagens e passos.
 
 A raiz `http://localhost:8000` responde **404**, e isso é de propósito: as REGRAS proíbem rota no
 `main.py`.
@@ -171,6 +171,14 @@ O login devolve um **token Bearer**, e o front o guarda na sessão da aba. Quem 
 token em `Authorization: Bearer ...`, e o back valida ele em `/usuarios/eu`, que é a rota que devolve
 o papel e o `cliente_id` da conta. O front é quem escolhe a tela a partir do papel, e o papel vem do
 back: o front não tem nenhum id de usuário escrito no código.
+
+O cadastro `POST /usuarios` é público e sempre cria uma conta Cliente. As demais operações
+protegidas verificam permissões do grupo no banco a cada requisição, incluindo o acesso às
+tatuagens e aos passos próprios. As rotas de gestão de grupos são exclusivas do Administrador.
+O catálogo pode ser consultado em `GET /grupos/permissoes`; o Administrador lista e cria grupos,
+troca permissões e atribui contas a grupos pela API. O primeiro Administrador é criado localmente
+com `python criar_administrador.py`, depois das migrations, e a senha é solicitada sem eco no
+terminal.
 
 ## Mudança no banco: migrations
 
@@ -296,12 +304,11 @@ As duas paletas e os contrastes de cada uma estão no `docs/styleguide/styleguid
   é a rota que escolhe o status.
 - `async def` não entra. Rota é `def` normal.
 - CORS liberado só para o endereço do front, lido do `.env`. Nunca `["*"]`.
-- O login usa token Bearer, armazenado na sessão da aba. O papel da conta mora no banco, na
-  tabela `usuarios`, e é o back que devolve: o front não tem id de usuário escrito no código.
+- O login usa token Bearer, armazenado na sessão da aba. O grupo e suas permissões moram no banco,
+  e é o back que os devolve: o front não tem id de usuário escrito no código.
 - A conta é uma tabela só dela, e a cliente continua na tabela `clientes`. A ligação é a coluna
   `usuarios.cliente_id`, e ela é vazia para o tatuador, que não é dono de tatuagem nenhuma.
-- O backend ainda não exige autenticação nas rotas de tatuagens e passos. O token enviado pelo
-  front não substitui essa validação no servidor.
+- Cadastro de Cliente e login são públicos; as demais rotas aplicam permissões de grupo no servidor.
 - Cor mora em token, em `estilos/tokens.css`. Nenhuma tela escreve um código de cor, e nenhum
   hexadecimal sobrou no CSS: até o branco do botão principal é `--cor-sobre-acento`.
 - A marca não é duplicada no front, e a fonte não vem de link. As duas coisas vêm do repositório.

@@ -1,8 +1,8 @@
 """O modelo SQLAlchemy da conta de usuário.
 
-A conta é a pessoa que entra no sistema, e ela tem um papel: cliente ou tatuador.
-Esse papel mora no banco, e não na tela, porque é o back que sabe o que cada
-pessoa pode ver. O front recebe o papel em /usuarios/eu e só obedece.
+A conta é a pessoa que entra no sistema, e ela pertence a um grupo: Cliente,
+Tatuador ou Administrador. O vínculo e as permissões moram no banco, e o backend
+é quem decide o que cada pessoa pode acessar.
 
 Por que a conta é uma tabela só dela
 
@@ -15,7 +15,7 @@ Por que a conta é uma tabela só dela
 
 O que a coluna cliente_id faz
 
-    Ela liga a conta de papel "cliente" à linha dela na tabela clientes, que é
+    Ela liga a conta do grupo "cliente" à linha dela na tabela clientes, que é
     onde o nome da dona da tatuagem mora. É por essa coluna que "minhas
     tatuagens" filtra por cliente_id, e é por isso que a conta do tatuador
     deixa a coluna vazia: tatuador não é dono de tatuagem.
@@ -57,10 +57,16 @@ class Usuario(Base):
     # digitada na tela.
     senha_hash = Column(String(255), nullable=False)
 
-    # papel: o que a pessoa é no estúdio, "cliente" ou "tatuador". É este valor
-    # que decide quais telas a pessoa vê, e ele fica no banco porque a decisão é
-    # do back, e não da tela.
-    papel = Column(String(20), nullable=False)
+    # papel: compatibilidade com o front existente; o grupo vinculado é a fonte
+    # de verdade para autorização e este campo recebe o código do grupo.
+    papel = Column(String(50), nullable=False)
+
+    # NOVO: grupo_id liga a conta ao grupo que concede suas permissões de rota.
+    grupo_id = Column(
+        Integer,
+        ForeignKey("grupos.id", name="fk_usuarios_grupo"),
+        nullable=False,
+    )
 
     # cliente_id: o elo com a tabela clientes, e ele é vazio para o tatuador.
     # ForeignKey aponta para a chave da tabela de destino, e o nome da

@@ -1,8 +1,8 @@
 """O depósito das contas de usuário, na tabela usuarios.
 
-A conta é a pessoa que entra no sistema, e ela tem um papel: cliente ou tatuador.
-Este arquivo é só o depósito das contas: ele lê e grava na tabela usuarios, e
-nada mais. A regra de quem pode entrar e com que papel mora no serviço.
+A conta é a pessoa que entra no sistema, e ela pertence a um grupo que concede
+permissões. Este arquivo é só o depósito das contas: ele lê e grava na tabela
+usuarios, e nada mais.
 
 Por que a conta não mora mais na tabela clientes
 
@@ -25,6 +25,14 @@ O que as funções devolvem
 import banco
 
 
+# NOVO: o JOIN devolve o código do grupo como papel, preservando o contrato do front.
+_CONSULTA_USUARIO = (
+    "SELECT u.id, u.nome, u.email, u.senha_hash, u.papel, u.cliente_id, "
+    "u.grupo_id, g.codigo AS grupo_codigo, g.nome AS grupo_nome "
+    "FROM usuarios AS u LEFT JOIN grupos AS g ON g.id = u.grupo_id "
+)
+
+
 def buscar_por_email(email: str) -> dict | None:
     """Busca uma conta pelo email, sem devolver dados além dos necessários.
 
@@ -34,8 +42,7 @@ def buscar_por_email(email: str) -> dict | None:
     """
     with banco.cursor() as cursor:
         cursor.execute(
-            "SELECT id, nome, email, senha_hash, papel, cliente_id "
-            "FROM usuarios WHERE email = %s",
+            _CONSULTA_USUARIO + "WHERE u.email = %s",
             (email,),
         )
         return cursor.fetchone()
@@ -47,18 +54,21 @@ def criar_usuario(
     senha_hash: str,
     papel: str,
     cliente_id: int | None,
+    grupo_id: int,
 ) -> dict:
-    """Cria a conta e devolve os dados dela, já com o id que o MySQL escolheu."""
+    """Cria a conta e devolve os dados dela, já com o id que o MySQL escolheu.
+
+    NOVO: grupo_id grava o vínculo usado para autorizar a conta em cada rota.
+    """
     with banco.cursor() as cursor:
         cursor.execute(
-            "INSERT INTO usuarios (nome, email, senha_hash, papel, cliente_id) "
-            "VALUES (%s, %s, %s, %s, %s)",
-            (nome, email, senha_hash, papel, cliente_id),
+            "INSERT INTO usuarios (nome, email, senha_hash, papel, cliente_id, grupo_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (nome, email, senha_hash, papel, cliente_id, grupo_id),
         )
         usuario_id = cursor.lastrowid
         cursor.execute(
-            "SELECT id, nome, email, senha_hash, papel, cliente_id "
-            "FROM usuarios WHERE id = %s",
+            _CONSULTA_USUARIO + "WHERE u.id = %s",
             (usuario_id,),
         )
         return cursor.fetchone()
@@ -68,8 +78,7 @@ def buscar_usuario_por_id(usuario_id: int) -> dict | None:
     """Busca conta pelo id, incluindo o hash somente para validação interna."""
     with banco.cursor() as cursor:
         cursor.execute(
-            "SELECT id, nome, email, senha_hash, papel, cliente_id "
-            "FROM usuarios WHERE id = %s",
+            _CONSULTA_USUARIO + "WHERE u.id = %s",
             (usuario_id,),
         )
         return cursor.fetchone()

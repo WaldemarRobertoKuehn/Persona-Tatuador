@@ -61,8 +61,11 @@ export default function App() {
     const perfilBase = PERFIS[usuario.papel];
 
     if (!perfilBase) {
+      // NOVO: grupos sem persona visual usam a API administrativa, não as telas React.
       throw new Error(
-        "Esta conta ainda não está associada a um perfil do sistema. Os papéis do sistema são cliente e tatuador.",
+        usuario.papel === "administrador"
+          ? "O grupo Administrador gerencia permissões pela API em /docs; ele não possui telas neste site."
+          : "Este grupo não possui telas neste site; use as rotas da API em /docs.",
       );
     }
 

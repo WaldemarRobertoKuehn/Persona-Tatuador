@@ -25,40 +25,57 @@ O serviço não levanta HTTPException, então todo o 404, 422 e 409 deste arquiv
 são escritos aqui.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from rotas.dependencias import exigir_acesso_a_tatuagem
 import servicos.passo as servico_passos
-import servicos.tatuagem as servico_tatuagens
 from esquemas.passo import PassoEntrada, PassoSaida
 from servicos.excecoes import EtapaNaoAceitaPasso, PassoDesconhecido
 
 # O prefixo é "/tatuagens/{tatuagem_id}/passos" e não só "/passos", porque o
 # histórico é sempre o de uma tatuagem. A tag é o que agrupa as duas rotas no
 # /docs, ao lado das rotas de tatuagem.
-roteador_passos = APIRouter(prefix="/tatuagens/{tatuagem_id}/passos", tags=["passos"])
+roteador_passos = APIRouter(
+    prefix="/tatuagens/{tatuagem_id}/passos",
+    tags=["passos"],
+)
 
 
+# NOVO: a dependência valida a permissão e a titularidade da tatuagem.
 @roteador_passos.get("", response_model=list[PassoSaida])
-def listar_passos(tatuagem_id: int) -> list[dict]:
+def listar_passos(
+    tatuagem_id: int,
+    tatuagem: dict = Depends(
+        exigir_acesso_a_tatuagem(
+            "passos:listar_proprios",
+            "passos:listar_todos",
+        )
+    ),
+) -> list[dict]:
     """Mostra o histórico de passos de uma tatuagem, na ordem em que entraram.
 
-    Antes de listar, confirma que a tatuagem existe. Se ela não existir, a lista
-    viria vazia e o front não distinguiria "sem passos" de "tatuagem errada", que
-    são coisas diferentes para quem está lendo um histórico.
+    A dependência de autorização confirma existência e titularidade antes da
+    consulta. Sem ela, uma lista vazia confundiria "sem passos" com "tatuagem
+    errada" e permitiria consultar dados de outro cliente.
 
     O tatuagem_id da função é o mesmo {tatuagem_id} do prefixo: o FastAPI
     preenche o parâmetro com o que veio no caminho, e ainda confere se é número.
     """
-    tatuagem = servico_tatuagens.buscar_tatuagem(tatuagem_id)
-
-    if tatuagem is None:
-        raise HTTPException(status_code=404, detail="Tatuagem não encontrada.")
-
     return servico_passos.listar_passos(tatuagem_id)
 
 
+# NOVO: registrar passos também exige permissão e titularidade no servidor.
 @roteador_passos.post("", response_model=PassoSaida, status_code=201)
-def registrar_passo(tatuagem_id: int, passo: PassoEntrada) -> dict:
+def registrar_passo(
+    tatuagem_id: int,
+    passo: PassoEntrada,
+    tatuagem: dict = Depends(
+        exigir_acesso_a_tatuagem(
+            "passos:registrar_proprio",
+            "passos:registrar_todos",
+        )
+    ),
+) -> dict:
     """Registra um passo numa tatuagem, se a regra da cartilha aceitar.
 
     O parâmetro tatuagem_id vem do caminho, e o passo vem do corpo: o corpo é só o

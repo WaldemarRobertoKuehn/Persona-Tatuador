@@ -50,6 +50,51 @@ O script pode rodar de novo sem quebrar nada: conta que já existe é pulada, e
 a senha do dono não muda, porque o hash que já estava na tabela `clientes` é
 copiado para a `usuarios`.
 
+### Criar o primeiro Administrador
+
+Depois de aplicar as migrations, rode o comando local no diretório `backend`.
+Ele cria a primeira conta no grupo Administrador e solicita a senha sem exibi-la
+nem colocá-la nos argumentos do comando:
+
+```powershell
+cd backend
+python criar_administrador.py
+```
+
+No `/docs`, execute `POST /autenticacao/login`, copie `access_token`, clique em
+**Authorize** e cole o token Bearer. A interface React não possui tela
+administrativa; a gestão é feita pela API. As rotas `/grupos` permitem consultar
+e criar grupos, atribuir permissões e trocar o grupo de usuários. A rota
+`/grupos/permissoes` lista os códigos aceitos. O último Administrador não pode
+ser rebaixado, para evitar bloquear a gestão.
+
+As permissões iniciais seguem a matriz escolhida: Cliente consulta e altera
+somente as próprias tatuagens e passos; Tatuador acessa tatuagens e passos do
+estúdio; Administrador tem acesso total e gerencia grupos. O cadastro público
+continua criando apenas contas Cliente. A titularidade também é validada no
+back, além da permissão de rota.
+
+Exemplo de configuração pelo `/docs`:
+
+1. Consulte `GET /grupos/permissoes` e `GET /grupos` para ver o catálogo e os
+   identificadores.
+2. Crie um grupo com `POST /grupos`, por exemplo:
+
+   ```json
+   {
+     "codigo": "agenda",
+     "nome": "Equipe da agenda",
+     "permissoes": ["tatuagens:listar_todas", "tatuagens:consultar_todas"]
+   }
+   ```
+3. Atribua uma conta ao novo grupo com `PUT /usuarios/{usuario_id}/grupo`,
+   enviando `{"grupo_id": 4}` com o id devolvido pela criação.
+
+Para trocar as permissões de um grupo existente, use
+`PUT /grupos/{grupo_id}/permissoes` com a lista completa nova. Permissões não
+listadas são removidas. O grupo Administrador precisa manter as permissões
+necessárias para continuar gerindo o sistema.
+
 ### Se a senha de uma conta se perdeu
 
 O hash da senha não tem volta. A senha nova é gerada por um comando, que
@@ -93,10 +138,12 @@ fastapi dev main.py
 O terminal tem que mostrar algo como `http://localhost:8000`. Para conferir se
 subiu mesmo:
 
-- `http://localhost:8000/docs` abre a documentação automática, com as cinco rotas
-  da cartilha;
-- `http://localhost:8000/tatuagens` responde com as **oito tatuagens de
-  demonstração**.
+- `http://localhost:8000/docs` abre a documentação automática, com as rotas da API;
+- o cadastro `POST /usuarios` é público e cria somente contas do grupo Cliente;
+- as rotas administrativas de grupos são acessíveis somente ao grupo Administrador;
+- `/autenticacao/login` aceita as credenciais de uma conta de demonstração e
+  devolve o token Bearer necessário para acessar as rotas de usuários, tatuagens
+  e passos.
 
 A raiz `http://localhost:8000` responde **404**, e isso é de propósito: a REGRAS
 proíbe rota no `main.py`.

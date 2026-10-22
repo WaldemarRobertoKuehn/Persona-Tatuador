@@ -44,12 +44,46 @@ class UsuarioSaida(BaseModel):
     id: int
     nome: str
     email: str | None
-    # papel é o que a pessoa é no estúdio: "cliente" ou "tatuador". É o back que
-    # decide, e a tela só obedece: por isso ele sai daqui, e não da tela.
+    # papel permanece por compatibilidade com a tela; a autorização usa o grupo
+    # persistido e as permissões que o back carrega para a conta.
     papel: str
     # cliente_id é o elo com a tabela clientes, e ele é vazio para o tatuador.
     # A tela da cliente usa esse id para filtrar as tatuagens dela.
     cliente_id: int | None = None
+    # NOVO: o código do grupo é exposto para refletir a autorização atual da conta.
+    grupo_id: int
+    grupo: str
+    permissoes: list[str] = Field(default_factory=list)
+
+
+# NOVO: esquemas das operações administrativas de grupos e associações.
+class GrupoEntrada(BaseModel):
+    """NOVO: campos para criar um grupo e selecionar permissões do catálogo."""
+
+    codigo: str = Field(min_length=2, max_length=50)
+    nome: str = Field(min_length=1, max_length=80)
+    permissoes: list[str] = Field(default_factory=list)
+
+
+class GrupoPermissoesEntrada(BaseModel):
+    """NOVO: lista completa de permissões que substituirá as atuais do grupo."""
+
+    permissoes: list[str]
+
+
+class GrupoSaida(BaseModel):
+    """NOVO: forma pública de um grupo com os códigos de permissão associados."""
+
+    id: int
+    codigo: str
+    nome: str
+    permissoes: list[str]
+
+
+class AtribuicaoGrupoEntrada(BaseModel):
+    """NOVO: grupo de destino para uma conta existente."""
+
+    grupo_id: int = Field(gt=0)
 
 
 class TokenSaida(BaseModel):

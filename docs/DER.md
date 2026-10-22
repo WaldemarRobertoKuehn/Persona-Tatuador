@@ -1,7 +1,7 @@
 # DER · Traço Fino, estúdio de tatuagem
 
-Este documento é o desenho do banco do Traço Fino: as três entidades da cartilha, a tabela da conta
-que entrou depois, o que cada coluna guarda, e o tipo e a restrição de cada uma. A fonte de verdade do
+Este documento é o desenho do banco do Traço Fino: as entidades da cartilha, a tabela da conta e as
+tabelas novas de grupos e permissões, o que cada coluna guarda, e o tipo e a restrição de cada uma. A fonte de verdade do
 que o sistema precisa fazer continua sendo `docs/CARTILHA.md`, e este arquivo não inventa coluna: ele
 registra as escolhas de tipo e restrição, que são minhas, e que eu defendo na apresentação.
 
@@ -11,18 +11,21 @@ A cartilha nomeia três entidades: o **usuário**, a **tatuagem** e o **passo**.
 se chama **cliente**, e o nome é meu: o usuário da cartilha é a pessoa que pede tatuagem, e o
 estúdio tem duas clientes, a Bruna e a Camila. Por isso a tabela é `clientes`, e não `usuarios`.
 
-A **conta que entra no sistema** mora em outra tabela, a `usuarios`. Ela veio com o login, e é o
-único acréscimo ao desenho da cartilha. A conta é a pessoa que tem senha, e o papel dela é
-`cliente` ou `tatuador`: o dono do estúdio é tatuador, e ele não é dono de tatuagem nenhuma. Com
-as duas coisas na mesma tabela, o tatuador precisaria de uma linha em `clientes` só para ter login.
+A **conta que entra no sistema** mora em outra tabela, a `usuarios`. Ela veio com o login, e guarda
+senha e associação com um grupo. Os grupos Cliente e Tatuador representam as duas personas; o grupo
+Administrador existe para gerir permissões e contas, sem cadastro público.
 
 ```
 usuarios ──0..1──1───< clientes ──1───< tatuagens ──1───< passos
+grupos ──1───< usuarios
+grupos ──1───< grupos_permissoes >───1─── permissoes
 ```
 
 | relacionamento | quem manda | o que significa |
 | --- | --- | --- |
 | `usuarios` → `clientes` | `usuarios.cliente_id` | a conta de papel "cliente" é a mesma pessoa que a cliente da cartilha; a conta de tatuador não tem cliente nenhuma |
+| `grupos` → `usuarios` | `usuarios.grupo_id` | cada conta pertence a um grupo que determina as permissões disponíveis |
+| `grupos` ↔ `permissoes` | `grupos_permissoes.grupo_id` e `permissao_id` | uma permissão pode valer para vários grupos e um grupo pode receber várias permissões |
 | `clientes` → `tatuagens` | `tatuagens.cliente_id` | uma cliente tem tatuagens; uma tatuagem pertence a exatamente uma cliente |
 | `tatuagens` → `passos` | `passos.tatuagem_id` | uma tatuagem tem passos; um passo pertence a exatamente uma tatuagem |
 
@@ -40,6 +43,9 @@ para guardar o papel.
 ```mermaid
 erDiagram
     USUARIOS ||--o| CLIENTES : "entra como"
+    GRUPOS ||--o{ USUARIOS : "autoriza"
+    GRUPOS ||--o{ GRUPOS_PERMISSOES : "recebe"
+    PERMISSOES ||--o{ GRUPOS_PERMISSOES : "concede"
     CLIENTES ||--o{ TATUAGENS : "tem"
     TATUAGENS ||--o{ PASSOS : "registra"
 
@@ -48,8 +54,26 @@ erDiagram
         VARCHAR(100) nome NOT_NULL
         VARCHAR(254) email NOT_NULL
         VARCHAR(255) senha_hash NOT_NULL
-        VARCHAR(20) papel NOT_NULL
+        VARCHAR(50) papel NOT_NULL
+        INT grupo_id FK_NOT_NULL
         INT cliente_id FK
+    }
+
+    GRUPOS {
+        INT id PK
+        VARCHAR(50) codigo UNIQUE
+        VARCHAR(80) nome UNIQUE
+    }
+
+    PERMISSOES {
+        INT id PK
+        VARCHAR(100) codigo UNIQUE
+        VARCHAR(250) descricao
+    }
+
+    GRUPOS_PERMISSOES {
+        INT grupo_id PK, FK
+        INT permissao_id PK, FK
     }
 
     CLIENTES {
@@ -83,7 +107,8 @@ erDiagram
 | `nome` | VARCHAR(100) | `NOT NULL` | o nome da pessoa |
 | `email` | VARCHAR(254) | `NOT NULL`, `UNIQUE` | o login |
 | `senha_hash` | VARCHAR(255) | `NOT NULL` | a senha guardada como hash |
-| `papel` | VARCHAR(20) | `NOT NULL` | `cliente` ou `tatuador` |
+| `papel` | VARCHAR(50) | `NOT NULL` | código do grupo, mantido por compatibilidade com o front |
+| `grupo_id` | INT | `NOT NULL`, `FOREIGN KEY` → `grupos(id)` | grupo usado pelo servidor para autorizar rotas |
 | `cliente_id` | INT | `FOREIGN KEY` → `clientes(id)` | a cliente da cartilha que é a mesma pessoa, quando a conta é de cliente |
 
 - **`email` como `VARCHAR(254)`** porque é o `max_length` do esquema Pydantic, e o 254 é o limite
@@ -92,16 +117,32 @@ erDiagram
 - **`senha_hash` como `VARCHAR(255)`** porque o hash do argon2id, com o sal e os parâmetros, tem
   esse tamanho. A senha em si nunca é gravada: o que fica no banco é o hash, e é com ele que a
   senha digitada é comparada.
-- **`papel` como `VARCHAR(20)`, e não `ENUM`.** Os dois valores (`cliente` e `tatuador`) já estão
-  escritos no serviço, e a regra de quem entra é do back, não do banco. Fica em `VARCHAR`, pelo
-  mesmo motivo que a coluna `etapa` das tatuagens: a mesma lista em dois lugares diverge no dia
-  que alguém mexer num e esquecer do outro.
+- **`papel` como `VARCHAR(50)`** mantém o código do grupo para compatibilidade com o front atual.
+  A autorização não confia nesse campo: usa `grupo_id` e as permissões relacionadas no banco.
 - **`cliente_id` com `FOREIGN KEY` e sem `NOT NULL`** porque a conta do tatuador não tem cliente
   nenhuma. A constraint se chama `fk_usuarios_cliente`, e é esse nome que o modelo declara com
   `name=`: sem ele, o Alembic não sabe qual restrição criar e não sabe desfazê-la.
 - **A conta tem o seu id, e ele não é o id da cliente.** São dois números diferentes, e quem guarda
   a ligação entre eles é a coluna `cliente_id`. Antes eles eram o mesmo número, e isso só
   funcionava porque os ids da tela estavam escritos no front.
+
+## 3.1 Grupos e permissões
+
+| tabela | coluna | tipo/restrição | uso |
+| --- | --- | --- | --- |
+| `grupos` | `id` | `PRIMARY KEY`, `AUTO_INCREMENT` | identifica o grupo |
+| `grupos` | `codigo` | `VARCHAR(50)`, `UNIQUE` | código estável lido pelo backend |
+| `grupos` | `nome` | `VARCHAR(80)`, `UNIQUE` | nome apresentado no gerenciamento |
+| `permissoes` | `id` | `PRIMARY KEY`, `AUTO_INCREMENT` | identifica uma permissão do catálogo |
+| `permissoes` | `codigo` | `VARCHAR(100)`, `UNIQUE` | chave reconhecida pelas rotas |
+| `permissoes` | `descricao` | `VARCHAR(250)` | descrição legível da permissão |
+| `grupos_permissoes` | `grupo_id`, `permissao_id` | chave primária composta e `FOREIGN KEY`s | associação muitos-para-muitos |
+
+A migration `20261021_01` cria os grupos iniciais Cliente, Tatuador e Administrador, registra o
+catálogo de permissões e associa as permissões iniciais escolhidas. O Administrador pode criar novos
+grupos, atualizar permissões e mudar o grupo de uma conta pela API. As rotas consultam as permissões
+no banco em cada requisição, então uma alteração vale imediatamente; nenhuma permissão é confiada
+ao conteúdo do JWT. A API impede remover a última conta Administrador.
 
 ## 4. clientes
 
@@ -182,13 +223,14 @@ erDiagram
 
 | neste DER | no código |
 | --- | --- |
-| as quatro tabelas e colunas | `backend/modelos/cliente.py`, `usuario.py`, `tatuagem.py` e `passo.py`, uma classe por tabela |
+| as tabelas e colunas | `backend/modelos/cliente.py`, `usuario.py`, `grupo.py`, `tatuagem.py` e `passo.py` |
 | a criação das tabelas | `backend/criar_tabelas.py`, com `Base.metadata.create_all(engine)` |
 | a conexão e a sessão | `backend/banco.py`, com `engine`, `Sessao`, `Base` e `obter_sessao` |
-| as três chaves estrangeiras | `ForeignKey(..., name="fk_...")` no modelo filha e `relationship` no modelo da tatuagem |
+| as chaves estrangeiras | `ForeignKey(..., name="fk_...")` em cada modelo dependente |
 | a mudança deste desenho depois que o banco já existe | `backend/migracoes/versions/`, uma migration por mudança, gerada pelo Alembic |
 | a regra da etapa | `backend/servicos/passo.py`, e não uma coluna do banco |
 | as contas de demonstração | `backend/criar_contas_de_demonstracao.py`, que chama o serviço |
+| o primeiro Administrador | `backend/criar_administrador.py`, com solicitação local de credenciais |
 
 O `create_all` só cria a tabela que ainda não existe: tabela que já existe, ele não toca. Por isso
 mudança neste desenho, depois que o banco tem dado de alguém, é migration e não `ALTER TABLE`

@@ -1,11 +1,12 @@
 """Regras de cadastro, busca e validação de contas de usuário."""
 
 import repositorios.cliente as repositorio_clientes
+import repositorios.grupo as repositorio_grupos
 import repositorios.usuario as repositorio_usuarios
 import seguranca
 
-# Os dois papéis que existem no sistema. O papel é a decisão que muda o que a
-# pessoa vê depois de entrar, e ele fica no banco, e não na tela.
+# Os códigos iniciais dos dois grupos de persona. A permissão efetiva vem agora
+# do vínculo de grupo e do catálogo administrável, não apenas destes códigos.
 PAPEL_CLIENTE = "cliente"
 PAPEL_TATUADOR = "tatuador"
 
@@ -13,12 +14,10 @@ PAPEL_TATUADOR = "tatuador"
 def cadastrar(dados: dict) -> dict | None:
     """Cria uma conta ou devolve None quando o email já está cadastrado.
 
-    Quem se cadastra pelo formulário público entra como cliente, porque quem
-    pede tatuagem no estúdio é cliente. O papel "tatuador" é do dono e dos
-    tatuadores do estúdio, e quem cria essa conta é o próprio estúdio, não a
-    tela de cadastro.
+    Quem se cadastra pelo formulário público entra no grupo cliente. Os outros
+    grupos são atribuídos pelo Administrador ou por scripts locais confiáveis.
 
-    A conta de papel "cliente" fica ligada a uma linha da tabela clientes, e é
+    A conta do grupo "cliente" fica ligada a uma linha da tabela clientes, e é
     essa ligação que faz "minhas tatuagens" filtrar por cliente_id. Quando a
     pessoa ainda não é cliente do estúdio, o serviço cria a linha dela aqui, em
     um commit só: ou os dois nascem, ou nenhum dos dois nasce.
@@ -29,14 +28,21 @@ def cadastrar(dados: dict) -> dict | None:
     senha_hash = seguranca.gerar_hash(dados["senha"])
     nome = dados["nome"].strip()
     papel = dados.get("papel", PAPEL_CLIENTE)
+    # NOVO: cada usuário é vinculado a um grupo existente, nunca a permissões
+    # enviadas pela tela de cadastro.
+    grupo = repositorio_grupos.buscar_grupo_por_codigo(papel)
+    if grupo is None:
+        raise ValueError("O grupo informado não existe.")
     cliente_id = dados.get("cliente_id")
 
-    if papel == PAPEL_CLIENTE and cliente_id is None:
+    if grupo["codigo"] == PAPEL_CLIENTE and cliente_id is None:
         cliente_id = repositorio_clientes.criar_cliente(nome)
+    if grupo["codigo"] != PAPEL_CLIENTE:
+        cliente_id = None
 
     try:
         return repositorio_usuarios.criar_usuario(
-            nome, email, senha_hash, papel, cliente_id
+            nome, email, senha_hash, grupo["codigo"], cliente_id, grupo["id"]
         )
     except Exception as erro:
         # Trata a corrida em que duas requisições tentam cadastrar o mesmo email.
@@ -56,7 +62,14 @@ def autenticar(email: str, senha: str) -> dict | None:
 
 
 def buscar_por_id(usuario_id: int) -> dict | None:
-    return repositorio_usuarios.buscar_usuario_por_id(usuario_id)
+    usuario = repositorio_usuarios.buscar_usuario_por_id(usuario_id)
+    if usuario is not None:
+        # NOVO: permissões são lidas do banco em toda requisição para que uma
+        # alteração administrativa tenha efeito imediato, sem esperar o JWT vencer.
+        usuario["permissoes"] = repositorio_grupos.listar_permissoes_do_usuario(
+            usuario_id
+        )
+    return usuario
 
 
 def trocar_senha(email: str, senha_nova: str) -> bool:
@@ -96,12 +109,18 @@ def mover_conta(cliente_id: int, papel: str) -> dict | None:
     if repositorio_usuarios.buscar_por_email(acesso["email"]) is not None:
         return None
 
+    grupo = repositorio_grupos.buscar_grupo_por_codigo(papel)
+    if grupo is None:
+        raise ValueError("O grupo informado não existe.")
+    # NOVO: a migração provisiona os grupos de persona; a conta antiga passa a
+    # carregar também o identificador do grupo correspondente.
     conta = repositorio_usuarios.criar_usuario(
         acesso["nome"],
         acesso["email"],
         acesso["senha_hash"],
-        papel,
+        grupo["codigo"],
         cliente_id if papel == PAPEL_CLIENTE else None,
+        grupo["id"],
     )
     repositorio_clientes.esvaziar_acesso(cliente_id)
 

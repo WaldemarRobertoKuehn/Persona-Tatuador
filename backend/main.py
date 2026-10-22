@@ -12,10 +12,12 @@ from fastapi.middleware.cors import CORSMiddleware
 # do arquivo, sem puxar para dentro dela nenhuma função solta.
 import configuracao
 
-# Os dois routers são importados pelo módulo. O main não sabe o que tem dentro de
-# nenhum dos dois: ele só os liga no app.
+# NOVO: os routers são importados sem trazer as funções de rota para este módulo;
+# o main continua apenas conectando cada recurso à aplicação.
 from rotas import passos as rotas_passos
 from rotas import autenticacao as rotas_autenticacao
+# NOVO: o router de grupos oferece gestão administrativa de permissões.
+from rotas import grupos as rotas_grupos
 from rotas import tatuagens as rotas_tatuagens
 from rotas import usuarios as rotas_usuarios
 
@@ -27,21 +29,22 @@ app = FastAPI(title="Traço Fino", version="0.1.0")
 # que roda em outro. Sem ele, o navegador bloqueia a chamada.
 # allow_origins recebe uma lista, e não a string "*": a regra do projeto exige o
 # endereço exato do meu front, e esse endereço vem da configuração, nunca do código.
-# allow_methods fica só com GET e POST porque são os únicos verbos que a cartilha
-# pede. Se entrar rota com outro verbo, é só acrescentar o nome nesta lista.
+# NOVO: PUT é necessário para atribuir usuários a grupos e alterar permissões.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[configuracao.endereco_do_front()],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT"],
     allow_headers=["*"],
 )
 
 # include_router é quem pendura as rotas do projeto dentro do app. Um include por
 # arquivo de backend/rotas/, e o prefixo de cada uma já está no próprio router.
-# Depois destas duas linhas, as cinco capacidades da cartilha estão no ar, e o
-# main continua sem nenhuma rota em si: ele só amarra as peças.
+# Cada include registra um recurso; as rotas administrativas continuam nos
+# próprios módulos e o main não declara nenhuma rota.
 app.include_router(rotas_tatuagens.roteador_tatuagens)
 app.include_router(rotas_passos.roteador_passos)
 app.include_router(rotas_usuarios.roteador_usuarios)
 app.include_router(rotas_autenticacao.roteador_autenticacao)
+# NOVO: endpoint administrativo de grupos e permissões.
+app.include_router(rotas_grupos.roteador_grupos)

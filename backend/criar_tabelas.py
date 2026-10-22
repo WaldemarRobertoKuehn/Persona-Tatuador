@@ -14,7 +14,7 @@ from banco import Base, engine
 # vaidade: é ele que registra cada tabela na Base.metadata, e é dessa metadata
 # que o create_all abaixo lê o desenho. Sem os imports, a metadata chegaria
 # vazia e nenhuma tabela seria criada.
-from modelos import cliente, passo, tatuagem, usuario
+from modelos import cliente, grupo, passo, tatuagem, usuario
 
 # create_all cria só as tabelas que ainda não existem: as que já existem ele não
 # toca. É o que faz deste arquivo o caminho do banco vazio, e do Alembic o
