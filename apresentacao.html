@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Apresentação do projeto Traço Fino: personas, interface, identidade visual e regras de negócio."
+    />
+    <title>Traço Fino — apresentação do projeto</title>
+    <style>
+      @font-face {
+        font-family: "Playfair Display";
+        src: url("frontend/src/fontes/playfair-display.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+      }
+
+      :root {
+        color-scheme: dark;
+        --ink: #f4f4f5;
+        --muted: #a1a1aa;
+        --canvas: #111111;
+        --panel: #1c1c1f;
+        --line: #34343a;
+        --accent: #c2410c;
+        --accent-light: #fb923c;
+        --serif: "Playfair Display", Georgia, serif;
+        --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: clamp(16px, 1.3vw, 20px);
+        line-height: 1.45;
+      }
+
+      button {
+        color: inherit;
+        font: inherit;
+      }
+
+      .apresentacao {
+        min-height: 100svh;
+        display: grid;
+        grid-template-rows: 4px 1fr auto;
+      }
+
+      .trilho {
+        background: var(--line);
+      }
+
+      .progresso {
+        width: 10%;
+        height: 100%;
+        background: var(--accent);
+        transition: width 220ms ease;
+      }
+
+      .palco {
+        display: grid;
+        place-items: center;
+        min-height: 0;
+        padding: clamp(20px, 4vw, 58px);
+      }
+
+      .slide {
+        display: none;
+        width: min(100%, 1200px);
+        min-height: min(720px, calc(100svh - 120px));
+        aspect-ratio: 16 / 9;
+        position: relative;
+        overflow: hidden;
+        padding: clamp(28px, 4vw, 58px);
+        border: 1px solid #29292e;
+        border-radius: 12px;
+        background:
+          radial-gradient(ellipse at 100% 0%, rgba(194, 65, 12, 0.11), transparent 34%),
+          var(--canvas);
+        box-shadow: 0 22px 80px rgba(0, 0, 0, 0.34);
+      }
+
+      .slide.ativo {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        animation: entrar 240ms ease-out;
+      }
+
+      @keyframes entrar {
+        from {
+          opacity: 0.45;
+          transform: translateY(7px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .sobrelinha,
+      .rotulo {
+        color: var(--accent-light);
+        font-size: 0.66em;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: var(--serif);
+        font-weight: 600;
+        line-height: 1.12;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin-bottom: 0.28em;
+        font-size: clamp(2.8rem, 7vw, 6.6rem);
+        letter-spacing: -0.045em;
+      }
+
+      h2 {
+        max-width: 880px;
+        margin-bottom: 0.4em;
+        font-size: clamp(2rem, 3.7vw, 3.45rem);
+        letter-spacing: -0.035em;
+      }
+
+      h3 {
+        margin-bottom: 0.35em;
+        font-size: clamp(1.15rem, 1.9vw, 1.7rem);
+      }
+
+      p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .abertura {
+        justify-content: space-between !important;
+        background:
+          linear-gradient(90deg, rgba(17, 17, 17, 0.98) 0%, rgba(17, 17, 17, 0.8) 55%, rgba(17, 17, 17, 0.3) 100%),
+          url("frontend/src/imagens/foto-atelie.jpg") center / cover,
+          var(--canvas);
+      }
+
+      .abertura .marca {
+        width: min(250px, 46vw);
+        margin-bottom: clamp(18px, 4vh, 38px);
+      }
+
+      .abertura h1 {
+        max-width: 700px;
+        font-size: clamp(2.6rem, 5vw, 5rem);
+      }
+
+      .abertura .subtitulo {
+        max-width: 690px;
+        margin-bottom: 0;
+        color: #e4e4e7;
+        font-size: clamp(1.08rem, 2vw, 1.55rem);
+      }
+
+      .abertura .rodape-capa {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 20px;
+        margin-top: 18px;
+        color: #d4d4d8;
+        font-size: 0.75em;
+      }
+
+      .grande {
+        max-width: 950px;
+        color: var(--ink);
+        font-size: clamp(1.4rem, 2.6vw, 2.65rem);
+        line-height: 1.24;
+      }
+
+      .grade {
+        display: grid;
+        gap: clamp(14px, 2vw, 24px);
+      }
+
+      .grade.dois {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grade.tres {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .cartao {
+        padding: clamp(17px, 2.3vw, 29px);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .cartao p:last-child,
+      .cartao ul:last-child {
+        margin-bottom: 0;
+      }
+
+      .numero {
+        display: inline-grid;
+        width: 2em;
+        height: 2em;
+        place-items: center;
+        margin-bottom: 1em;
+        border: 1px solid #7c2d12;
+        border-radius: 50%;
+        color: var(--accent-light);
+        font-weight: 700;
+      }
+
+      .lista-limpa {
+        display: grid;
+        gap: 0.7em;
+        margin: 0;
+        padding: 0;
+        color: var(--muted);
+        list-style: none;
+      }
+
+      .lista-limpa li {
+        position: relative;
+        padding-left: 1.2em;
+      }
+
+      .lista-limpa li::before {
+        position: absolute;
+        left: 0;
+        color: var(--accent-light);
+        content: "—";
+      }
+
+      .perfil {
+        display: grid;
+        grid-template-columns: minmax(0, 0.83fr) minmax(0, 1.17fr);
+        align-items: center;
+        gap: clamp(25px, 5vw, 70px);
+      }
+
+      .perfil.vitor {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      }
+
+      .retrato {
+        width: 100%;
+        max-height: 460px;
+        aspect-ratio: 4 / 5;
+        border-radius: 8px;
+        object-fit: cover;
+        filter: saturate(0.78);
+      }
+
+      .perfil .retrato {
+        max-height: 350px;
+        aspect-ratio: 4 / 3;
+      }
+
+      .perfil .dados {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .perfil .fato {
+        padding: 15px 18px;
+        border-left: 2px solid var(--accent);
+        background: var(--panel);
+      }
+
+      .fato strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--ink);
+      }
+
+      .fato span {
+        color: var(--muted);
+        font-size: 0.88em;
+      }
+
+      .dispositivos {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 12px;
+        padding: 6px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.75em;
+      }
+
+      .etapas {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 22px 0 28px;
+      }
+
+      .etapa {
+        min-height: 106px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #26262b;
+        color: var(--ink);
+      }
+
+      .etapa.aprovada {
+        background: #34343a;
+      }
+
+      .etapa.sessao {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: white;
+      }
+
+      .etapa.finalizada {
+        background: #f4f4f5;
+        color: #111111;
+      }
+
+      .etapa small {
+        opacity: 0.72;
+        font-size: 0.63em;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .etapa strong {
+        font-size: 0.94em;
+      }
+
+      .fluxo {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+        align-items: center;
+        gap: 9px;
+        margin: 22px 0;
+      }
+
+      .passo {
+        min-height: 84px;
+        display: grid;
+        place-items: center;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        text-align: center;
+        font-size: 0.83em;
+        font-weight: 650;
+      }
+
+      .seta {
+        color: var(--accent-light);
+        font-size: 1.3em;
+      }
+
+      .regra-extra {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .regra-extra p {
+        margin: 0;
+        padding: 13px 16px;
+        border: 1px solid #7c2d12;
+        border-radius: 8px;
+        color: #fed7aa;
+        font-size: 0.82em;
+      }
+
+      .loop {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+        margin: -7px 0 16px;
+        color: var(--muted);
+        font-size: 0.76em;
+      }
+
+      .loop b {
+        color: var(--accent-light);
+        font-size: 1.5em;
+      }
+
+      .amostras {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin: 24px 0;
+      }
+
+      .amostra {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .cor {
+        height: clamp(45px, 7vw, 82px);
+      }
+
+      .legenda-cor {
+        padding: 10px;
+        color: var(--muted);
+        font-size: 0.66em;
+        line-height: 1.4;
+      }
+
+      .legenda-cor strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--ink);
+      }
+
+      .mini-linha {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: clamp(18px, 3vw, 38px);
+        align-items: stretch;
+      }
+
+      .tipografia {
+        display: grid;
+        align-content: center;
+        gap: 14px;
+      }
+
+      .tipo-exemplo {
+        color: var(--ink);
+        font-family: var(--serif);
+        font-size: clamp(2rem, 4vw, 3.8rem);
+        line-height: 1.1;
+      }
+
+      .contraste {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        margin-top: 14px;
+        padding: 15px 17px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .contraste strong {
+        color: var(--accent-light);
+        font-size: 1.2em;
+        white-space: nowrap;
+      }
+
+      .camadas {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        align-items: stretch;
+        margin: 20px 0 24px;
+      }
+
+      .camada {
+        position: relative;
+        padding: 18px 16px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .camada:first-child {
+        border-radius: 8px 0 0 8px;
+      }
+
+      .camada:last-child {
+        border-radius: 0 8px 8px 0;
+      }
+
+      .camada strong {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--ink);
+      }
+
+      .camada span {
+        color: var(--muted);
+        font-size: 0.75em;
+      }
+
+      .fecho {
+        display: grid;
+        grid-template-columns: 1fr minmax(200px, 0.55fr);
+        align-items: center;
+        gap: 40px;
+      }
+
+      .fecho img {
+        width: 100%;
+        max-height: 380px;
+        aspect-ratio: 4 / 3;
+        border-radius: 8px;
+        object-fit: cover;
+        filter: saturate(0.72);
+      }
+
+      .notas {
+        display: none;
+        position: absolute;
+        z-index: 3;
+        right: 18px;
+        bottom: 18px;
+        left: 18px;
+        max-height: 40%;
+        overflow: auto;
+        padding: 16px 20px;
+        border: 1px solid #7c2d12;
+        border-radius: 8px;
+        background: #19110e;
+        color: #ffedd5;
+        font-size: 0.68em;
+        line-height: 1.45;
+      }
+
+      .notas h3 {
+        margin-bottom: 7px;
+        color: var(--accent-light);
+        font-family: var(--sans);
+        font-size: 1em;
+      }
+
+      .notas p {
+        margin: 0;
+        color: #ffedd5;
+      }
+
+      .mostrar-notas .slide.ativo .notas {
+        display: block;
+      }
+
+      .controles {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        padding: 12px clamp(16px, 4vw, 56px) 18px;
+        color: var(--muted);
+        font-size: 0.72em;
+      }
+
+      .acoes {
+        display: flex;
+        gap: 8px;
+      }
+
+      .controle {
+        min-height: 40px;
+        padding: 7px 13px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        cursor: pointer;
+      }
+
+      .controle:hover,
+      .controle:focus-visible {
+        border-color: var(--accent-light);
+        outline: 2px solid transparent;
+      }
+
+      .atalhos {
+        text-align: center;
+      }
+
+      kbd {
+        padding: 2px 5px;
+        border: 1px solid #52525b;
+        border-radius: 4px;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      @media (max-width: 760px) {
+        .palco {
+          padding: 10px;
+        }
+
+        .slide {
+          min-height: calc(100svh - 95px);
+          aspect-ratio: auto;
+          padding: 27px 22px;
+        }
+
+        .grade.tres {
+          grid-template-columns: 1fr;
+        }
+
+        .grade.tres .cartao {
+          padding: 14px 16px;
+        }
+
+        .grade.tres .numero {
+          float: left;
+          width: 1.6em;
+          height: 1.6em;
+          margin: 0 12px 0 0;
+        }
+
+        .perfil,
+        .mini-linha,
+        .fecho {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+
+        .perfil.vitor {
+          grid-template-columns: 1fr;
+        }
+
+        .perfil .retrato {
+          max-height: 185px;
+          aspect-ratio: 16 / 6;
+          object-position: center 35%;
+        }
+
+        .etapas {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          margin: 12px 0;
+        }
+
+        .etapa {
+          min-height: 75px;
+          padding: 10px;
+        }
+
+        .fluxo {
+          grid-template-columns: 1fr;
+          gap: 5px;
+          margin: 10px 0;
+        }
+
+        .passo {
+          min-height: 43px;
+        }
+
+        .seta {
+          transform: rotate(90deg);
+          text-align: center;
+          line-height: 1;
+        }
+
+        .loop {
+          margin: 0 0 8px;
+        }
+
+        .amostras {
+          gap: 7px;
+          margin: 12px 0;
+        }
+
+        .legenda-cor {
+          padding: 6px;
+          font-size: 0.58em;
+        }
+
+        .regra-extra,
+        .grade.dois {
+          grid-template-columns: 1fr;
+        }
+
+        .camadas {
+          grid-template-columns: 1fr;
+          gap: 6px;
+          margin: 12px 0;
+        }
+
+        .camada,
+        .camada:first-child,
+        .camada:last-child {
+          border-radius: 6px;
+        }
+
+        .camada {
+          padding: 10px 13px;
+        }
+
+        .camada strong {
+          display: inline;
+          margin-right: 8px;
+        }
+
+        .fecho img {
+          max-height: 180px;
+          aspect-ratio: 16 / 6;
+        }
+
+        .controles {
+          flex-wrap: wrap;
+          justify-content: center;
+          padding-top: 8px;
+        }
+
+        .atalhos {
+          display: none;
+        }
+      }
+
+      @media print {
+        @page {
+          size: 13.333in 7.5in;
+          margin: 0;
+        }
+
+        body {
+          background: var(--canvas);
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .apresentacao {
+          display: block;
+        }
+
+        .trilho,
+        .controles {
+          display: none !important;
+        }
+
+        .palco {
+          display: block;
+          padding: 0;
+        }
+
+        .slide,
+        .slide.ativo {
+          display: flex !important;
+          width: 13.333in;
+          height: 7.5in;
+          min-height: 0;
+          aspect-ratio: 16 / 9;
+          padding: 0.65in;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          page-break-after: always;
+          break-after: page;
+          animation: none;
+        }
+
+        .notas {
+          display: none !important;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="apresentacao" aria-label="Apresentação do projeto Traço Fino">
+      <div class="trilho" aria-hidden="true"><div class="progresso"></div></div>
+      <div class="palco">
+        <section class="slide abertura ativo" aria-labelledby="titulo-capa">
+          <div>
+            <img class="marca" src="docs/marca/logo-escuro.svg" alt="Traço Fino" />
+            <p class="sobrelinha">Projeto de produto · estúdio de tatuagem</p>
+            <h1 id="titulo-capa">Acompanhar cada traço. Do pedido ao retoque.</h1>
+            <p class="subtitulo">
+              Uma experiência para a cliente Bruna e para o tatuador Vitor — com
+              etapas claras, histórico e regras que protegem o processo.
+            </p>
+          </div>
+          <div class="rodape-capa">
+            <span>Apresentação do projeto Traço Fino</span>
+            <span>~10 minutos · 10 slides</span>
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 45 segundos</h3>
+            <p>
+              Apresente o Traço Fino como um sistema para um estúdio pequeno,
+              não como um catálogo de tatuagens. A proposta organiza a jornada
+              de uma tatuagem desde o pedido até o retoque. A história é contada
+              por duas perspectivas complementares: Bruna, a cliente que quer
+              tranquilidade e visibilidade, e Vitor, o tatuador que precisa
+              organizar e registrar o trabalho. Antecipe que as escolhas das
+              telas, da paleta e das regras de negócio foram feitas para
+              responder a essas necessidades.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-dor">
+          <p class="sobrelinha">01 · O problema</p>
+          <h2 id="titulo-dor">A jornada se perde quando tudo fica nas mensagens.</h2>
+          <p class="grande">
+            Cada tatuagem é um compromisso que dura mais de um dia. A conversa
+            sozinha não é um bom lugar para controlar o que já aconteceu.
+          </p>
+          <div class="grade tres" style="margin-top: 24px">
+            <article class="cartao">
+              <span class="numero">1</span>
+              <h3>Etapa incerta</h3>
+              <p>Cliente e estúdio precisam perguntar ou procurar para saber onde o trabalho está.</p>
+            </article>
+            <article class="cartao">
+              <span class="numero">2</span>
+              <h3>Histórico disperso</h3>
+              <p>Aprovação, datas e observações ficam espalhadas entre conversas e memória.</p>
+            </article>
+            <article class="cartao">
+              <span class="numero">3</span>
+              <h3>Agenda sem visão</h3>
+              <p>É difícil perceber rapidamente quais tatuagens esperam o próximo passo.</p>
+            </article>
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 1 minuto</h3>
+            <p>
+              O ponto de partida é um estúdio pequeno, com dois tatuadores,
+              onde o processo hoje se apoia em conversas de mensagem. Isso
+              torna três perguntas difíceis de responder: em que etapa está
+              cada cliente, o que aconteceu na sessão anterior e qual trabalho
+              está esperando atenção. A dor não é simplesmente falta de uma
+              agenda com horários. É a ausência de um histórico de trabalho
+              organizado por tatuagem. Isso gera retrabalho para o tatuador e
+              incerteza para a pessoa que está esperando. O projeto transforma
+              esse fluxo disperso em registros que podem ser consultados.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-bruna">
+          <p class="sobrelinha">02 · Persona cliente</p>
+          <div class="perfil">
+            <img class="retrato" src="frontend/src/imagens/foto-bruna.jpg" alt="Retrato de Bruna" />
+            <div>
+              <h2 id="titulo-bruna">Bruna quer saber o que vem depois.</h2>
+              <p>
+                27 anos, designer, vai fazer sua primeira tatuagem grande.
+                Usa o sistema principalmente pelo celular.
+              </p>
+              <div class="dados">
+                <div class="fato">
+                  <strong>Expressar a ideia sem jargão</strong>
+                  <span>Descreve o desenho, a região do corpo e o tamanho estimado.</span>
+                </div>
+                <div class="fato">
+                  <strong>Acompanhar sem precisar cobrar</strong>
+                  <span>Consulta a etapa atual e entende o que já aconteceu.</span>
+                </div>
+                <div class="fato">
+                  <strong>Rever o histórico</strong>
+                  <span>Encontra os registros associados à tatuagem, no mesmo lugar.</span>
+                </div>
+              </div>
+              <span class="dispositivos">Prioridade de uso · celular</span>
+            </div>
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 1 minuto</h3>
+            <p>
+              Bruna representa a experiência da cliente: tem 27 anos, trabalha
+              como designer e vai fazer uma primeira tatuagem de grande porte.
+              Como não conhece necessariamente os termos técnicos do estúdio,
+              o sistema deve falar uma linguagem cotidiana. O pedido começa
+              com três informações concretas: a ideia, o local do corpo e o
+              tamanho. Depois, ela precisa descobrir por conta própria o estado
+              do processo e consultar o que já foi feito. O celular é a
+              prioridade porque é onde essa interação precisa ser mais
+              confortável; a informação principal, a etapa, não deve ficar
+              escondida atrás de uma conversa ou de um contato com o estúdio.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-vitor">
+          <p class="sobrelinha">03 · Persona tatuador</p>
+          <div class="perfil vitor">
+            <div>
+              <h2 id="titulo-vitor">Vitor precisa bater o olho e saber o que fazer.</h2>
+              <p>
+                Tatuador e dono do estúdio, organiza a agenda entre uma sessão
+                e outra. Usa o sistema principalmente no computador.
+              </p>
+              <div class="dados">
+                <div class="fato">
+                  <strong>Separar por etapa</strong>
+                  <span>Filtra a agenda para localizar os trabalhos que aguardam ação.</span>
+                </div>
+                <div class="fato">
+                  <strong>Registrar o que aconteceu</strong>
+                  <span>Anota desenho aprovado, sessão ou retoque com data e observação.</span>
+                </div>
+                <div class="fato">
+                  <strong>Confiar na atualização</strong>
+                  <span>Confere a etapa nova ou recebe o motivo quando uma ação não é aceita.</span>
+                </div>
+              </div>
+              <span class="dispositivos">Prioridade de uso · computador</span>
+            </div>
+            <img class="retrato" src="frontend/src/imagens/foto-vitor.jpg" alt="Retrato de Vitor" />
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 1 minuto</h3>
+            <p>
+              Vitor é quem administra a rotina do estúdio enquanto também
+              atende e tatua. O desafio dele é operacional: conseguir localizar
+              os trabalhos que precisam de um próximo passo e registrar o
+              atendimento sem gastar tempo procurando dados antigos. Por isso,
+              a agenda prioriza leitura rápida e filtro por etapa. Ao abrir uma
+              ficha, ele vê o contexto da tatuagem e o histórico, registra o
+              que aconteceu e recebe uma confirmação com a etapa atualizada.
+              Para ele, uma tentativa recusada também precisa ser explicada:
+              um botão que simplesmente falha não ajuda a organizar o trabalho.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-telas">
+          <p class="sobrelinha">04 · Jornada e telas</p>
+          <h2 id="titulo-telas">Duas rotinas, um processo compartilhado.</h2>
+          <div class="etapas" aria-label="Etapas do trabalho">
+            <div class="etapa"><small>Bruna · celular</small><strong>Pedir tatuagem</strong></div>
+            <div class="etapa aprovada"><small>Vitor · computador</small><strong>Aprovar desenho</strong></div>
+            <div class="etapa sessao"><small>Vitor · computador</small><strong>Conduzir sessões</strong></div>
+            <div class="etapa finalizada"><small>Bruna + Vitor</small><strong>Consultar histórico</strong></div>
+          </div>
+          <div class="grade dois">
+            <article class="cartao">
+              <p class="rotulo">Cliente</p>
+              <h3>Pedir · Minhas tatuagens</h3>
+              <p>Formulário simples; cartões mostram etapa e permitem abrir a linha do tempo.</p>
+            </article>
+            <article class="cartao">
+              <p class="rotulo">Estúdio</p>
+              <h3>Agenda · Ficha</h3>
+              <p>Filtro por etapa; ficha reúne dados, passos e registro da próxima ação.</p>
+            </article>
+          </div>
+          <p style="margin: 18px 0 0; font-size: 0.82em">
+            Mobile-first para as telas da cliente, visão ampla para a gestão — todas continuam responsivas.
+          </p>
+          <aside class="notas">
+            <h3>Roteiro · 55 segundos</h3>
+            <p>
+              As quatro telas espelham as tarefas reais, em vez de dividir o
+              sistema por áreas técnicas. Para Bruna há uma tela de pedido e
+              outra para acompanhar as tatuagens e abrir o histórico. Para
+              Vitor há uma agenda com filtro por etapa e uma ficha de trabalho
+              para registrar cada passo. A distribuição respeita o dispositivo
+              prioritário de cada perfil: formulário e acompanhamento são
+              desenhados primeiro para o celular; lista e ficha aproveitam o
+              espaço do computador. Mas isso é prioridade de projeto, não
+              bloqueio: todas as telas seguem responsivas e podem ser usadas
+              em tamanhos diferentes.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-cores">
+          <p class="sobrelinha">05 · Identidade visual</p>
+          <h2 id="titulo-cores">Só um acento. O foco continua no trabalho.</h2>
+          <div class="amostras" aria-label="Paleta de cores do sistema">
+            <div class="amostra">
+              <div class="cor" style="background: #111111"></div>
+              <div class="legenda-cor"><strong>Preto</strong>#111111 · texto e concluído</div>
+            </div>
+            <div class="amostra">
+              <div class="cor" style="background: #ffffff"></div>
+              <div class="legenda-cor"><strong>Branco</strong>#FFFFFF · respiro e contraste</div>
+            </div>
+            <div class="amostra">
+              <div class="cor" style="background: #f4f4f5"></div>
+              <div class="legenda-cor"><strong>Superfície</strong>#F4F4F5 · cartões e espera</div>
+            </div>
+            <div class="amostra">
+              <div class="cor" style="background: #e4e4e7"></div>
+              <div class="legenda-cor"><strong>Borda</strong>#E4E4E7 · estrutura discreta</div>
+            </div>
+            <div class="amostra">
+              <div class="cor" style="background: #c2410c"></div>
+              <div class="legenda-cor"><strong>Terracota</strong>#C2410C · ação e destaque</div>
+            </div>
+          </div>
+          <div class="mini-linha">
+            <div class="tipografia">
+              <span class="tipo-exemplo">Traço Fino</span>
+              <p style="margin: 0">Playfair Display nos títulos; fonte sem serifa do sistema para leitura e controles.</p>
+            </div>
+            <article class="cartao">
+              <p class="rotulo">Decisão de marca</p>
+              <h3>Serifa com propósito, não decoração.</h3>
+              <p>O contraste entre traços da fonte conversa com o nome. Uma única cor de acento mantém a interface calma e reconhecível.</p>
+            </article>
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 1 minuto e 5 segundos</h3>
+            <p>
+              A identidade visual parte de uma base neutra: preto, branco e
+              tons de cinza para organizar conteúdo sem competir com as
+              tatuagens ou com a etapa. A única cor de destaque é a terracota,
+              usada com intenção, como no botão principal e na etapa que
+              demanda atenção. Não se espalha o laranja pela tela inteira,
+              porque isso apagaria a hierarquia. A Playfair Display aparece no
+              logotipo e nos títulos: sua alternância entre traços finos e
+              grossos faz referência ao traço, sem recorrer a clichês visuais.
+              A fonte do sistema fica nos textos e controles por ser familiar
+              e legível. No tema escuro, a mesma identidade continua, adaptada
+              para manter o contraste.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-estados">
+          <p class="sobrelinha">06 · Hierarquia e acessibilidade</p>
+          <h2 id="titulo-estados">A etapa é visível — pela cor e pelo nome.</h2>
+          <div class="etapas">
+            <div class="etapa"><small>Neutra · aguardando</small><strong>Pedida</strong></div>
+            <div class="etapa aprovada"><small>Preparação</small><strong>Desenho aprovado</strong></div>
+            <div class="etapa sessao"><small>Destaque · em ação</small><strong>Em sessões</strong></div>
+            <div class="etapa finalizada"><small>Concluída</small><strong>Finalizada</strong></div>
+          </div>
+          <div class="contraste">
+            <div>
+              <strong>Um estado não depende apenas da cor.</strong>
+              <p style="margin: 4px 0 0">Cada etiqueta traz o nome da etapa; o tema escuro também respeita os contrastes.</p>
+            </div>
+            <strong>5,18:1</strong>
+          </div>
+          <p style="margin: 10px 0 0; text-align: right; font-size: 0.68em">
+            Contraste de texto branco sobre o acento · acima do mínimo WCAG AA para texto normal (4,5:1).
+          </p>
+          <aside class="notas">
+            <h3>Roteiro · 50 segundos</h3>
+            <p>
+              A cor também explica o fluxo. Tons neutros indicam uma tatuagem
+              que ainda espera, o laranja marca o trabalho em sessões, e o tom
+              escuro sólido representa algo concluído. Isso não significa que
+              o usuário precise decorar a paleta: a etiqueta sempre escreve o
+              nome completo da etapa. O tema escuro não é uma inversão
+              automática; os valores são escolhidos para que texto e
+              superfícies continuem distinguíveis. Um exemplo verificável é o
+              contraste de 5,18 para 1 entre o texto branco e o terracota do
+              botão, que supera a referência WCAG AA de 4,5 para 1 para texto
+              normal. A hierarquia visual e a informação textual trabalham juntas.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-regra">
+          <p class="sobrelinha">07 · Regra de negócio</p>
+          <h2 id="titulo-regra">A sequência evita registrar um passo fora de hora.</h2>
+          <div class="fluxo" aria-label="Pedida, desenho aprovado, sessões, finalizada">
+            <div class="passo">Pedida</div><span class="seta" aria-hidden="true">→</span>
+            <div class="passo">Desenho aprovado</div><span class="seta" aria-hidden="true">→</span>
+            <div class="passo">Em sessões</div><span class="seta" aria-hidden="true">→</span>
+            <div class="passo">Finalizada</div>
+          </div>
+          <div class="loop"><b>↺</b> Sessão pode se repetir antes do retoque.</div>
+          <div class="regra-extra">
+            <p><strong>Recusa:</strong> sessão antes da aprovação do desenho.</p>
+            <p><strong>Recusa:</strong> retoque antes de ao menos uma sessão.</p>
+          </div>
+          <p style="margin: 20px 0 0; color: var(--ink); font-size: 0.86em">
+            Só um passo aceito atualiza a etapa. Pedido novo sempre começa como <strong>pedida</strong>.
+          </p>
+          <aside class="notas">
+            <h3>Roteiro · 1 minuto e 20 segundos</h3>
+            <p>
+              Esta sequência é a regra central do sistema. Um pedido nasce na
+              etapa pedida. Quando o desenho é aprovado, passa para desenho
+              aprovado. A primeira sessão leva a em sessões, e essa etapa pode
+              permanecer enquanto forem necessárias sessões adicionais. Só
+              depois de pelo menos uma sessão o retoque pode ser registrado;
+              ele finaliza o trabalho. A regra impede, por exemplo, que uma
+              sessão seja gravada antes da aprovação do desenho ou que o
+              retoque apareça antes de uma sessão. A validação acontece antes
+              da gravação: se o passo não for permitido na etapa atual, a
+              operação é recusada, o motivo é mostrado e o estado não avança.
+              Isso protege a coerência do histórico, não apenas a aparência da
+              tela.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-sistema">
+          <p class="sobrelinha">08 · Como o produto sustenta o fluxo</p>
+          <h2 id="titulo-sistema">Cada parte sabe qual responsabilidade assumir.</h2>
+          <div class="camadas">
+            <div class="camada">
+              <strong>Interface</strong>
+              <span>Coleta pedido; mostra agenda, etapa, histórico e retorno.</span>
+            </div>
+            <div class="camada">
+              <strong>API e serviço</strong>
+              <span>Valida a sequência e atualiza a etapa depois de aceitar o passo.</span>
+            </div>
+            <div class="camada">
+              <strong>Banco de dados</strong>
+              <span>Guarda usuários, tatuagens e passos, incluindo datas e observações.</span>
+            </div>
+          </div>
+          <div class="grade dois">
+            <article class="cartao">
+              <p class="rotulo">Bruna</p>
+              <h3>Login e dados da cliente</h3>
+              <p>A lista de tatuagens usa o identificador da cliente autenticada para consultar o que pertence a ela.</p>
+            </article>
+            <article class="cartao">
+              <p class="rotulo">Vitor</p>
+              <h3>Agenda e gestão do estúdio</h3>
+              <p>Encontra tatuagens por etapa, abre a ficha e registra passos com resposta visível.</p>
+            </article>
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 1 minuto e 10 segundos</h3>
+            <p>
+              A interface não é responsável por decidir se um passo é válido.
+              Ela envia o pedido, apresenta o histórico e informa o resultado.
+              A API recebe e direciona a operação; a regra mora no serviço,
+              que decide se aceita a transição antes de salvar o passo e
+              atualizar a etapa. O banco conserva a tatuagem e seus passos,
+              como uma linha do tempo consultável. O sistema também passou da
+              seleção informal de perfis para login: a conta tem um papel de
+              cliente ou tatuador. No caso da Bruna, a consulta usa o
+              identificador da cliente autenticada, para mostrar os dados que
+              são dela. A arquitetura separa tarefas da cliente e da gestão,
+              sem duplicar a regra entre tela e servidor.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-resultado">
+          <p class="sobrelinha">09 · Resultado e escopo</p>
+          <div class="fecho">
+            <div>
+              <h2 id="titulo-resultado">Menos procura. Mais clareza para os dois lados.</h2>
+              <ul class="lista-limpa">
+                <li>Bruna consulta etapa e histórico sem depender de mensagens.</li>
+                <li>Vitor encontra o que espera ação e registra cada passo.</li>
+                <li>A regra mantém a sequência de trabalho consistente.</li>
+              </ul>
+              <p style="margin-top: 24px; color: var(--ink)">
+                O foco é acompanhar bem a tatuagem — sem aumentar o escopo com funções que não resolvem essa dor.
+              </p>
+            </div>
+            <img src="frontend/src/imagens/foto-vitrine.jpg" alt="Vitrine do estúdio Traço Fino" />
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 55 segundos</h3>
+            <p>
+              Para concluir, o valor do projeto está em tornar o andamento
+              compreensível para a cliente e administrável para o estúdio.
+              Bruna pode consultar a etapa e o histórico; Vitor consegue
+              localizar o trabalho e registrar o que foi feito; e a regra de
+              negócio evita que o fluxo pule etapas. O escopo é intencional:
+              orçamento, pagamentos, portfólio de fotos e avisos por mensagem
+              não fazem parte desta solução. Eles poderiam ser discutidos em
+              outra etapa, mas não devem desviar do problema que o projeto
+              escolheu resolver. A ideia final é simples: cada tatuagem deixa
+              de depender da memória e passa a ter um percurso claro, da
+              primeira descrição ao retoque.
+            </p>
+          </aside>
+        </section>
+      </div>
+
+      <nav class="controles" aria-label="Controles da apresentação">
+        <div class="acoes">
+          <button class="controle" type="button" id="anterior" aria-label="Slide anterior">← Anterior</button>
+          <button class="controle" type="button" id="proximo" aria-label="Próximo slide">Próximo →</button>
+        </div>
+        <div id="contador" aria-live="polite">1 / 10</div>
+        <div class="atalhos">
+          <kbd>←</kbd> <kbd>→</kbd> navegar · <kbd>N</kbd> notas · <kbd>F</kbd> tela cheia · <kbd>P</kbd> imprimir
+        </div>
+        <div class="acoes">
+          <button class="controle" type="button" id="notas" aria-pressed="false">Notas</button>
+          <button class="controle" type="button" id="tela-cheia">Tela cheia</button>
+        </div>
+      </nav>
+    </main>
+
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      const progresso = document.querySelector(".progresso");
+      const contador = document.querySelector("#contador");
+      let atual = 0;
+
+      function mostrar(indice) {
+        atual = Math.max(0, Math.min(indice, slides.length - 1));
+        slides.forEach((slide, posicao) => {
+          const ativo = posicao === atual;
+          slide.classList.toggle("ativo", ativo);
+          slide.setAttribute("aria-hidden", String(!ativo));
+        });
+        contador.textContent = `${atual + 1} / ${slides.length}`;
+        progresso.style.width = `${((atual + 1) / slides.length) * 100}%`;
+        document.querySelector("#anterior").disabled = atual === 0;
+        document.querySelector("#proximo").disabled = atual === slides.length - 1;
+        document.title = `${String(atual + 1).padStart(2, "0")} · ${slides[atual].querySelector("h1, h2")?.textContent ?? "Traço Fino"}`;
+      }
+
+      function alternarNotas() {
+        const visiveis = document.body.classList.toggle("mostrar-notas");
+        document.querySelector("#notas").setAttribute("aria-pressed", String(visiveis));
+      }
+
+      document.querySelector("#anterior").addEventListener("click", () => mostrar(atual - 1));
+      document.querySelector("#proximo").addEventListener("click", () => mostrar(atual + 1));
+      document.querySelector("#notas").addEventListener("click", alternarNotas);
+      document.querySelector("#tela-cheia").addEventListener("click", () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          document.documentElement.requestFullscreen?.();
+        }
+      });
+
+      document.addEventListener("keydown", (evento) => {
+        if (["ArrowRight", "PageDown", " "].includes(evento.key)) {
+          evento.preventDefault();
+          mostrar(atual + 1);
+        } else if (["ArrowLeft", "PageUp"].includes(evento.key)) {
+          evento.preventDefault();
+          mostrar(atual - 1);
+        } else if (evento.key === "Home") {
+          mostrar(0);
+        } else if (evento.key === "End") {
+          mostrar(slides.length - 1);
+        } else if (evento.key.toLowerCase() === "n") {
+          alternarNotas();
+        } else if (evento.key.toLowerCase() === "f") {
+          document.querySelector("#tela-cheia").click();
+        } else if (evento.key.toLowerCase() === "p") {
+          window.print();
+        }
+      });
+
+      let toqueInicial = 0;
+      document.querySelector(".palco").addEventListener(
+        "touchstart",
+        (evento) => {
+          toqueInicial = evento.changedTouches[0].screenX;
+        },
+        { passive: true },
+      );
+      document.querySelector(".palco").addEventListener(
+        "touchend",
+        (evento) => {
+          const distancia = evento.changedTouches[0].screenX - toqueInicial;
+          if (Math.abs(distancia) > 60) {
+            mostrar(atual + (distancia < 0 ? 1 : -1));
+          }
+        },
+        { passive: true },
+      );
+
+      mostrar(0);
+    </script>
+  </body>
+</html>
