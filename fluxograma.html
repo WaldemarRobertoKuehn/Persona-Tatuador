@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Proposta de arquitetura de produção do projeto Traço Fino."
+    />
+    <title>Traço Fino — proposta de arquitetura</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --canvas: #111111;
+        --panel: #1c1c1f;
+        --line: #34343a;
+        --ink: #f4f4f5;
+        --muted: #a1a1aa;
+        --accent: #fb923c;
+        --accent-dark: #c2410c;
+        --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.5;
+      }
+
+      main {
+        width: min(1120px, 100%);
+        margin-inline: auto;
+        padding: clamp(24px, 5vw, 64px) clamp(20px, 5vw, 48px);
+      }
+
+      .rotulo {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        font-weight: 600;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+      }
+
+      .introducao {
+        max-width: 720px;
+        margin: 16px 0 36px;
+        color: var(--muted);
+      }
+
+      .diagrama {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr) 92px minmax(0, 1fr) 92px minmax(0, 1fr);
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .caixa {
+        min-width: 0;
+        padding: 22px 18px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+
+      .caixa.publica {
+        border-color: var(--accent-dark);
+      }
+
+      .icone {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        margin-bottom: 20px;
+        place-items: center;
+        border-radius: 10px;
+        background: rgba(194, 65, 12, 0.16);
+        color: var(--accent);
+        font-size: 1.35rem;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+        line-height: 1.3;
+      }
+
+      .funcao {
+        min-height: 3em;
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      dl {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      dl div {
+        display: grid;
+        gap: 2px;
+      }
+
+      dt {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      dd {
+        margin: 0;
+        font-size: 0.88rem;
+      }
+
+      .seta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        color: var(--accent);
+        text-align: center;
+      }
+
+      .seta span {
+        color: var(--ink);
+        font-size: 0.78rem;
+        font-weight: 650;
+        line-height: 1.35;
+      }
+
+      .seta svg {
+        width: 100%;
+        height: 18px;
+        overflow: visible;
+      }
+
+      .aviso {
+        margin: 24px 0 0;
+        padding: 14px 16px;
+        border-left: 3px solid var(--accent-dark);
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .aviso strong {
+        color: var(--ink);
+      }
+
+      @media (max-width: 760px) {
+        .diagrama {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 10px;
+        }
+
+        .caixa {
+          padding: 18px;
+        }
+
+        .icone {
+          margin-bottom: 14px;
+        }
+
+        .funcao {
+          min-height: 0;
+          margin-bottom: 14px;
+        }
+
+        .seta {
+          gap: 5px;
+        }
+
+        .seta svg {
+          width: 18px;
+          height: 28px;
+          transform: rotate(90deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="rotulo">Infraestrutura · proposta</p>
+      <h1>Da máquina do usuário à produção</h1>
+      <p class="introducao">
+        O navegador acessa a tela e a API pela mesma origem. Apenas o servidor web
+        recebe tráfego público; a API e o banco ficam em portas internas.
+      </p>
+
+      <section class="diagrama" aria-label="Fluxo proposto da arquitetura de produção">
+        <article class="caixa">
+          <div class="icone" aria-hidden="true">⌘</div>
+          <h2>Navegador</h2>
+          <p class="funcao">Exibe a tela e inicia as chamadas à API.</p>
+          <dl>
+            <div>
+              <dt>Máquina</dt>
+              <dd>Do usuário</dd>
+            </div>
+            <div>
+              <dt>Porta de servidor</dt>
+              <dd>Não se aplica</dd>
+            </div>
+            <div>
+              <dt>Tráfego público</dt>
+              <dd>Cliente; não recebe conexões de entrada</dd>
+            </div>
+          </dl>
+        </article>
+
+        <div class="seta" aria-label="HTTPS, porta 443">
+          <span>HTTPS<br />porta 443</span>
+          <svg viewBox="0 0 100 18" role="img" aria-hidden="true">
+            <path d="M1 9h94m-8-7 8 7-8 7" fill="none" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </div>
+
+        <article class="caixa publica">
+          <div class="icone" aria-hidden="true">↗</div>
+          <h2>Servidor web</h2>
+          <p class="funcao">Serve a tela e encaminha `/api/*` à API.</p>
+          <dl>
+            <div>
+              <dt>Máquina</dt>
+              <dd>De produção</dd>
+            </div>
+            <div>
+              <dt>Porta de atendimento</dt>
+              <dd>443 · HTTPS</dd>
+            </div>
+            <div>
+              <dt>Tráfego público</dt>
+              <dd>Sim; é a entrada pública</dd>
+            </div>
+          </dl>
+        </article>
+
+        <div class="seta" aria-label="HTTP interno, porta 8000, caminho /api">
+          <span>HTTP interno<br />porta 8000 · `/api/*`</span>
+          <svg viewBox="0 0 100 18" role="img" aria-hidden="true">
+            <path d="M1 9h94m-8-7 8 7-8 7" fill="none" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </div>
+
+        <article class="caixa">
+          <div class="icone" aria-hidden="true">⌘</div>
+          <h2>API</h2>
+          <p class="funcao">Autentica contas, aplica permissões e processa pedidos.</p>
+          <dl>
+            <div>
+              <dt>Máquina</dt>
+              <dd>De produção</dd>
+            </div>
+            <div>
+              <dt>Porta de atendimento</dt>
+              <dd>8000 · interna</dd>
+            </div>
+            <div>
+              <dt>Tráfego público</dt>
+              <dd>Não; recebe do servidor web</dd>
+            </div>
+          </dl>
+        </article>
+
+        <div class="seta" aria-label="MySQL sobre TCP, porta 3306">
+          <span>MySQL/TCP<br />porta 3306</span>
+          <svg viewBox="0 0 100 18" role="img" aria-hidden="true">
+            <path d="M1 9h94m-8-7 8 7-8 7" fill="none" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </div>
+
+        <article class="caixa">
+          <div class="icone" aria-hidden="true">▤</div>
+          <h2>MySQL</h2>
+          <p class="funcao">Armazena contas, tatuagens, passos e permissões.</p>
+          <dl>
+            <div>
+              <dt>Máquina</dt>
+              <dd>De produção</dd>
+            </div>
+            <div>
+              <dt>Porta de atendimento</dt>
+              <dd>3306 · interna</dd>
+            </div>
+            <div>
+              <dt>Tráfego público</dt>
+              <dd>Não; recebe da API</dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+
+      <p class="aviso">
+        <strong>Escopo:</strong> arquitetura proposta para produção. A localização
+        de servidor web, API e MySQL na mesma máquina é uma hipótese de implantação,
+        não uma infraestrutura publicada. Não há CORS entre a tela e a API quando
+        compartilham a mesma origem.
+      </p>
+    </main>
+  </body>
+</html>
