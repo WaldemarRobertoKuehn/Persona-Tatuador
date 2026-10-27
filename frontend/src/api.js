@@ -1,9 +1,8 @@
 /* O jeito de falar com o back.
  *
- * Este arquivo é o único que sabe a porta do back, e o único que usa fetch. Nenhuma
- * tela chama o back diretamente: a tela chama uma função daqui. Assim, se a porta
- * mudar, muda uma linha só, e o tratamento de erro e o cabeçalho do token ficam
- * escritos uma vez só.
+ * Este arquivo é o único que usa fetch. Nenhuma tela chama o back diretamente:
+ * a tela chama uma função daqui. O endereço da API vem do ambiente do Vite, e o
+ * tratamento de erro e o cabeçalho do token ficam escritos uma vez só.
  *
  * A regra dos três estados da tela é esta: quando a tela carrega, ela começa
  * carregando; quando a chamada volta, ela passa a estar pronta; e quando a
@@ -12,7 +11,7 @@
  * deu erro já vem com a mensagem pronta.
  */
 
-const URL_DO_BACK = "http://localhost:8000";
+const URL_DO_BACK = import.meta.env.VITE_API_URL;
 const CHAVE_TOKEN = "traco-fino-token";
 
 let tokenAcesso = null;
