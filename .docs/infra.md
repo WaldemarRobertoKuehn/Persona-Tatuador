@@ -29,7 +29,7 @@ Para testar no mermaid.live, cole **só o conteúdo** do diagrama, começando em
 
 | Item | Desenvolvimento — projeto atual | Produção — proposta |
 |---|---|---|
-| API | FastAPI iniciado com `fastapi dev main.py` na porta 8000. O front tem a URL da API escrita em `frontend/src/api.js`. | API na porta interna 8000. O servidor web recebe `/api/*` em HTTPS 443 e encaminha as chamadas para ela. A URL usada pelo navegador passa a ser relativa à origem do site, como `/api`. |
+| API | FastAPI iniciado com `fastapi dev main.py` na porta 8000. O front centraliza as chamadas em `frontend/src/api.js`; o endereço vem de `VITE_API_URL` nos arquivos de ambiente do Vite. | API na porta interna 8000. O servidor web recebe `/api/*` em HTTPS 443 e encaminha as chamadas para ela. `VITE_API_URL` usa o caminho relativo `/api`, na mesma origem da tela. |
 | Tela | React servido pelo Vite em desenvolvimento na porta 5173. O projeto gera os arquivos de produção com `npm run build`, em `dist/`. | Arquivos gerados pelo build servidos pelo servidor web na mesma origem HTTPS da API. O Vite de desenvolvimento não é o servidor público. |
 | Banco | MySQL na porta 3306. O exemplo de configuração usa `localhost`; o endereço efetivo em uso não foi verificado (?). | MySQL acessível internamente na porta 3306, somente pela API. Sem acesso público direto ao banco. |
 | `.env` | `backend/configuracao.py` carrega a configuração do lado do servidor; existe um `backend/.env.exemplo`. Os valores efetivos do `.env` não foram verificados (?). | Configuração e segredos ficam apenas no ambiente do servidor, fora dos arquivos públicos da tela e do repositório. Os valores precisam corresponder aos endereços internos e ao domínio usado em produção; nenhum valor é definido aqui. |
@@ -51,7 +51,7 @@ A busca no código e nos arquivos de configuração versionados encontrou estes 
 
 | Arquivo e linha | Uso |
 |---|---|
-| `frontend/src/api.js`, linha 15 | Base da URL usada pelo **navegador** para chamar a API diretamente durante o desenvolvimento. Na proposta, seria substituída por um caminho da mesma origem, como `/api`. |
+| `frontend/src/api.js`, linha 14 | Lê `VITE_API_URL`, valor usado pelo **navegador** como base das chamadas à API. A URL não está fixa nesse código: o desenvolvimento usa `frontend/.env.development` e a produção usa `frontend/.env.production`. |
 | `backend/configuracao.py`, linha 31 | Valor padrão usado **no servidor** para a origem permitida pelo CORS; não é o endereço que o navegador usa para encontrar a API. |
 | `backend/configuracao.py`, linha 58 | Valor padrão usado **no servidor** como host do MySQL. É um endereço de conexão da API ao banco, não um endereço usado pelo navegador. |
 | `backend/alembic.ini`, linha 107 | Host em uma configuração padrão do Alembic. No modo online, `backend/migracoes/env.py` usa o `engine` do projeto para conectar; essa linha não identifica, por si só, o banco efetivamente usado nesse modo. |
@@ -60,6 +60,8 @@ A busca no código e nos arquivos de configuração versionados encontrou estes 
 
 | Arquivo e linha | Uso |
 |---|---|
+| `frontend/.env.development`, linha 1 | Endereço de desenvolvimento que o navegador usa para chamar a API local. |
+| `frontend/.env.production`, linha 1 | Caminho relativo `/api` que o navegador usa em produção; presume a tela e a API na mesma origem. |
 | `backend/.env.exemplo`, linha 4 | Exemplo de origem do front para a configuração de CORS; não confirma o valor efetivo do `.env` atual. |
 | `backend/.env.exemplo`, linha 11 | Exemplo do host do banco; não confirma o destino efetivo da conexão atual. |
 
