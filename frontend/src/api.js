@@ -11,14 +11,14 @@
  * deu erro já vem com a mensagem pronta.
  */
 
-const URL_DO_BACK = import.meta.env.VITE_API_URL;
+export const URL_DA_API = import.meta.env.VITE_URL_DA_API;
 const CHAVE_TOKEN = "traco-fino-token";
 
 let tokenAcesso = null;
 
 /* Monta o caminho com a base e o pedaço que a tela precisa. */
 function caminho(pedaco) {
-  return `${URL_DO_BACK}${pedaco}`;
+  return `${URL_DA_API}${pedaco}`;
 }
 
 function opcoesAutenticadas(opcoes = {}) {

@@ -18,6 +18,7 @@ from rotas import passos as rotas_passos
 from rotas import autenticacao as rotas_autenticacao
 # NOVO: o router de grupos oferece gestão administrativa de permissões.
 from rotas import grupos as rotas_grupos
+from rotas import health as rotas_health
 from rotas import tatuagens as rotas_tatuagens
 from rotas import usuarios as rotas_usuarios
 
@@ -48,3 +49,4 @@ app.include_router(rotas_usuarios.roteador_usuarios)
 app.include_router(rotas_autenticacao.roteador_autenticacao)
 # NOVO: endpoint administrativo de grupos e permissões.
 app.include_router(rotas_grupos.roteador_grupos)
+app.include_router(rotas_health.roteador_health)

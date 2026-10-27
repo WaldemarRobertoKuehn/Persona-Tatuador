@@ -29,7 +29,7 @@ Para testar no mermaid.live, cole **só o conteúdo** do diagrama, começando em
 
 | Item | Desenvolvimento — projeto atual | Produção — proposta |
 |---|---|---|
-| API | FastAPI iniciado com `fastapi dev main.py` na porta 8000. O front centraliza as chamadas em `frontend/src/api.js`; o endereço vem de `VITE_API_URL` nos arquivos de ambiente do Vite. | API na porta interna 8000. O servidor web recebe `/api/*` em HTTPS 443 e encaminha as chamadas para ela. `VITE_API_URL` usa o caminho relativo `/api`, na mesma origem da tela. |
+| API | FastAPI iniciado com `fastapi dev main.py` na porta 8000. O front centraliza as chamadas em `frontend/src/api.js`; o endereço vem de `VITE_URL_DA_API` nos arquivos de ambiente do Vite. | API na porta interna 8000. O servidor web recebe `/api/*` em HTTPS 443 e encaminha as chamadas para ela. `VITE_URL_DA_API` usa o caminho relativo `/api`, na mesma origem da tela. |
 | Tela | React servido pelo Vite em desenvolvimento na porta 5173. O projeto gera os arquivos de produção com `npm run build`, em `dist/`. | Arquivos gerados pelo build servidos pelo servidor web na mesma origem HTTPS da API. O Vite de desenvolvimento não é o servidor público. |
 | Banco | MySQL na porta 3306. O exemplo de configuração usa `localhost`; o endereço efetivo em uso não foi verificado (?). | MySQL acessível internamente na porta 3306, somente pela API. Sem acesso público direto ao banco. |
 | `.env` | `backend/configuracao.py` carrega a configuração do lado do servidor; existe um `backend/.env.exemplo`. Os valores efetivos do `.env` não foram verificados (?). | Configuração e segredos ficam apenas no ambiente do servidor, fora dos arquivos públicos da tela e do repositório. Os valores precisam corresponder aos endereços internos e ao domínio usado em produção; nenhum valor é definido aqui. |
@@ -47,21 +47,23 @@ Para testar no mermaid.live, cole **só o conteúdo** do diagrama, começando em
 
 ## 4. O que está chumbado
 
-A busca no código e nos arquivos de configuração versionados encontrou estes usos. Os exemplos de configuração estão listados à parte; o `.env` real não foi aberto. Não foi encontrada ocorrência de `127.0.0.1` nesses arquivos.
+Os itens listados abaixo já foram resolvidos. O endereço da API agora mora nos arquivos de ambiente do Vite e é lido em um único ponto central em `frontend/src/api.js`.
 
-| Arquivo e linha | Uso |
+| Arquivo | Situação |
 |---|---|
-| `frontend/src/api.js`, linha 14 | Lê `VITE_API_URL`, valor usado pelo **navegador** como base das chamadas à API. A URL não está fixa nesse código: o desenvolvimento usa `frontend/.env.development` e a produção usa `frontend/.env.production`. |
-| `backend/configuracao.py`, linha 31 | Valor padrão usado **no servidor** para a origem permitida pelo CORS; não é o endereço que o navegador usa para encontrar a API. |
-| `backend/configuracao.py`, linha 58 | Valor padrão usado **no servidor** como host do MySQL. É um endereço de conexão da API ao banco, não um endereço usado pelo navegador. |
-| `backend/alembic.ini`, linha 107 | Host em uma configuração padrão do Alembic. No modo online, `backend/migracoes/env.py` usa o `engine` do projeto para conectar; essa linha não identifica, por si só, o banco efetivamente usado nesse modo. |
+| `frontend/src/api.js` | Resolvido: exporta `URL_DA_API` a partir de `import.meta.env.VITE_URL_DA_API` e continua montando as rotas com concatenação, como `URL_DA_API + "/rota"`. |
+| `frontend/.env.development` | Resolvido: o endereço de desenvolvimento agora mora aqui como `VITE_URL_DA_API=http://localhost:8000`. |
+| `frontend/.env.production` | Resolvido: o endereço de produção agora mora aqui como `VITE_URL_DA_API=/api`, mantendo a mesma origem da tela. |
+| `backend/configuracao.py`, linha 31 | Não é um endereço do navegador; continua sendo o valor do servidor para CORS, não parte do front-end. |
+| `backend/configuracao.py`, linha 58 | Não é um endereço do navegador; continua sendo o host interno do MySQL usado pela API. |
+| `backend/alembic.ini`, linha 107 | Não é um endereço do navegador; continua sendo configuração de migração do banco, não da tela. |
 
 ### Exemplos de configuração
 
 | Arquivo e linha | Uso |
 |---|---|
-| `frontend/.env.development`, linha 1 | Endereço de desenvolvimento que o navegador usa para chamar a API local. |
-| `frontend/.env.production`, linha 1 | Caminho relativo `/api` que o navegador usa em produção; presume a tela e a API na mesma origem. |
+| `frontend/.env.development`, linha 1 | Endereço de desenvolvimento usado pelo navegador para chamar a API local. |
+| `frontend/.env.production`, linha 1 | Caminho relativo `/api` usado pelo navegador em produção, na mesma origem da tela. |
 | `backend/.env.exemplo`, linha 4 | Exemplo de origem do front para a configuração de CORS; não confirma o valor efetivo do `.env` atual. |
 | `backend/.env.exemplo`, linha 11 | Exemplo do host do banco; não confirma o destino efetivo da conexão atual. |
 

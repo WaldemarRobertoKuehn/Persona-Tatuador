@@ -132,11 +132,12 @@ os dados.
 ```powershell
 cd backend
 .\venv\Scripts\activate
-fastapi dev main.py
+fastapi dev main.py --host 0.0.0.0
 ```
 
-O terminal tem que mostrar algo como `http://localhost:8000`. Para conferir se
-subiu mesmo:
+O terminal tem que mostrar que o servidor está em `0.0.0.0:8000`. Para conferir se
+subiu mesmo, abra `http://127.0.0.1:8000/health`; a resposta esperada é
+`{"status":"ok"}`. Esse endpoint confirma a disponibilidade da API sem consultar o banco.
 
 - `http://localhost:8000/docs` abre a documentação automática, com as rotas da API;
 - o cadastro `POST /usuarios` é público e cria somente contas do grupo Cliente;
@@ -146,7 +147,8 @@ subiu mesmo:
   e passos.
 
 A raiz `http://localhost:8000` responde **404**, e isso é de propósito: a REGRAS
-proíbe rota no `main.py`.
+proíbe rota no `main.py`. O `Caddyfile` na raiz configura o proxy HTTP na porta 80
+e serve os arquivos React que estiverem em `/srv`.
 
 ## Abrir o front
 

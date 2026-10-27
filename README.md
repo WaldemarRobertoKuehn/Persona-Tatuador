@@ -49,6 +49,7 @@ cópia nenhuma dentro do front.
 │   ├── marca.md     o que a marca é e as regras de uso
 │   ├── marca/       os arquivos da marca, que o front serve de lá
 │   └── styleguide/  o styleguide, ou o link do Figma
+├── Caddyfile        proxy HTTP local e arquivos do build do React
 ├── frontend/        o React, com as quatro telas
 │   ├── src/
 │   │   ├── componentes/  o logo, o botão de tema e as peças repetidas
@@ -75,6 +76,7 @@ cópia nenhuma dentro do front.
 │   ├── modelos/          o desenho das tabelas, uma classe por entidade
 │   ├── main.py          cria o app, registra o CORS e liga os routers
 │   ├── rotas/           o que conhece HTTP
+│   │   └── health.py    confirmação de disponibilidade da API
 │   ├── servicos/        as decisões e a regra da cartilha
 │   ├── repositorios/    as funções que leem e gravam no banco
 │   │   └── cliente.py       o nome de quem é dona da tatuagem
@@ -139,7 +141,8 @@ Com o back no ar, o esperado é:
   as rotas de usuários, tatuagens e passos.
 
 A raiz `http://localhost:8000` responde **404**, e isso é de propósito: as REGRAS proíbem rota no
-`main.py`.
+`main.py`. Para confirmar que o back está no ar, `http://localhost:8000/health` responde
+`{"status":"ok"}` sem consultar o banco.
 
 O `.env` precisa ter `ORIGEM_FRONTEND` com o endereço exato do front, porque é dele que sai o CORS.
 Se o endereço mudar, mude no `.env` e reinicie o back.
