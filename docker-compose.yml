@@ -9,8 +9,8 @@ services:
       # Cria a conta que a API usará para conectar ao banco.
       MYSQL_USER: app
       # Lê as duas senhas do arquivo .env local, que não deve ir para o Git.
-      MYSQL_PASSWORD: ${SENHA_DO_BANCO}
-      MYSQL_ROOT_PASSWORD: ${SENHA_DO_BANCO}
+      MYSQL_PASSWORD: ${BANCO_SENHA}
+      MYSQL_ROOT_PASSWORD: ${BANCO_SENHA}
     volumes:
       # Preserva os dados do MySQL entre reinicializações dos contêineres.
       - dados_do_banco:/var/lib/mysql
@@ -25,9 +25,9 @@ services:
       BANCO_NOME: traco_fino
       BANCO_USUARIO: app
       # Entrega à API a senha da conta app criada no serviço MySQL.
-      BANCO_SENHA: ${SENHA_DO_BANCO}
+      BANCO_SENHA: ${BANCO_SENHA}
       # Mapeia a chave local para o nome lido pela configuração da aplicação.
-      JWT_SEGREDO: ${CHAVE_DO_TOKEN}
+      JWT_SEGREDO: ${JWT_SEGREDO}
       # Permite a origem local publicada pelo serviço web.
       ORIGEM_FRONTEND: http://localhost:8080
     # Ordena a partida; não garante que o MySQL já aceite conexões.
