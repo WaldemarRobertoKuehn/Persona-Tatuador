@@ -1,0 +1,57 @@
+# Define os serviços da demonstração na rede padrão criada pelo Compose.
+services:
+  # Executa o MySQL sem publicar sua porta no Windows.
+  banco:
+    image: mysql:8.4
+    environment:
+      # Usa o nome de banco documentado no exemplo do backend.
+      MYSQL_DATABASE: traco_fino
+      # Cria a conta que a API usará para conectar ao banco.
+      MYSQL_USER: app
+      # Lê as duas senhas do arquivo .env local, que não deve ir para o Git.
+      MYSQL_PASSWORD: ${SENHA_DO_BANCO}
+      MYSQL_ROOT_PASSWORD: ${SENHA_DO_BANCO}
+    volumes:
+      # Preserva os dados do MySQL entre reinicializações dos contêineres.
+      - dados_do_banco:/var/lib/mysql
+
+  # Executa a API sem publicar diretamente sua porta no host.
+  api:
+    build: ./backend
+    environment:
+      # Usa o nome do serviço banco como host na rede interna do Compose.
+      BANCO_HOST: banco
+      BANCO_PORTA: "3306"
+      BANCO_NOME: traco_fino
+      BANCO_USUARIO: app
+      # Entrega à API a senha da conta app criada no serviço MySQL.
+      BANCO_SENHA: ${SENHA_DO_BANCO}
+      # Mapeia a chave local para o nome lido pela configuração da aplicação.
+      JWT_SEGREDO: ${CHAVE_DO_TOKEN}
+      # Permite a origem local publicada pelo serviço web.
+      ORIGEM_FRONTEND: http://localhost:8080
+    # Ordena a partida; não garante que o MySQL já aceite conexões.
+    depends_on:
+      - banco
+
+  # Serve o frontend compilado e encaminha as chamadas da API pelo Caddy.
+  web:
+    build: ./frontend
+    ports:
+      # Expõe somente o site no host, na porta local 8080.
+      - "8080:80"
+    volumes:
+      # Usa a configuração Caddy do repositório, sem domínio nem HTTPS.
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      # Disponibiliza os arquivos da marca, fora do contexto frontend do build.
+      - ./docs/marca/logo.svg:/srv/logo.svg:ro
+      - ./docs/marca/logo-escuro.svg:/srv/logo-escuro.svg:ro
+      - ./docs/marca/logo-monocromatico.svg:/srv/logo-monocromatico.svg:ro
+      - ./docs/marca/simbolo.svg:/srv/simbolo.svg:ro
+    # Inicia o serviço web depois de iniciar a API.
+    depends_on:
+      - api
+
+# Declara o volume persistente do banco sem apagá-lo ao recriar contêineres.
+volumes:
+  dados_do_banco:

@@ -1,0 +1,8 @@
+# Não envia o ambiente virtual local ao contexto de build.
+venv/
+
+# Mantém as configurações locais fora da imagem.
+.env
+
+# Evita incluir arquivos de cache do Python.
+__pycache__/

@@ -1,6 +1,6 @@
 # Registro da funcionalidade com IA
 
-## Status: planejada
+## Status: requisitos definidos; implementação pendente
 
 ### Problema e oportunidade
 
@@ -26,6 +26,10 @@ tempo procurando mensagens e reconstruindo o histórico. O briefing descreve ess
 Se a IA falhar, a tela mantém o histórico disponível, informa o erro e permite tentar novamente.
 Não deve apresentar um resumo fabricado como alternativa.
 
+Quando um novo passo for registrado, o resumo confirmado anteriormente passa a ser considerado
+desatualizado. Um novo resumo só o substitui depois de ser gerado, revisado e confirmado por uma
+pessoa. Até lá, o sistema deve identificar claramente o resumo anterior como desatualizado.
+
 ### Limites e integração
 
 - A IA não determina nem altera etapas, não substitui a regra do serviço e não grava passos.
@@ -35,17 +39,21 @@ Não deve apresentar um resumo fabricado como alternativa.
 - O backend consulta os registros, chama o provedor e só persiste o rascunho após revisão e
   confirmação humana. A persistência do resumo não deve ser misturada à dos passos.
 - A proposta é uma chamada ao modelo, não um agente com ferramentas nem um sistema multiagente.
-  A escolha do provedor permanece aberta.
+  A proposta é usar um provedor externo compatível com a API OpenAI, configurado por variável de
+  ambiente. O provedor ainda não foi escolhido nem comparado; essa escolha depende de verificar as
+  condições aplicáveis ao tratamento dos dados.
 
-### Pontos a confirmar
+### Requisitos definidos e pendências
 
-- ? Quando um novo passo for registrado, marcar o resumo anterior como desatualizado e só
-  substituí-lo após nova geração, revisão e confirmação.
-- ? Definir como o resumo aponta para os passos que sustentam cada informação e como explicita
-  lacunas no histórico.
-- ? Escolher o provedor após comparar candidatos com exemplos fictícios e verificar as condições
-  de tratamento de dados aplicáveis. Não há preço, disponibilidade ou capacidade de provedor
-  assumidos neste registro.
+- **Desatualização:** um novo passo torna o resumo confirmado anterior desatualizado; ele só é
+  substituído após nova geração, revisão e confirmação humana.
+- **Referências:** cada afirmação factual deve apontar para os números dos passos que a sustentam.
+  Quando os registros não sustentarem uma conclusão, o resumo deve explicitar a lacuna, sem
+  preenchê-la por inferência.
+- **Provedor:** comparar candidatos com exemplos fictícios e verificar as condições de tratamento
+  de dados antes de escolher. Não há provedor escolhido nem comparação concluída.
+- **Implementação:** permanece pendente, incluindo consulta do histórico pelo backend, chamada ao
+  modelo, fluxo de revisão/edição/confirmação, persistência separada e tratamento de falha.
 
 ## Prompt e testes manuais
 

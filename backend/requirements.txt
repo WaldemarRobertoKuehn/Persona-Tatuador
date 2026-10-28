@@ -1,0 +1,7 @@
+fastapi
+fastapi-cli
+uvicorn[standard]
+sqlalchemy
+pymysql
+python-dotenv
+alembic

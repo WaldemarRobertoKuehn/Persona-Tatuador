@@ -1,0 +1,5 @@
+# Não envia dependências instaladas na máquina local ao build.
+node_modules/
+
+# Não envia um build local; o Docker gera um novo dentro da imagem.
+dist/
