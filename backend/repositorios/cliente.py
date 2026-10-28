@@ -1,4 +1,4 @@
-"""O depósito das clientes do estúdio, agora no MySQL.
+"""O depósito das clientes do estúdio, agora no PostgreSQL.
 
 A cartilha lista três entidades: o usuário, a tatuagem e o passo. O usuário é quem
 entra no sistema, e tem um tipo: cliente ou tatuador. A Bruna é a cliente 1, que é
@@ -43,8 +43,8 @@ def buscar_cliente(cliente_id: int) -> dict | None:
     dicionário devolvido passaria a ter uma chave a mais sem ninguém pedir.
 
     O WHERE usa o %s, e nunca uma f-string com o número escrito dentro. Esse %s é
-    um espaço reservado: o pymysql troca ele pelo valor do segundo argumento,
-    com escape, e o valor chega ao MySQL como texto, nunca como parte do comando.
+    um espaço reservado: o psycopg2 troca ele pelo valor do segundo argumento,
+    com escape, e o valor chega ao PostgreSQL como texto, nunca como parte do comando.
     É o que impede alguém de mandar um cliente_id que carregue junto um comando
     de SQL, e a proteção vale mesmo quando o valor é só um número.
 
@@ -79,14 +79,13 @@ def buscar_cliente_por_nome(nome: str) -> dict | None:
 
 
 def criar_cliente(nome: str) -> int:
-    """Cria a cliente e devolve o id que o MySQL escolheu para ela."""
+    """Cria a cliente e devolve o id que o PostgreSQL escolheu para ela."""
     with banco.cursor() as cursor:
         cursor.execute(
-            "INSERT INTO clientes (nome) VALUES (%s)",
+            "INSERT INTO clientes (nome) VALUES (%s) RETURNING id",
             (nome,),
         )
-
-        return cursor.lastrowid
+        return cursor.fetchone()["id"]
 
 
 def buscar_acesso(cliente_id: int) -> dict | None:

@@ -2,7 +2,8 @@
 
 import re
 
-import pymysql
+import psycopg2
+from psycopg2 import errorcodes
 
 import repositorios.grupo as repositorio_grupos
 from servicos.autorizacao import CATALOGO_PERMISSOES
@@ -36,8 +37,8 @@ def criar_grupo(dados: dict) -> dict:
         raise GrupoExistente("Já existe um grupo com este código ou nome.")
     try:
         return repositorio_grupos.criar_grupo(codigo, nome, permissoes)
-    except pymysql.err.IntegrityError as erro:
-        if erro.args and erro.args[0] == 1062:
+    except psycopg2.IntegrityError as erro:
+        if erro.pgcode == errorcodes.UNIQUE_VIOLATION:
             raise GrupoExistente(
                 "Já existe um grupo com este código ou nome."
             ) from erro

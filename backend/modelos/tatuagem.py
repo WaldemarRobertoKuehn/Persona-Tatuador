@@ -12,7 +12,7 @@ from sqlalchemy.orm import relationship
 # e diz qual é a coluna que aponta para qual: "clientes.id" quer dizer que a coluna
 # cliente_id desta tabela aponta para a coluna id da tabela clientes.
 #
-# Numeric é o tipo que vira DECIMAL no MySQL, e o que segura o tamanho exato da
+# Numeric é o tipo que vira DECIMAL no PostgreSQL, e o que segura o tamanho exato da
 # tatuagem em centímetros.
 
 # O modelo que tem ForeignKey importa o modelo da tabela para onde a chave aponta.
@@ -38,7 +38,7 @@ class Tatuagem(Base):
     # branco. nullable=False porque a cartilha diz que a tatuagem pertence a um
     # cliente: não existe tatuagem sem dona.
     #
-    # O name="fk_tatuagens_cliente" é o nome da chave no MySQL, e ele não é enfeite:
+    # O name="fk_tatuagens_cliente" é o nome da chave no PostgreSQL, e ele não é enfeite:
     # sem ele o Alembic não sabe o nome da restrição que criou, e avisa que não
     # consegue desfazer a chave numa migration. É o mesmo nome que o criar_tabelas
     # grava no banco, porque os dois leem o desenho daqui do modelo.

@@ -5,7 +5,7 @@ sempre pertence a uma tatuagem, e é lida como histórico dela. Quem decide se u
 passo é aceito, e o que ele faz com a etapa da tatuagem, é o serviço.
 """
 
-# Date é o tipo que vira DATE no MySQL, que é o que o DER pede para o passo: um dia,
+# Date é o tipo que vira DATE no PostgreSQL, que é o que o DER pede para o passo: um dia,
 # e não um instante. A ficha do Vitor não tem campo de data, e a cartilha fala em
 # data, não em horário.
 from sqlalchemy import Column, Date, ForeignKey, Integer, String
@@ -37,7 +37,7 @@ class Passo(Base):
     # escrito para o banco não deixar o dado quebrado. Este CASCADE é o do SQL, na
     # chave estrangeira, e não o cascade do ORM, que é outra coisa e não é usado.
     #
-    # O name="fk_passos_tatuagem" dá o nome da chave no MySQL, e os dois lados do
+    # O name="fk_passos_tatuagem" dá o nome da chave no PostgreSQL, e os dois lados do
     # projeto leem o mesmo desenho: criar_tabelas.py e o Alembic. Sem o name, o
     # Alembic não sabe desfazer a chave.
     tatuagem_id = Column(
@@ -59,7 +59,7 @@ class Passo(Base):
     #
     # São dois padrões default com nomes parecidos e lugares diferentes: default=""
     # é o do Python, e preenche o campo no próprio objeto antes de gravar;
-    # server_default="" é o do MySQL, e grava DEFAULT '' na tabela, para o banco
+    # server_default="" grava DEFAULT '' na tabela, para o banco
     # recusar sozinho um passo sem observação. Com os dois, a coluna nunca chega
     # vazia em nenhum dos lados.
     observacao = Column(

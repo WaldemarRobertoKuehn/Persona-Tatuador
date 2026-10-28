@@ -1,4 +1,4 @@
-"""O depósito das tatuagens, agora na tabela tatuagens do MySQL.
+"""O depósito das tatuagens, agora na tabela tatuagens do PostgreSQL.
 
 Este arquivo é o depósito. Ele guarda os dados e devolve, e nada mais: não sabe
 por que um passo é recusado, não escolhe etapa, não monta resposta de erro. A
@@ -8,27 +8,27 @@ O que mudou quando os dados foram para o banco
 
     Antes os dados viviam numa lista de dicionários dentro deste arquivo, e as
     funções filtravam a lista com list comprehension. Agora a lista é a tabela
-    tatuagens, e quem filtra é o MySQL, com a cláusula WHERE.
+    tatuagens, e quem filtra é o PostgreSQL, com a cláusula WHERE.
 
     A assinatura das funções não mudou uma vírgula, e é isso que interessa: o
     serviço recebe exatamente o mesmo tipo de coisa, uma lista de dicionários ou
-    None. Como o DictCursor devolve cada linha como dicionário, o tipo que a
+    None. Como o cursor de linhas devolve cada linha como dicionário, o tipo que a
     função entrega é o mesmo de antes, e por isso nenhum esquema, serviço ou rota
     precisou ser tocado.
 
 O que o banco resolve sozinho, e o que ele exige
 
     O id não é mais calculado com len(tatuagens) + 1. Quem escolhe o número agora
-    é a coluna AUTO_INCREMENT da tabela, e o Python pergunta o número gerado com
-    cursor.lastrowid. Isso não é só mais bonito: o len() + 1 quebrava assim que
+    é a sequência da tabela, e o INSERT retorna o id gerado. Isso não é só mais
+    bonito: o len() + 1 quebrava assim que
     existisse um DELETE, porque o tamanho da lista deixaria de ser o último id.
-    O AUTO_INCREMENT nunca repete número, mesmo com apagados no meio.
+    A sequência do PostgreSQL gera novos números, mesmo com apagados no meio.
 """
 
 import banco
 
 
-# O tamanho sai do MySQL como Decimal, e não como float, porque a coluna é
+# O tamanho sai do PostgreSQL como Decimal, e não como float, porque a coluna é
 # DECIMAL(6,2). Decimal é número exato: 12.50 volta como 12.50, e não como
 # 12.499999, que é o defeito clássico do float em medida. O esquema de saída
 # declara float, e o Pydantic converteria sozinho, mas converter aqui deixa o
@@ -113,14 +113,12 @@ def buscar_tatuagem(tatuagem_id: int) -> dict | None:
 def criar_tatuagem(dados: dict) -> dict:
     """Grava uma tatuagem nova e devolve como ela ficou gravada.
 
-    O id não é escrito no INSERT. A coluna é AUTO_INCREMENT, e quem escolhe o
-    número é o MySQL, sem o Python saber o último id gravado. Depois do INSERT, o
-    cursor.lastrowid devolve o número que o MySQL escolheu, e é com ele que a
-    função busca a linha de novo.
+    O id não é escrito no INSERT. A coluna é autoincrementada pelo PostgreSQL,
+    e o INSERT retorna o identificador gerado para buscar a linha de novo.
 
     Voltar a buscar em vez de devolver o dicionário montado tem uma vantagem que
     vale a pena: o que volta da consulta é o que está gravado no banco, e não o
-    que o Python acha que gravou. Se o MySQL tiver convertido alguma coisa, o que
+    que o Python acha que gravou. Se o PostgreSQL tiver convertido alguma coisa, o que
     a tela recebe é a versão convertida.
 
     A etapa chega pronta em dados, e não é este arquivo que decide qual é. Quem
@@ -131,7 +129,7 @@ def criar_tatuagem(dados: dict) -> dict:
         cursor.execute(
             "INSERT INTO tatuagens "
             "(cliente_id, ideia, local_do_corpo, tamanho, etapa) "
-            "VALUES (%s, %s, %s, %s, %s)",
+            "VALUES (%s, %s, %s, %s, %s) RETURNING id",
             (
                 dados["cliente_id"],
                 dados["ideia"],
@@ -141,7 +139,7 @@ def criar_tatuagem(dados: dict) -> dict:
             ),
         )
 
-        novo_id = cursor.lastrowid
+        novo_id = cursor.fetchone()["id"]
 
     return buscar_tatuagem(novo_id)
 
@@ -158,7 +156,7 @@ def atualizar_etapa(tatuagem_id: int, etapa: str) -> dict | None:
 
     Porque esse número mente justamente no caso que este projeto usa. Registrar
     uma segunda sessão numa tatuagem que já está "em sessões" faz a etapa ir para
-    "em sessões" outra vez, ou seja, o valor não muda. O MySQL conta isso como zero
+    "    em sessões" outra vez, ou seja, o valor não muda. O PostgreSQL conta isso como zero
     linhas alteradas, igual a uma tatuagem que não existe, e o serviço passaria a
     receber None e a rota a responder 404 onde devia responder 201. Por isso a
     função grava e depois pergunta, e é a busca que decide se a tatuagem existe.

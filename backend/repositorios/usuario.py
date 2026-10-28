@@ -56,17 +56,17 @@ def criar_usuario(
     cliente_id: int | None,
     grupo_id: int,
 ) -> dict:
-    """Cria a conta e devolve os dados dela, já com o id que o MySQL escolheu.
+    """Cria a conta e devolve os dados dela, com o id retornado pelo PostgreSQL.
 
     NOVO: grupo_id grava o vínculo usado para autorizar a conta em cada rota.
     """
     with banco.cursor() as cursor:
         cursor.execute(
             "INSERT INTO usuarios (nome, email, senha_hash, papel, cliente_id, grupo_id) "
-            "VALUES (%s, %s, %s, %s, %s, %s)",
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
             (nome, email, senha_hash, papel, cliente_id, grupo_id),
         )
-        usuario_id = cursor.lastrowid
+        usuario_id = cursor.fetchone()["id"]
         cursor.execute(
             _CONSULTA_USUARIO + "WHERE u.id = %s",
             (usuario_id,),

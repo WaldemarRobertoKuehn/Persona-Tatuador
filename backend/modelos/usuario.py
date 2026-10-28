@@ -34,14 +34,14 @@ from banco import Base
 class Usuario(Base):
     """A tabela usuarios: a conta que entra no sistema."""
 
-    # __tablename__ diz o nome real da tabela dentro do MySQL. A classe se chama
+    # __tablename__ diz o nome real da tabela dentro do PostgreSQL. A classe se chama
     # Usuario, no singular, e a tabela se chama usuarios, no plural: é a convenção
     # do projeto.
     __tablename__ = "usuarios"
     __table_args__ = (UniqueConstraint("email", name="uq_usuarios_email"),)
 
     # id: a chave primária. autoincrement=True diz que quem escolhe o próximo número
-    # é o MySQL, e não o código.
+    # é o banco, e não o código.
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # nome: o nome da pessoa, o mesmo que aparece na barra do alto da tela.

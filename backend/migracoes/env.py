@@ -2,7 +2,7 @@
 
 Este arquivo é a ponte entre o Alembic e o projeto. Ele é o que o comando
 `alembic upgrade head` executa por baixo, e por isso é o único lugar do projeto
-onde o Alembic encontra o desenho das tabelas e o endereço do MySQL.
+onde o Alembic encontra o desenho das tabelas e o endereço do PostgreSQL.
 
 As duas configuração que interessam
 
@@ -11,7 +11,7 @@ As duas configuração que interessam
                       que o criar_tabelas.py usa. Sem esta linha, o autogenerate não
                       tem o que comparar e escreve uma migration vazia.
 
-    connectable       é a conexão que o Alembic usa para falar com o MySQL. Aqui ela
+    connectable       é a conexão que o Alembic usa para falar com o PostgreSQL. Aqui ela
                       é o engine do banco.py, e não um engine novo montado a partir
                       do alembic.ini. O motivo é a senha: o endereço, com a senha,
                       é lido do .env pelo configuracao.py, e deste jeito ela não vai
@@ -42,7 +42,7 @@ config = context.config
 
 # Interpreta o arquivo de configuração do Python para o log do Alembic sair no
 # terminal no mesmo formato do resto do projeto, e é o que permite ligar o
-# sqlalchemy.echo no ini para ver cada comando que ele manda ao MySQL.
+# sqlalchemy.echo no ini para ver cada comando que ele manda ao PostgreSQL.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
@@ -71,7 +71,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Roda a migration falando com o MySQL de verdade.
+    """Roda a migration falando com o PostgreSQL de verdade.
 
     O connectable é o engine do banco.py, e não o engine_from_config que o
     `alembic init` deixou aqui. A troca é o que tira a senha do caminho: o

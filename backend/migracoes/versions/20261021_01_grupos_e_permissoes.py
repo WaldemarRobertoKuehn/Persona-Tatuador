@@ -116,6 +116,15 @@ def upgrade() -> None:
         ],
     )
 
+    op.execute(
+        "SELECT setval(pg_get_serial_sequence('grupos', 'id'), "
+        "COALESCE((SELECT MAX(id) FROM grupos), 1), true)"
+    )
+    op.execute(
+        "SELECT setval(pg_get_serial_sequence('permissoes', 'id'), "
+        "COALESCE((SELECT MAX(id) FROM permissoes), 1), true)"
+    )
+
     # NOVO: os usuários atuais mantêm os papéis existentes e passam a apontar para
     # os grupos equivalentes. A migration para com erro se encontrar papel inesperado.
     op.alter_column(
@@ -137,8 +146,9 @@ def upgrade() -> None:
     conexao.execute(
         sa.text(
             "UPDATE usuarios AS u "
-            "JOIN grupos AS g ON g.codigo = u.papel "
-            "SET u.grupo_id = g.id"
+            "SET grupo_id = g.id "
+            "FROM grupos AS g "
+            "WHERE g.codigo = u.papel"
         )
     )
     op.alter_column("usuarios", "grupo_id", existing_type=sa.Integer(), nullable=False)

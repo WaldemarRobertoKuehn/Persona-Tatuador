@@ -7,7 +7,8 @@ fechar a aba.
 
 ## O que precisa existir na máquina
 
-- **MySQL**, para o banco. Precisa estar no ar e o banco `traco_fino` precisa existir.
+- **PostgreSQL do Supabase**, para o banco. Configure host, porta, banco, usuário,
+  senha e SSL no `backend/.env`.
 - **Python**, para o back. O `venv` já está criado em `backend/venv`, então não é
   preciso instalar nada: é só ativar.
 - **Node.js**, para o front. O `node_modules` já está em `frontend/`, então
@@ -15,20 +16,18 @@ fechar a aba.
 
 ### Se o banco não existir ainda
 
-O back não sobe sem o MySQL, porque é nele que os dados moram. O desenho do
-banco mora nos modelos, em `backend/modelos/`, e o banco é montado em três
-passos:
+O back não sobe sem o PostgreSQL, porque é nele que os dados moram. O desenho do
+banco mora nos modelos e nas migrations em `backend/migracoes/`. Configure o
+`backend/.env` com os dados de conexão do Supabase e aplique as migrations:
 
 ```powershell
 cd backend
-mysql -u root -p -e "CREATE DATABASE traco_fino"
 python criar_tabelas.py
-alembic upgrade head
 ```
 
-O `criar_tabelas.py` cria as tabelas que ainda não existem, e o `alembic
-upgrade head` aplica as migrations que faltam, que é o que faz a tabela
-`usuarios` existir. A senha é pedida pelo próprio `mysql`, não vai no comando.
+O script executa `alembic upgrade head`, criando as tabelas e carregando os
+grupos e permissões iniciais. Ele pode ser executado novamente para aplicar
+somente as migrations que ainda faltam.
 
 ### Se as contas de demonstração não existirem
 
@@ -117,7 +116,7 @@ São sete pacotes, e o README explica o porquê de cada um:
 cd backend
 python -m venv venv
 .\venv\Scripts\activate
-pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy pymysql python-dotenv alembic
+pip install -r requirements.txt
 ```
 
 O `fastapi-cli` é o que dá o comando `fastapi dev`: sem ele, o `fastapi.exe`

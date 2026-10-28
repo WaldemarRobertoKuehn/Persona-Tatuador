@@ -32,7 +32,7 @@ def endereco_do_front() -> str:
 
 
 def endereco_do_banco() -> URL:
-    """Devolve o endereço do MySQL como URL, montado a partir do .env.
+    """Devolve o endereço do PostgreSQL como URL, montado a partir do .env.
 
     O endereço é devolvido em partes e não como um texto pronto, e o motivo é a
     senha: o .env é um arquivo texto, e a senha pode ter @, : ou /, que são os
@@ -41,9 +41,8 @@ def endereco_do_banco() -> URL:
     falharia. Com URL.create, cada parte entra no seu lugar, com o nome do
     argumento, e quem monta o texto é o SQLAlchemy.
 
-    drivername é o par driver+dialeto, escrito no formato do SQLAlchemy: o
-    "mysql+" é o nome do dialeto e o que vem depois é o driver que fala com o
-    MySQL. O driver PyMySQL é usado tanto pelos repositórios como pelo SQLAlchemy.
+    drivername é o par driver+dialeto, escrito no formato do SQLAlchemy. O driver
+    psycopg2 é usado tanto pelos repositórios como pelo SQLAlchemy.
 
     A porta é lida com int(), e não como texto, porque o os.getenv devolve sempre
     texto e o número da porta é número.
@@ -52,12 +51,13 @@ def endereco_do_banco() -> URL:
     mesmo numa máquina sem .env. Quem manda é o valor do .env.
     """
     return URL.create(
-        drivername="mysql+pymysql",
-        username=os.getenv("BANCO_USUARIO", "root"),
+        drivername="postgresql+psycopg2",
+        username=os.getenv("BANCO_USUARIO", "postgres"),
         password=os.getenv("BANCO_SENHA", ""),
         host=os.getenv("BANCO_HOST", "localhost"),
-        port=int(os.getenv("BANCO_PORTA", "3306")),
-        database=os.getenv("BANCO_NOME", "traco_fino"),
+        port=int(os.getenv("BANCO_PORTA", "5432")),
+        database=os.getenv("BANCO_NOME", "postgres"),
+        query={"sslmode": os.getenv("BANCO_SSLMODE", "require")},
     )
 
 

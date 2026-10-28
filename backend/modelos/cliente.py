@@ -8,7 +8,7 @@ existem, com que tipo e com que restrição, exatamente como está no docs/DER.m
 
 # Column é o que transforma um atributo desta classe em coluna da tabela, com o
 # tipo e a restrição. primary_key=True marca a chave primária, nullable=False vira
-# NOT NULL no banco, e é por aí que o DER chega no MySQL.
+# NOT NULL no banco, e é por aí que o DER chega no PostgreSQL.
 from sqlalchemy import Column, Integer, String, UniqueConstraint
 
 # DeclarativeBase não entra aqui: o que entra é a Base que já foi declarada no
@@ -21,14 +21,14 @@ from banco import Base
 class Cliente(Base):
     """A tabela clientes: a pessoa que usa o sistema."""
 
-    # __tablename__ diz o nome real da tabela dentro do MySQL. A classe se chama
+    # __tablename__ diz o nome real da tabela dentro do PostgreSQL. A classe se chama
     # Cliente, no singular, e a tabela se chama clientes, no plural: é a convenção
     # do projeto, e o que o SQL usa é sempre o que está escrito aqui.
     __tablename__ = "clientes"
     __table_args__ = (UniqueConstraint("email", name="uq_clientes_email"),)
 
     # id: a chave primária. autoincrement=True diz que quem escolhe o próximo número
-    # é o MySQL, e não o código, e é o que transforma a coluna em INT AUTO_INCREMENT.
+    # é o banco, e não o código, e é o que transforma a coluna em chave serial.
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # nome: o nome da pessoa. VARCHAR(100) é o mesmo limite do max_length do esquema
@@ -39,7 +39,7 @@ class Cliente(Base):
     # Campos de autenticação, que ficaram vazios quando a conta passou a morar na
     # tabela usuarios. As duas colunas continuam no desenho porque a regra do
     # projeto proíbe apagar coluna de tabela que já existe: o caminho é a
-    # migration, e nenhuma coluna sai do MySQL sem que isso seja decidido e
+    # migration, e nenhuma coluna sai do banco sem que isso seja decidido e
     # versionado. O que importa é que ninguém grave mais nelas: quem guarda
     # email e hash de senha é a tabela usuarios, e só ela.
     email = Column(String(254), nullable=True)

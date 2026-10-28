@@ -1,4 +1,4 @@
-"""A porta de entrada no MySQL, compartilhada pelos três repositórios.
+"""A porta de entrada no PostgreSQL, compartilhada pelos três repositórios.
 
 Este arquivo é a única parte do back que sabe que existe um banco de dados, e ele
 guarda quatro coisas: o engine, a fábrica de sessão, a classe Base e a função que
@@ -31,8 +31,9 @@ from contextlib import contextmanager
 # guarda o pool de conexões. O pool é o conjunto de conexões que o SQLAlchemy abre
 # e reaproveita, para não abrir uma conexão nova a cada requisição.
 from sqlalchemy import create_engine
-import pymysql
-from pymysql.cursors import DictCursor
+from sqlalchemy.pool import NullPool
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # sessionmaker é a fábrica de sessões: chamar Sessao() devolve uma sessão nova, e é
 # por isso que ela se chama Sessao, com S maiúsculo, como a regra do projeto pede.
@@ -59,24 +60,25 @@ class Base(DeclarativeBase):
 engine = create_engine(
     configuracao.endereco_do_banco(),
     connect_args={"connect_timeout": 5},
+    poolclass=NullPool,
 )
 
 
 @contextmanager
 def cursor():
-    """Abre um cursor MySQL em formato de dicionário para os repositórios."""
+    """Abre um cursor PostgreSQL em formato de dicionário para os repositórios."""
     endereco = configuracao.endereco_do_banco()
-    conexao = pymysql.connect(
+    conexao = psycopg2.connect(
         host=endereco.host,
         port=endereco.port,
         user=endereco.username,
         password=endereco.password,
         database=endereco.database,
+        sslmode=endereco.query["sslmode"],
         connect_timeout=5,
-        cursorclass=DictCursor,
     )
     try:
-        with conexao.cursor() as cursor_banco:
+        with conexao.cursor(cursor_factory=RealDictCursor) as cursor_banco:
             yield cursor_banco
         conexao.commit()
     except Exception:

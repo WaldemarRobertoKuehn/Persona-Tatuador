@@ -1,4 +1,4 @@
-"""NOVO: consultas e gravações de grupos e permissões no MySQL."""
+"""NOVO: consultas e gravações de grupos e permissões no PostgreSQL."""
 
 import banco
 
@@ -76,10 +76,10 @@ def criar_grupo(codigo: str, nome: str, permissoes: list[str]) -> dict:
     """NOVO: grava grupo e vínculos de permissão na mesma transação."""
     with banco.cursor() as cursor:
         cursor.execute(
-            "INSERT INTO grupos (codigo, nome) VALUES (%s, %s)",
+            "INSERT INTO grupos (codigo, nome) VALUES (%s, %s) RETURNING id",
             (codigo, nome),
         )
-        grupo_id = cursor.lastrowid
+        grupo_id = cursor.fetchone()["id"]
         for permissao in permissoes:
             cursor.execute(
                 "INSERT INTO grupos_permissoes (grupo_id, permissao_id) "
@@ -140,10 +140,10 @@ def atribuir_usuario_ao_grupo(usuario_id: int, grupo: dict) -> str:
             # NOVO: contas promovidas a Cliente precisam de um registro de dono
             # para que o escopo de tatuagens próprias funcione.
             cursor.execute(
-                "INSERT INTO clientes (nome) VALUES (%s)",
+                "INSERT INTO clientes (nome) VALUES (%s) RETURNING id",
                 (usuario["nome"],),
             )
-            cliente_id = cursor.lastrowid
+            cliente_id = cursor.fetchone()["id"]
         cursor.execute(
             "UPDATE usuarios SET grupo_id = %s, papel = %s, cliente_id = %s "
             "WHERE id = %s",
