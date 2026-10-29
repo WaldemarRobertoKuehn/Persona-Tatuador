@@ -166,9 +166,8 @@ Com o back no ar, o esperado é:
 - fazer login em `/autenticacao/login` e enviar o token Bearer em `Authorization` para acessar
   as rotas de usuários, tatuagens e passos.
 
-A raiz `http://localhost:8000` responde **404**, e isso é de propósito: as REGRAS proíbem rota no
-`main.py`. Para confirmar que o back está no ar, `http://localhost:8000/health` responde
-`{"status":"ok"}` sem consultar o banco.
+A raiz `http://localhost:8000` responde `{"status":"ok"}` para confirmar que o back está no ar,
+sem consultar o banco.
 
 O `.env` precisa ter `ORIGEM_FRONTEND` com o endereço exato do front, porque é dele que sai o CORS.
 Se o endereço mudar, mude no `.env` e reinicie o back.

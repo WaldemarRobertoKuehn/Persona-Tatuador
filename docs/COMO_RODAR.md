@@ -135,7 +135,7 @@ fastapi dev main.py --host 0.0.0.0
 ```
 
 O terminal tem que mostrar que o servidor está em `0.0.0.0:8000`. Para conferir se
-subiu mesmo, abra `http://127.0.0.1:8000/health`; a resposta esperada é
+subiu mesmo, abra `http://127.0.0.1:8000/`; a resposta esperada é
 `{"status":"ok"}`. Esse endpoint confirma a disponibilidade da API sem consultar o banco.
 
 - `http://localhost:8000/docs` abre a documentação automática, com as rotas da API;

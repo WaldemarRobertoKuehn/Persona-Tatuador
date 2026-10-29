@@ -5,7 +5,7 @@ from fastapi import APIRouter
 roteador_health = APIRouter(tags=["health"])
 
 
-@roteador_health.get("/health")
+@roteador_health.get("/")
 def verificar_saude() -> dict[str, str]:
     """Informa que a API está respondendo."""
     return {"status": "ok"}
