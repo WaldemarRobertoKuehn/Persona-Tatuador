@@ -11,7 +11,7 @@
  * deu erro já vem com a mensagem pronta.
  */
 
-export const URL_DA_API = import.meta.env.VITE_URL_DA_API;
+export const URL_DA_API = (import.meta.env.VITE_URL_DA_API || "/api").replace(/\/$/, "");
 const CHAVE_TOKEN = "traco-fino-token";
 
 let tokenAcesso = null;

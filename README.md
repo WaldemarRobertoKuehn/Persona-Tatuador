@@ -94,11 +94,18 @@ O back é o FastAPI, na pasta `backend/`. A documentação automática fica em `
 
 ## Publicar na Vercel
 
-O deploy na Vercel é somente do backend. Configure o **Root Directory** como
-`backend/`. A pasta contém o `vercel.json` e a função `api/index.py`, que encaminha
-as requisições para o FastAPI. Remova qualquer comando personalizado de instalação
-ou build que execute `npm`; com `backend/` como raiz, a Vercel instala as
-dependências Python de `requirements.txt`.
+O frontend e o backend são dois projetos independentes da Vercel, conectados ao
+mesmo repositório. Crie um projeto para cada pasta e configure o **Root Directory**
+de acordo com a tabela:
+
+| projeto | Root Directory | configuração de build |
+| --- | --- | --- |
+| Backend | `backend/` | deixe os comandos de instalação e build padrão; a Vercel instala `requirements.txt` |
+| Frontend | `frontend/` | Framework Preset `Vite`; Build Command `npm run build`; Output Directory `dist` |
+
+No projeto do backend, `api/index.py` encaminha as requisições para o FastAPI.
+O `requirements.txt` dessa pasta declara as dependências necessárias para uma
+instalação limpa na Vercel.
 
 Configure estas variáveis no projeto Vercel, em **Settings → Environment Variables**:
 
@@ -114,9 +121,10 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 | `JWT_MINUTOS` | validade do token em minutos, por exemplo `60` |
 | `ORIGEM_FRONTEND` | URL HTTPS exata do domínio onde o frontend está hospedado |
 
-No deploy separado do frontend, configure `VITE_URL_DA_API` com a URL do backend
-mais `/api`, por exemplo `https://seu-backend.vercel.app/api`. A variável é usada
-no build do frontend, não no projeto Vercel do backend.
+No projeto do frontend, configure `VITE_URL_DA_API` com a URL pública do backend,
+mais `/api`, por exemplo `https://seu-backend.vercel.app/api`. Essa variável é
+usada no build do frontend. Sem ela, o front usa `/api`, opção adequada apenas
+quando a API está no mesmo domínio.
 
 Use um PostgreSQL hospedado externamente, pois o banco local do Docker não fica
 disponível para as funções da Vercel. Depois de criar o banco, aplique as migrations

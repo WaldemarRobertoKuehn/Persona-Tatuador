@@ -28,7 +28,7 @@ def endereco_do_front() -> str:
     estiver no .env. Ele existe para o back subir mesmo numa máquina sem .env, e não
     muda nada quando o .env existe: quem manda é o valor de lá.
     """
-    return os.getenv("ORIGEM_FRONTEND", "http://localhost:5173")
+    return os.getenv("ORIGEM_FRONTEND", "http://localhost:5173").rstrip("/")
 
 
 def endereco_do_banco() -> URL:
