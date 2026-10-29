@@ -2,6 +2,7 @@
 venv/
 .env
 .env.local
+.env.migracao
 # O .env.exemplo vai para o Git: é a lista das chaves, sem os valores.
 !.env.exemplo
 
