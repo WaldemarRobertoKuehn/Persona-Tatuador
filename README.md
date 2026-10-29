@@ -94,11 +94,11 @@ O back é o FastAPI, na pasta `backend/`. A documentação automática fica em `
 
 ## Publicar na Vercel
 
-O repositório está configurado para publicar o frontend Vite e a API FastAPI no
-mesmo projeto Vercel. Importe o repositório na Vercel mantendo o **Root Directory**
-na raiz do repositório; não defina `frontend/` como raiz. O `vercel.json` compila
-`frontend/`, encaminha `/api/*` para a função Python em `api/index.py` e entrega o
-`index.html` para as demais rotas do React.
+O deploy na Vercel é somente do backend. Configure o **Root Directory** como
+`backend/`. A pasta contém o `vercel.json` e a função `api/index.py`, que encaminha
+as requisições para o FastAPI. Remova qualquer comando personalizado de instalação
+ou build que execute `npm`; com `backend/` como raiz, a Vercel instala as
+dependências Python de `requirements.txt`.
 
 Configure estas variáveis no projeto Vercel, em **Settings → Environment Variables**:
 
@@ -112,8 +112,11 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 | `BANCO_SSLMODE` | `require` |
 | `JWT_SEGREDO` | segredo aleatório com pelo menos 32 caracteres |
 | `JWT_MINUTOS` | validade do token em minutos, por exemplo `60` |
-| `ORIGEM_FRONTEND` | URL HTTPS exata do domínio do frontend na Vercel |
-| `VITE_URL_DA_API` | `/api` |
+| `ORIGEM_FRONTEND` | URL HTTPS exata do domínio onde o frontend está hospedado |
+
+No deploy separado do frontend, configure `VITE_URL_DA_API` com a URL do backend
+mais `/api`, por exemplo `https://seu-backend.vercel.app/api`. A variável é usada
+no build do frontend, não no projeto Vercel do backend.
 
 Use um PostgreSQL hospedado externamente, pois o banco local do Docker não fica
 disponível para as funções da Vercel. Depois de criar o banco, aplique as migrations
