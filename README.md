@@ -24,7 +24,7 @@ O back entrega as cinco coisas que a cartilha pede:
 | Registrar um passo numa tatuagem | `POST /tatuagens/{tatuagem_id}/passos` |
 
 A agenda abre com **oito tatuagens de demonstração** — cinco da Bruna e três da Camila — e os
-históricos delas estão coerentes com a regra. Esses dados estão no MySQL, e as contas que entram
+históricos delas estão coerentes com a regra. Esses dados estão no PostgreSQL, e as contas que entram
 nele estão na tabela `usuarios`: são criadas por `backend/criar_contas_de_demonstracao.py`, que é
 o mesmo caminho do `criar_tabelas.py` e do `alembic upgrade head`, ou seja, montagem de banco, e
 não rota da API.
@@ -92,40 +92,63 @@ cópia nenhuma dentro do front.
 
 O back é o FastAPI, na pasta `backend/`. A documentação automática fica em `/docs`.
 
-O banco é o **MySQL**, e ele precisa existir antes do back subir. O desenho dele mora nos modelos,
+## Publicar na Vercel
+
+O repositório está configurado para publicar o frontend Vite e a API FastAPI no
+mesmo projeto Vercel. Importe o repositório na Vercel mantendo o **Root Directory**
+na raiz do repositório; não defina `frontend/` como raiz. O `vercel.json` compila
+`frontend/`, encaminha `/api/*` para a função Python em `api/index.py` e entrega o
+`index.html` para as demais rotas do React.
+
+Configure estas variáveis no projeto Vercel, em **Settings → Environment Variables**:
+
+| variável | valor |
+| --- | --- |
+| `BANCO_HOST` | host do PostgreSQL acessível pela Vercel |
+| `BANCO_PORTA` | porta do PostgreSQL, normalmente `5432` |
+| `BANCO_NOME` | nome do banco |
+| `BANCO_USUARIO` | usuário do banco |
+| `BANCO_SENHA` | senha do banco |
+| `BANCO_SSLMODE` | `require` |
+| `JWT_SEGREDO` | segredo aleatório com pelo menos 32 caracteres |
+| `JWT_MINUTOS` | validade do token em minutos, por exemplo `60` |
+| `ORIGEM_FRONTEND` | URL HTTPS exata do domínio do frontend na Vercel |
+| `VITE_URL_DA_API` | `/api` |
+
+Use um PostgreSQL hospedado externamente, pois o banco local do Docker não fica
+disponível para as funções da Vercel. Depois de criar o banco, aplique as migrations
+com `alembic upgrade head` usando uma conexão configurada para esse banco antes de
+usar a aplicação. Para previews em domínios diferentes, configure `ORIGEM_FRONTEND`
+no ambiente Preview com a origem correspondente.
+
+O deploy não cria automaticamente as contas de demonstração nem migra o banco.
+Essas tarefas devem ser executadas separadamente contra o PostgreSQL hospedado.
+
+O banco é o **PostgreSQL**, e ele precisa existir antes do back subir. O desenho dele mora nos modelos,
 em `backend/modelos/`, e o banco é montado em três passos:
 
 ```bash
 cd backend
-mysql -u root -p -e "CREATE DATABASE traco_fino"
+createdb -U postgres traco_fino
 python criar_tabelas.py
 alembic upgrade head
 ```
 
 O `criar_tabelas.py` cria as tabelas que ainda não existem, e o `alembic upgrade head` aplica as
-migrations que faltam, que é o que faz a tabela `usuarios` existir. A senha do banco é pedida pelo
-próprio `mysql`, não vai no comando.
+migrations que faltam. Configure `BANCO_HOST`, `BANCO_PORTA`, `BANCO_NOME`,
+`BANCO_USUARIO` e `BANCO_SENHA` no `.env` antes de executar os comandos.
 
-Depois, o ambiente do Python. São sete pacotes, e cada um tem um porquê:
+Depois, prepare o ambiente do Python e instale as dependências do `requirements.txt`:
 
 ```bash
 cd backend
 python -m venv venv
 venv\Scripts\activate
-pip install fastapi fastapi-cli "uvicorn[standard]" sqlalchemy pymysql python-dotenv alembic
+pip install -r requirements.txt
 ```
 
-| pacote | por que |
-| --- | --- |
-| `fastapi` | `FastAPI`, `APIRouter`, `HTTPException`, `Query` e `Depends`, em `main.py` e `rotas/` |
-| `fastapi-cli` | o comando `fastapi dev`. Sem ele o `fastapi.exe` avisa que falta o `fastapi[standard]` |
-| `uvicorn[standard]` | o servidor que o `fastapi dev` sobe, e o `watchfiles`, que é o auto-reload |
-| `sqlalchemy` | `create_engine`, `sessionmaker`, `DeclarativeBase`, `Column`, `ForeignKey` e `relationship`, em `banco.py` e `modelos/` |
-| `pymysql` | o driver `mysql+pymysql`, que é o que o `configuracao.py` monta |
-| `python-dotenv` | o `load_dotenv()` do `configuracao.py` |
-| `alembic` | o comando `alembic` e o `migracoes/env.py`, para as migrations |
-
-O `pydantic` não está na lista porque vem junto com o `fastapi`, e o `starlette` também.
+O `requirements.txt` contém as dependências da API, incluindo FastAPI, SQLAlchemy,
+o driver PostgreSQL e Alembic.
 
 E aí o back sobe:
 
@@ -185,7 +208,7 @@ terminal.
 
 ## Mudança no banco: migrations
 
-O banco é o MySQL, e o desenho dele mora nos modelos, em `backend/modelos/`. O problema do
+O banco é o PostgreSQL, e o desenho dele mora nos modelos, em `backend/modelos/`. O problema do
 `Base.metadata.create_all` é que ele **só cria a tabela que ainda não existe**: tabela que já
 existe, ele não toca. Mudar uma coluna ou acrescentar uma chave estrangeira numa tabela que já tem
 dado de alguém não pode ser `DROP TABLE` nem `ALTER TABLE` escrito à mão, porque um funciona só na
@@ -210,7 +233,7 @@ gerado** e só então aplico com `alembic upgrade head`. O `--autogenerate` acer
 chave; em troca de nome de coluna ele não é confiável, porque lê como apagar uma e criar outra.
 
 **O banco atual ainda não tem migration.** As duas chaves estrangeiras (`fk_tatuagens_cliente` e
-`fk_passos_tatuagem`) já estão no MySQL, e `backend/esquema.sql` é o desenho que as criou. A pasta
+`fk_passos_tatuagem`) já estão no PostgreSQL, e `backend/esquema.sql` é o desenho que as criou. A pasta
 `migracoes/versions/` começa vazia de propósito: o banco foi montado direto do desenho, sem passar
 por migration, e a primeira migration vai nascer da **primeira mudança de verdade** que vier. Como o
 Alembic compara os modelos com o banco que está rodando, e não com a pasta de migrations, essa
@@ -299,7 +322,7 @@ As duas paletas e os contrastes de cada uma estão no `docs/styleguide/styleguid
 ## Regras de ouro deste repositório
 
 - Rota chama serviço, serviço chama repositório. Nunca o contrário.
-- Os dados ficam no MySQL, e o desenho do banco mora nos modelos, em `modelos/`. A sessão nasce na
+- Os dados ficam no PostgreSQL, e o desenho do banco mora nos modelos, em `modelos/`. A sessão nasce na
   rota, pelo `Depends(obter_sessao)`, e passa de mão em mão.
 - Mudança numa tabela que já existe é migration, em `migracoes/versions/`, versionada no Git. Nunca
   `DROP TABLE` e nunca `ALTER TABLE` escrito à mão.
