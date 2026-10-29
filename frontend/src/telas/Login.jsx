@@ -8,13 +8,37 @@ import AlternadorTema from "../componentes/AlternadorTema";
 import Logo from "../componentes/Logo";
 import { ESCURO } from "../tema";
 
-export default function Login({ aoEntrar, erro, entrando, tema, trocarTema }) {
+export default function Login({
+  aoEntrar,
+  aoCadastrar,
+  aoLimparErro,
+  erro,
+  entrando,
+  cadastrando,
+  tema,
+  trocarTema,
+}) {
+  const [modo, setModo] = useState("entrar");
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const ehCadastro = modo === "cadastrar";
+  const ocupado = entrando || cadastrando;
+
+  function trocarModo(novoModo) {
+    setModo(novoModo);
+    setSenha("");
+    aoLimparErro();
+  }
 
   function enviar(evento) {
     evento.preventDefault();
-    aoEntrar(email, senha);
+
+    if (ehCadastro) {
+      aoCadastrar(nome, email, senha);
+    } else {
+      aoEntrar(email, senha);
+    }
   }
 
   return (
@@ -51,10 +75,30 @@ export default function Login({ aoEntrar, erro, entrando, tema, trocarTema }) {
         </div>
       </section>
 
-      <h2>Entrar no Traço Fino</h2>
-      <p className="legenda">Use o e-mail e a senha da sua conta.</p>
+      <h2>{ehCadastro ? "Criar sua conta" : "Entrar no Traço Fino"}</h2>
+      <p className="legenda">
+        {ehCadastro
+          ? "Nome, e-mail e senha. Sua conta começa como Cliente."
+          : "Use o e-mail e a senha da sua conta."}
+      </p>
 
       <form className="cartao" onSubmit={enviar}>
+        {ehCadastro ? (
+          <label className="campo">
+            <span className="campo-rodape">Nome</span>
+            <input
+              type="text"
+              name="nome"
+              value={nome}
+              onChange={(evento) => setNome(evento.target.value)}
+              autoComplete="name"
+              minLength={2}
+              maxLength={100}
+              required
+            />
+          </label>
+        ) : null}
+
         <label className="campo">
           <span className="campo-rodape">E-mail</span>
           <input
@@ -62,19 +106,25 @@ export default function Login({ aoEntrar, erro, entrando, tema, trocarTema }) {
             name="email"
             value={email}
             onChange={(evento) => setEmail(evento.target.value)}
-            autoComplete="username"
+            autoComplete={ehCadastro ? "email" : "username"}
+            maxLength={254}
             required
           />
         </label>
 
         <label className="campo">
-          <span className="campo-rodape">Senha</span>
+          <span className="campo-rodape">
+            Senha
+            {ehCadastro ? <span className="campo-dica"> mínimo 8 caracteres</span> : null}
+          </span>
           <input
             type="password"
             name="senha"
             value={senha}
             onChange={(evento) => setSenha(evento.target.value)}
-            autoComplete="current-password"
+            autoComplete={ehCadastro ? "new-password" : "current-password"}
+            minLength={ehCadastro ? 8 : 1}
+            maxLength={128}
             required
           />
         </label>
@@ -85,10 +135,28 @@ export default function Login({ aoEntrar, erro, entrando, tema, trocarTema }) {
           </p>
         ) : null}
 
-        <button className="botao botao-largo" type="submit" disabled={entrando}>
-          {entrando ? "Entrando..." : "Entrar"}
+        <button className="botao botao-largo" type="submit" disabled={ocupado}>
+          {ehCadastro
+            ? cadastrando
+              ? "Criando conta..."
+              : "Criar conta"
+            : entrando
+              ? "Entrando..."
+              : "Entrar"}
         </button>
       </form>
+
+      <p className="alternar-acesso">
+        {ehCadastro ? "Já tem uma conta?" : "Ainda não tem conta?"}{" "}
+        <button
+          type="button"
+          className="link-acao"
+          onClick={() => trocarModo(ehCadastro ? "entrar" : "cadastrar")}
+          disabled={ocupado}
+        >
+          {ehCadastro ? "Entrar" : "Criar conta"}
+        </button>
+      </p>
 
       <section className="vitrine">
         <img

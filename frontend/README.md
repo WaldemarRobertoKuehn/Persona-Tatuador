@@ -53,7 +53,8 @@ valida o token novamente; quando o prazo informado no token vence, limpa a sess�
 login. O perfil vem pelo **papel** que o back devolve em `/usuarios/eu`, que é `cliente` ou
 `tatuador`: o front não tem nenhum id de usuário escrito no código, e é por isso que o mesmo
 perfil serve para as duas contas de tatuador do estúdio. O nome que aparece na barra também vem do
-back, da conta que entrou. Não há cadastro de contas pelo front.
+back, da conta que entrou. A mesma tela alterna para o cadastro, que envia nome, e-mail e senha em
+`POST /usuarios`; o back cria sempre uma conta Cliente, e o front entra nela em seguida.
 
 A tela da cliente usa o `cliente_id` que vem na mesma resposta, e não o id da conta: a conta e a
 cliente da cartilha são duas coisas diferentes, e quem guarda a ligação entre elas é o back.

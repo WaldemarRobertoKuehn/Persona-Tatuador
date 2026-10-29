@@ -114,6 +114,14 @@ export function autenticar(email, senha) {
     });
 }
 
+export function cadastrarUsuario({ nome, email, senha }) {
+  return fetch(caminho("/usuarios"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome, email, senha }),
+  }).then(conferirResposta);
+}
+
 export function buscarUsuarioAtual(token = tokenAcesso) {
   return fetch(
     caminho("/usuarios/eu"),

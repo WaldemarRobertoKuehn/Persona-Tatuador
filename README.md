@@ -100,8 +100,8 @@ de acordo com a tabela:
 
 | projeto | Root Directory | configuração de build |
 | --- | --- | --- |
-| Backend | `backend/` | deixe os comandos de instalação e build padrão; a Vercel instala `requirements.txt` |
-| Frontend | `frontend/` | Framework Preset `Vite`; Build Command `npm run build`; Output Directory `dist` |
+| Backend | `backend/` | Framework Preset `Other`; deixe os comandos de instalação e build padrão; a Vercel instala `requirements.txt` |
+| Frontend | `frontend/` | Framework Preset `Vite`; Build Command `npm run build`; Output Directory `dist`; Install Command `npm install` |
 
 No projeto do backend, `api/index.py` encaminha as requisições para o FastAPI.
 O `requirements.txt` dessa pasta declara as dependências necessárias para uma
@@ -125,6 +125,10 @@ No projeto do frontend, configure `VITE_URL_DA_API` com a URL pública do backen
 mais `/api`, por exemplo `https://seu-backend.vercel.app/api`. Essa variável é
 usada no build do frontend. Sem ela, o front usa `/api`, opção adequada apenas
 quando a API está no mesmo domínio.
+
+Na raiz deste repositório, `vercel.json` mantém apenas o build estático do frontend
+para instalações criadas com a raiz do repositório. Para os dois projetos separados,
+selecione `frontend/` e `backend/` como Root Directory de cada projeto.
 
 Use um PostgreSQL hospedado externamente, pois o banco local do Docker não fica
 disponível para as funções da Vercel. Depois de criar o banco, aplique as migrations

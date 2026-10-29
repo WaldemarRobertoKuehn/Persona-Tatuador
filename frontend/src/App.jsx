@@ -28,6 +28,7 @@ import { ESCURO, useTema } from "./tema";
 import {
   autenticar,
   buscarUsuarioAtual,
+  cadastrarUsuario,
   limparToken,
   milissegundosAteExpirar,
   tokenSalvo,
@@ -47,6 +48,7 @@ export default function App() {
     tokenSalvo() ? "verificando" : "desconectado",
   );
   const [entrando, setEntrando] = useState(false);
+  const [cadastrando, setCadastrando] = useState(false);
   const [erroAutenticacao, setErroAutenticacao] = useState("");
 
   /* O tema é do App e não de cada tela, porque o botão fica na barra, que é
@@ -121,19 +123,38 @@ export default function App() {
     return () => clearTimeout(temporizador);
   }, [estadoAutenticacao]);
 
+  async function concluirAcesso(email, senha) {
+    await autenticar(email, senha);
+    const usuario = await buscarUsuarioAtual();
+    ativarConta(usuario);
+  }
+
   async function entrar(email, senha) {
     setEntrando(true);
     setErroAutenticacao("");
 
     try {
-      await autenticar(email, senha);
-      const usuario = await buscarUsuarioAtual();
-      ativarConta(usuario);
+      await concluirAcesso(email, senha);
     } catch (erroRecebido) {
       limparToken();
       setErroAutenticacao(erroRecebido.message);
     } finally {
       setEntrando(false);
+    }
+  }
+
+  async function cadastrar(nome, email, senha) {
+    setCadastrando(true);
+    setErroAutenticacao("");
+
+    try {
+      await cadastrarUsuario({ nome, email, senha });
+      await concluirAcesso(email, senha);
+    } catch (erroRecebido) {
+      limparToken();
+      setErroAutenticacao(erroRecebido.message);
+    } finally {
+      setCadastrando(false);
     }
   }
 
@@ -166,8 +187,11 @@ export default function App() {
     return (
       <Login
         aoEntrar={entrar}
+        aoCadastrar={cadastrar}
+        aoLimparErro={() => setErroAutenticacao("")}
         erro={erroAutenticacao}
         entrando={entrando}
+        cadastrando={cadastrando}
         tema={tema}
         trocarTema={trocarTema}
       />
