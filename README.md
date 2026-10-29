@@ -122,9 +122,12 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 | `ORIGEM_FRONTEND` | URL HTTPS exata do domínio onde o frontend está hospedado |
 
 No projeto do frontend, configure `VITE_URL_DA_API` com a URL pública do backend,
-mais `/api`, por exemplo `https://seu-backend.vercel.app/api`. Essa variável é
-usada no build do frontend. Sem ela, o front usa `/api`, opção adequada apenas
-quando a API está no mesmo domínio.
+mais `/api`, por exemplo `https://seu-backend.vercel.app/api`. Para usar o proxy
+incluído em `frontend/vercel.json`, mantenha `VITE_URL_DA_API=/api` (como em
+`frontend/.env.production`) e ajuste nesse arquivo o domínio para o projeto
+Backend da Vercel. O proxy encaminha `/api/...` ao backend; o `backend/vercel.json`
+direciona essas chamadas ao handler FastAPI, que remove o prefixo antes de
+resolver a rota.
 
 Na raiz deste repositório, `vercel.json` mantém apenas o build estático do frontend
 para instalações criadas com a raiz do repositório. Para os dois projetos separados,
