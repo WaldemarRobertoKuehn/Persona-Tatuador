@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "'https://persona-tatuador-x2gw.vercel.app/$1"
+      "destination": "https://persona-tatuador-x2gw.vercel.app/$1"
     },
     {
       "source": "/(.*)",
