@@ -7,6 +7,7 @@ chama os.getenv: todos pedem o valor a este arquivo.
 """
 
 import os
+from pathlib import Path
 
 # load_dotenv() lê o arquivo .env e coloca cada chave dele como variável de ambiente
 # do processo. Sem essa chamada, o os.getenv lá embaixo não encontraria nada.
@@ -16,9 +17,9 @@ from dotenv import load_dotenv
 # driver, usuário, senha, host, porta e nome. Montar o endereço com URL.create, em
 # vez de escrever o texto na mão, é o que resolve o problema da senha com caractere
 # estranho: o SQLAlchemy escapa o valor na hora de montar o texto, e não a gente.
-from sqlalchemy.engine import URL
+from sqlalchemy.engine import URL, make_url
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 
 def endereco_do_front() -> str:
@@ -50,6 +51,17 @@ def endereco_do_banco() -> URL:
     Os valores padrão seguem o mesmo motivo do da origem do front: o back sobe
     mesmo numa máquina sem .env. Quem manda é o valor do .env.
     """
+    supabase_url = os.getenv("SUPABASE_DB_URL", "").strip()
+    supabase_password = os.getenv("SUPABASE_DB_PASSWORD", "")
+
+    if supabase_url:
+        url = make_url(supabase_url)
+        return url.set(
+            drivername="postgresql+psycopg2",
+            password=supabase_password or url.password,
+            query={**url.query, "sslmode": os.getenv("BANCO_SSLMODE", "require")},
+        )
+
     return URL.create(
         drivername="postgresql+psycopg2",
         username=os.getenv("BANCO_USUARIO", "postgres"),
