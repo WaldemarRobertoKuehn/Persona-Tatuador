@@ -24,6 +24,7 @@ export default function Login({
   const [senha, setSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [erroConfirmacao, setErroConfirmacao] = useState("");
+  const [mostrarAjudaSenha, setMostrarAjudaSenha] = useState(false);
   const ehCadastro = modo === "cadastrar";
   const ocupado = entrando || cadastrando;
 
@@ -32,6 +33,7 @@ export default function Login({
     setSenha("");
     setConfirmacaoSenha("");
     setErroConfirmacao("");
+    setMostrarAjudaSenha(false);
     aoLimparErro();
   }
 
@@ -181,6 +183,28 @@ export default function Login({
               : "Entrar"}
         </button>
       </form>
+
+      {!ehCadastro ? (
+        <>
+          <p className="alternar-acesso">
+            <button
+              type="button"
+              className="link-acao"
+              aria-expanded={mostrarAjudaSenha}
+              aria-controls="ajuda-redefinir-senha"
+              onClick={() => setMostrarAjudaSenha(!mostrarAjudaSenha)}
+            >
+              Esqueceu ou quer redefinir a senha?
+            </button>
+          </p>
+          {mostrarAjudaSenha ? (
+            <p className="aviso" id="ajuda-redefinir-senha" role="status">
+              Para proteger sua conta, peça ao responsável pelo estúdio para
+              redefinir sua senha.
+            </p>
+          ) : null}
+        </>
+      ) : null}
 
       <p className="alternar-acesso">
         {ehCadastro ? "Já tem uma conta?" : "Ainda não tem conta?"}{" "}
