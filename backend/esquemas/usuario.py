@@ -40,6 +40,23 @@ class CredenciaisEntrada(BaseModel):
         return valor
 
 
+class SolicitacaoRedefinicaoSenha(BaseModel):
+    email: str = Field(min_length=5, max_length=254)
+
+    @field_validator("email")
+    @classmethod
+    def normalizar_email(cls, valor: str) -> str:
+        valor = valor.strip().lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor):
+            raise ValueError("Informe um email válido.")
+        return valor
+
+
+class RedefinicaoSenhaEntrada(BaseModel):
+    token: str = Field(min_length=20, max_length=256)
+    senha: str = Field(min_length=8, max_length=128)
+
+
 class UsuarioSaida(BaseModel):
     id: int
     nome: str

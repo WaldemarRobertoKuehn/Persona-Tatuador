@@ -30,6 +30,12 @@ services:
       JWT_SEGREDO: ${JWT_SEGREDO}
       # Permite a origem local publicada pelo serviço web.
       ORIGEM_FRONTEND: http://localhost:8080
+      EMAIL_RECUPERACAO: ${EMAIL_RECUPERACAO:-waldemarrobertokuehn@gmail.com}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORTA: ${SMTP_PORTA:-587}
+      SMTP_USUARIO: ${SMTP_USUARIO}
+      SMTP_SENHA: ${SMTP_SENHA}
+      SMTP_REMETENTE: ${SMTP_REMETENTE:-}
     # Ordena a partida; não garante que o MySQL já aceite conexões.
     depends_on:
       - banco

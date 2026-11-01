@@ -108,6 +108,34 @@ O primeiro argumento é o e-mail da conta e o segundo é a senha nova, com pelo
 menos oito caracteres. A senha em texto nunca vai para o banco: o que é
 gravado é o hash.
 
+### Redefinir senha pela tela
+
+O link de recuperação das contas de demonstração é enviado para
+`waldemarrobertokuehn@gmail.com`. Para o envio funcionar pelo Gmail, gere uma
+senha de app na conta Google que enviará as mensagens e configure no `.env` da
+raiz do projeto:
+
+```dotenv
+EMAIL_RECUPERACAO=waldemarrobertokuehn@gmail.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORTA=587
+SMTP_USUARIO=conta-que-envia@gmail.com
+SMTP_SENHA=senha-de-app-do-google
+SMTP_REMETENTE=conta-que-envia@gmail.com
+```
+
+Não use a senha normal do Gmail nem coloque a senha de app no Git. Depois de
+configurar, aplique a migration:
+
+```powershell
+cd backend
+python criar_tabelas.py
+```
+
+Na tela de login, escolha **Esqueceu ou quer redefinir a senha?** e informe o
+e-mail da conta. O link enviado à caixa configurada expira em 30 minutos e só
+pode ser usado uma vez.
+
 ### Se o `venv` for apagado
 
 São sete pacotes, e o README explica o porquê de cada um:

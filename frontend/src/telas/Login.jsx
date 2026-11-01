@@ -11,33 +11,49 @@ import { ESCURO } from "../tema";
 export default function Login({
   aoEntrar,
   aoCadastrar,
+  aoSolicitarRedefinicao,
+  aoRedefinirSenha,
   aoLimparErro,
   erro,
+  mensagem,
   entrando,
   cadastrando,
+  solicitandoRedefinicao,
+  redefinindoSenha,
   tema,
   trocarTema,
 }) {
-  const [modo, setModo] = useState("entrar");
+  const tokenInicial = new URLSearchParams(window.location.hash.slice(1)).get("token");
+  const [modo, setModo] = useState(tokenInicial ? "redefinir" : "entrar");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [erroConfirmacao, setErroConfirmacao] = useState("");
-  const [mostrarAjudaSenha, setMostrarAjudaSenha] = useState(false);
+  const [tokenRedefinicao] = useState(tokenInicial);
   const ehCadastro = modo === "cadastrar";
-  const ocupado = entrando || cadastrando;
+  const ehRecuperacao = modo === "recuperar";
+  const ehRedefinicao = modo === "redefinir";
+  const ocupado =
+    entrando || cadastrando || solicitandoRedefinicao || redefinindoSenha;
 
   function trocarModo(novoModo) {
     setModo(novoModo);
     setSenha("");
     setConfirmacaoSenha("");
     setErroConfirmacao("");
-    setMostrarAjudaSenha(false);
     aoLimparErro();
   }
 
-  function enviar(evento) {
+  function limparTokenDaUrl() {
+    const url = new URL(window.location.href);
+    const fragmento = new URLSearchParams(url.hash.slice(1));
+    fragmento.delete("token");
+    url.hash = fragmento.toString();
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  async function enviar(evento) {
     evento.preventDefault();
 
     if (ehCadastro) {
@@ -47,6 +63,21 @@ export default function Login({
       }
 
       aoCadastrar(nome, email, senha);
+    } else if (ehRecuperacao) {
+      await aoSolicitarRedefinicao(email);
+    } else if (ehRedefinicao) {
+      if (senha !== confirmacaoSenha) {
+        setErroConfirmacao("As senhas não coincidem.");
+        return;
+      }
+
+      const redefinida = await aoRedefinirSenha(tokenRedefinicao, senha);
+      if (redefinida) {
+        limparTokenDaUrl();
+        setSenha("");
+        setConfirmacaoSenha("");
+        setModo("entrar");
+      }
     } else {
       aoEntrar(email, senha);
     }
@@ -86,11 +117,23 @@ export default function Login({
         </div>
       </section>
 
-      <h2>{ehCadastro ? "Criar sua conta" : "Entrar no Traço Fino"}</h2>
+      <h2>
+        {ehCadastro
+          ? "Criar sua conta"
+          : ehRecuperacao
+            ? "Esqueceu a senha?"
+            : ehRedefinicao
+              ? "Redefinir senha"
+              : "Entrar no Traço Fino"}
+      </h2>
       <p className="legenda">
         {ehCadastro
           ? "Nome, e-mail e senha. Sua conta começa como Cliente."
-          : "Use o e-mail e a senha da sua conta."}
+          : ehRecuperacao
+            ? "Informe o e-mail da conta. O link será enviado ao responsável pelo projeto."
+            : ehRedefinicao
+              ? "Escolha uma nova senha com pelo menos 8 caracteres."
+              : "Use o e-mail e a senha da sua conta."}
       </p>
 
       <form className="cartao" onSubmit={enviar}>
@@ -110,35 +153,39 @@ export default function Login({
           </label>
         ) : null}
 
-        <label className="campo">
-          <span className="campo-rodape">E-mail</span>
-          <input
-            type="email"
-            name="email"
-            value={email}
-            onChange={(evento) => setEmail(evento.target.value)}
-            autoComplete={ehCadastro ? "email" : "username"}
-            maxLength={254}
-            required
+        {!ehRedefinicao ? (
+          <label className="campo">
+            <span className="campo-rodape">E-mail</span>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(evento) => setEmail(evento.target.value)}
+              autoComplete={ehCadastro ? "email" : "username"}
+              maxLength={254}
+              required
+            />
+          </label>
+        ) : null}
+
+        {!ehRecuperacao ? (
+          <CampoSenha
+            id="senha"
+            name="senha"
+            label={ehRedefinicao ? "Nova senha" : "Senha"}
+            dica={ehCadastro ? "mínimo 8 caracteres" : null}
+            value={senha}
+            onChange={(valor) => {
+              setSenha(valor);
+              setErroConfirmacao("");
+            }}
+            autoComplete={ehCadastro || ehRedefinicao ? "new-password" : "current-password"}
+            minLength={ehCadastro || ehRedefinicao ? 8 : 1}
+            maxLength={128}
           />
-        </label>
+        ) : null}
 
-        <CampoSenha
-          id="senha"
-          name="senha"
-          label="Senha"
-          dica={ehCadastro ? "mínimo 8 caracteres" : null}
-          value={senha}
-          onChange={(valor) => {
-            setSenha(valor);
-            setErroConfirmacao("");
-          }}
-          autoComplete={ehCadastro ? "new-password" : "current-password"}
-          minLength={ehCadastro ? 8 : 1}
-          maxLength={128}
-        />
-
-        {ehCadastro ? (
+        {ehCadastro || ehRedefinicao ? (
           <>
             <CampoSenha
               id="confirmacao-senha"
@@ -173,9 +220,23 @@ export default function Login({
           </p>
         ) : null}
 
+        {mensagem ? (
+          <p className="aviso" role="status">
+            {mensagem}
+          </p>
+        ) : null}
+
         <button className="botao botao-largo" type="submit" disabled={ocupado}>
-          {ehCadastro
-            ? cadastrando
+          {ehRecuperacao
+            ? solicitandoRedefinicao
+              ? "Enviando..."
+              : "Enviar link de redefinição"
+            : ehRedefinicao
+              ? redefinindoSenha
+                ? "Salvando..."
+                : "Salvar nova senha"
+            : ehCadastro
+              ? cadastrando
               ? "Criando conta..."
               : "Criar conta"
             : entrando
@@ -184,39 +245,65 @@ export default function Login({
         </button>
       </form>
 
-      {!ehCadastro ? (
-        <>
-          <p className="alternar-acesso">
-            <button
-              type="button"
-              className="link-acao"
-              aria-expanded={mostrarAjudaSenha}
-              aria-controls="ajuda-redefinir-senha"
-              onClick={() => setMostrarAjudaSenha(!mostrarAjudaSenha)}
-            >
-              Esqueceu ou quer redefinir a senha?
-            </button>
-          </p>
-          {mostrarAjudaSenha ? (
-            <p className="aviso" id="ajuda-redefinir-senha" role="status">
-              Para proteger sua conta, peça ao responsável pelo estúdio para
-              redefinir sua senha.
-            </p>
-          ) : null}
-        </>
+      {modo === "entrar" ? (
+        <p className="alternar-acesso">
+          <button
+            type="button"
+            className="link-acao"
+            onClick={() => trocarModo("recuperar")}
+            disabled={ocupado}
+          >
+            Esqueceu ou quer redefinir a senha?
+          </button>
+        </p>
       ) : null}
 
-      <p className="alternar-acesso">
-        {ehCadastro ? "Já tem uma conta?" : "Ainda não tem conta?"}{" "}
-        <button
-          type="button"
-          className="link-acao"
-          onClick={() => trocarModo(ehCadastro ? "entrar" : "cadastrar")}
-          disabled={ocupado}
-        >
-          {ehCadastro ? "Entrar" : "Criar conta"}
-        </button>
-      </p>
+      {ehCadastro ? (
+        <p className="alternar-acesso">
+          Já tem uma conta?{" "}
+          <button
+            type="button"
+            className="link-acao"
+            onClick={() => {
+              if (ehRedefinicao) {
+                limparTokenDaUrl();
+              }
+              trocarModo("entrar");
+            }}
+            disabled={ocupado}
+          >
+            Entrar
+          </button>
+        </p>
+      ) : null}
+
+      {ehRecuperacao || ehRedefinicao ? (
+        <p className="alternar-acesso">
+          Lembrou sua senha?{" "}
+          <button
+            type="button"
+            className="link-acao"
+            onClick={() => trocarModo("entrar")}
+            disabled={ocupado}
+          >
+            Voltar ao login
+          </button>
+        </p>
+      ) : null}
+
+      {modo === "entrar" ? (
+        <p className="alternar-acesso">
+          Ainda não tem conta?{" "}
+          <button
+            type="button"
+            className="link-acao"
+            onClick={() => trocarModo("cadastrar")}
+            disabled={ocupado}
+          >
+            Criar conta
+          </button>
+        </p>
+      ) : null}
 
       <section className="vitrine">
         <img

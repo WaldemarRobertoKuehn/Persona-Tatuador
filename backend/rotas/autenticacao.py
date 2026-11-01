@@ -1,11 +1,22 @@
 """Rota de login e dependência para identificar o usuário pelo token."""
 
+import logging
+import smtplib
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 import seguranca
 import servicos.usuario as servico_usuarios
-from esquemas.usuario import CredenciaisEntrada, TokenSaida
+from esquemas.usuario import (
+    CredenciaisEntrada,
+    RedefinicaoSenhaEntrada,
+    SolicitacaoRedefinicaoSenha,
+    TokenSaida,
+)
+
+
+_logger = logging.getLogger(__name__)
 
 
 roteador_autenticacao = APIRouter(prefix="/autenticacao", tags=["autenticacao"])
@@ -24,6 +35,36 @@ def login(credenciais: CredenciaisEntrada) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     return {"access_token": seguranca.gerar_token(usuario["id"]), "token_type": "bearer"}
+
+
+@roteador_autenticacao.post("/solicitar-redefinicao")
+def solicitar_redefinicao(dados: SolicitacaoRedefinicaoSenha) -> dict[str, str]:
+    """Solicita link de recuperação sem revelar se o email possui uma conta."""
+    try:
+        servico_usuarios.solicitar_redefinicao_senha(dados.email)
+    except (OSError, ValueError, smtplib.SMTPException) as erro:
+        _logger.exception("Não foi possível enviar o e-mail de redefinição.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Não foi possível enviar o e-mail. Verifique a configuração SMTP.",
+        ) from erro
+    return {
+        "message": (
+            "Se a conta existir, o link de redefinição será enviado ao "
+            "responsável pelo projeto."
+        )
+    }
+
+
+@roteador_autenticacao.post("/redefinir-senha")
+def redefinir_senha(dados: RedefinicaoSenhaEntrada) -> dict[str, str]:
+    """Troca a senha com um link válido, ainda não utilizado."""
+    if not servico_usuarios.redefinir_senha_com_token(dados.token, dados.senha):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Link inválido, expirado ou já utilizado.",
+        )
+    return {"message": "Senha redefinida. Você já pode entrar com a nova senha."}
 
 
 def obter_usuario_atual(

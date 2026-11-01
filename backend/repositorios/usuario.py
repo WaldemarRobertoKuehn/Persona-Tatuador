@@ -20,6 +20,8 @@ O que as funções devolvem
     resto do projeto não percebeu a troca da tabela.
 """
 
+from datetime import datetime, timedelta, timezone
+
 # O mesmo banco.py dos outros repositórios: este arquivo não sabe de onde vem a
 # conexão, só recebe o cursor pronto.
 import banco
@@ -95,3 +97,109 @@ def atualizar_senha(usuario_id: int, senha_hash: str) -> None:
             "UPDATE usuarios SET senha_hash = %s WHERE id = %s",
             (senha_hash, usuario_id),
         )
+        cursor.execute(
+            "DELETE FROM tokens_redefinicao_senha WHERE usuario_id = %s",
+            (usuario_id,),
+        )
+
+
+def criar_token_redefinicao(
+    usuario_id: int,
+    token_hash: str,
+    criado_em: datetime,
+    expira_em: datetime,
+) -> bool:
+    """Registra um token e limita cada conta a uma solicitação por minuto."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM usuarios WHERE id = %s FOR UPDATE",
+            (usuario_id,),
+        )
+        if cursor.fetchone() is None:
+            return False
+
+        cursor.execute(
+            "SELECT criado_em FROM tokens_redefinicao_senha "
+            "WHERE usuario_id = %s FOR UPDATE",
+            (usuario_id,),
+        )
+        token_existente = cursor.fetchone()
+        if token_existente is not None:
+            ultima_solicitacao = token_existente["criado_em"]
+            if ultima_solicitacao.tzinfo is None:
+                ultima_solicitacao = ultima_solicitacao.replace(tzinfo=timezone.utc)
+            if criado_em - ultima_solicitacao < timedelta(minutes=1):
+                return False
+
+            cursor.execute(
+                "DELETE FROM tokens_redefinicao_senha WHERE usuario_id = %s",
+                (usuario_id,),
+            )
+
+        cursor.execute(
+            "INSERT INTO tokens_redefinicao_senha "
+            "(usuario_id, token_hash, criado_em, expira_em) "
+            "VALUES (%s, %s, %s, %s)",
+            (usuario_id, token_hash, criado_em, expira_em),
+        )
+        return True
+
+
+def remover_token_redefinicao(token_hash: str) -> None:
+    """Remove o token quando o envio do e-mail falha."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM tokens_redefinicao_senha WHERE token_hash = %s",
+            (token_hash,),
+        )
+
+
+def token_redefinicao_valido(token_hash: str) -> bool:
+    """Confere a existência e a validade sem calcular um hash de senha."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT expira_em FROM tokens_redefinicao_senha WHERE token_hash = %s",
+            (token_hash,),
+        )
+        token = cursor.fetchone()
+        if token is None:
+            return False
+
+        expiracao = token["expira_em"]
+        if expiracao.tzinfo is None:
+            expiracao = expiracao.replace(tzinfo=timezone.utc)
+        return expiracao > datetime.now(timezone.utc)
+
+
+def consumir_token_redefinicao(token_hash: str, senha_hash: str) -> bool:
+    """Troca a senha e invalida o token na mesma transação."""
+    agora = datetime.now(timezone.utc)
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT usuario_id, expira_em FROM tokens_redefinicao_senha "
+            "WHERE token_hash = %s FOR UPDATE",
+            (token_hash,),
+        )
+        token = cursor.fetchone()
+        if token is None:
+            return False
+
+        expiracao = token["expira_em"]
+        if expiracao.tzinfo is None:
+            expiracao = expiracao.replace(tzinfo=timezone.utc)
+        if expiracao <= agora:
+            cursor.execute(
+                "DELETE FROM tokens_redefinicao_senha WHERE token_hash = %s",
+                (token_hash,),
+            )
+            return False
+
+        cursor.execute(
+            "UPDATE usuarios SET senha_hash = %s WHERE id = %s",
+            (senha_hash, token["usuario_id"]),
+        )
+        cursor.execute(
+            "DELETE FROM tokens_redefinicao_senha WHERE usuario_id = %s",
+            (token["usuario_id"],),
+        )
+        return True
