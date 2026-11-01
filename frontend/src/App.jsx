@@ -31,8 +31,6 @@ import {
   cadastrarUsuario,
   limparToken,
   milissegundosAteExpirar,
-  redefinirSenha as redefinirSenhaApi,
-  solicitarRedefinicaoSenha,
   tokenSalvo,
 } from "./api";
 import Agenda from "./telas/Agenda";
@@ -42,26 +40,16 @@ import MinhasTatuagens from "./telas/MinhasTatuagens";
 import PedirTatuagem from "./telas/PedirTatuagem";
 
 export default function App() {
-  const temTokenRedefinicao = new URLSearchParams(
-    window.location.hash.slice(1),
-  ).has("token");
   /* O perfil só passa a existir depois de o back validar a conta e seu token. */
   const [perfil, setPerfil] = useState(null);
   const [tela, setTela] = useState(null);
   const [tatuagemAberta, setTatuagemAberta] = useState(null);
   const [estadoAutenticacao, setEstadoAutenticacao] = useState(() =>
-    temTokenRedefinicao
-      ? "desconectado"
-      : tokenSalvo()
-        ? "verificando"
-        : "desconectado",
+    tokenSalvo() ? "verificando" : "desconectado",
   );
   const [entrando, setEntrando] = useState(false);
   const [cadastrando, setCadastrando] = useState(false);
   const [erroAutenticacao, setErroAutenticacao] = useState("");
-  const [mensagemAutenticacao, setMensagemAutenticacao] = useState("");
-  const [solicitandoRedefinicao, setSolicitandoRedefinicao] = useState(false);
-  const [redefinindoSenha, setRedefinindoSenha] = useState(false);
 
   /* O tema é do App e não de cada tela, porque o botão fica na barra, que é
    * compartilhada. Se cada tela guardasse o seu, o botão de uma tela trocaria
@@ -100,10 +88,6 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (temTokenRedefinicao) {
-      return;
-    }
-
     const token = tokenSalvo();
 
     if (!token) {
@@ -119,7 +103,7 @@ export default function App() {
         );
         setEstadoAutenticacao("desconectado");
       });
-  }, [temTokenRedefinicao]);
+  }, []);
 
   useEffect(() => {
     if (estadoAutenticacao !== "autenticado") {
@@ -148,7 +132,6 @@ export default function App() {
   async function entrar(email, senha) {
     setEntrando(true);
     setErroAutenticacao("");
-    setMensagemAutenticacao("");
 
     try {
       await concluirAcesso(email, senha);
@@ -163,7 +146,6 @@ export default function App() {
   async function cadastrar(nome, email, senha) {
     setCadastrando(true);
     setErroAutenticacao("");
-    setMensagemAutenticacao("");
 
     try {
       await cadastrarUsuario({ nome, email, senha });
@@ -173,38 +155,6 @@ export default function App() {
       setErroAutenticacao(erroRecebido.message);
     } finally {
       setCadastrando(false);
-    }
-  }
-
-  async function solicitarRedefinicao(email) {
-    setSolicitandoRedefinicao(true);
-    setErroAutenticacao("");
-    setMensagemAutenticacao("");
-    try {
-      const resposta = await solicitarRedefinicaoSenha(email);
-      setMensagemAutenticacao(resposta.message);
-      return true;
-    } catch (erroRecebido) {
-      setErroAutenticacao(erroRecebido.message);
-      return false;
-    } finally {
-      setSolicitandoRedefinicao(false);
-    }
-  }
-
-  async function redefinirSenha(token, senha) {
-    setRedefinindoSenha(true);
-    setErroAutenticacao("");
-    setMensagemAutenticacao("");
-    try {
-      const resposta = await redefinirSenhaApi(token, senha);
-      setMensagemAutenticacao(resposta.message);
-      return true;
-    } catch (erroRecebido) {
-      setErroAutenticacao(erroRecebido.message);
-      return false;
-    } finally {
-      setRedefinindoSenha(false);
     }
   }
 
@@ -238,18 +188,10 @@ export default function App() {
       <Login
         aoEntrar={entrar}
         aoCadastrar={cadastrar}
-        aoSolicitarRedefinicao={solicitarRedefinicao}
-        aoRedefinirSenha={redefinirSenha}
-        aoLimparErro={() => {
-          setErroAutenticacao("");
-          setMensagemAutenticacao("");
-        }}
+        aoLimparErro={() => setErroAutenticacao("")}
         erro={erroAutenticacao}
-        mensagem={mensagemAutenticacao}
         entrando={entrando}
         cadastrando={cadastrando}
-        solicitandoRedefinicao={solicitandoRedefinicao}
-        redefinindoSenha={redefinindoSenha}
         tema={tema}
         trocarTema={trocarTema}
       />

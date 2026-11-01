@@ -87,28 +87,3 @@ def validade_token_segundos() -> int:
     if minutos < 1:
         raise ValueError("JWT_MINUTOS precisa ser maior que zero.")
     return minutos * 60
-
-
-def configuracao_smtp() -> dict[str, str | int]:
-    """Devolve as configurações SMTP sem expor a senha em mensagens de erro."""
-    usuario = os.getenv("SMTP_USUARIO", "").strip()
-    senha = os.getenv("SMTP_SENHA", "")
-    if not usuario or not senha:
-        raise ValueError(
-            "Configure SMTP_USUARIO e SMTP_SENHA no .env para enviar e-mails."
-        )
-    return {
-        "host": os.getenv("SMTP_HOST", "smtp.gmail.com").strip(),
-        "porta": int(os.getenv("SMTP_PORTA", "587")),
-        "usuario": usuario,
-        "senha": senha,
-        "remetente": os.getenv("SMTP_REMETENTE", "").strip() or usuario,
-    }
-
-
-def email_para_recuperacao() -> str:
-    """Devolve a caixa que recebe solicitações de recuperação das contas de demonstração."""
-    return os.getenv(
-        "EMAIL_RECUPERACAO",
-        "waldemarrobertokuehn@gmail.com",
-    ).strip()

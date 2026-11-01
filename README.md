@@ -120,11 +120,6 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 | `JWT_SEGREDO` | segredo aleatório com pelo menos 32 caracteres |
 | `JWT_MINUTOS` | validade do token em minutos, por exemplo `60` |
 | `ORIGEM_FRONTEND` | URL HTTPS exata do domínio onde o frontend está hospedado |
-| `EMAIL_RECUPERACAO` | caixa que recebe os links de recuperação |
-| `SMTP_HOST` / `SMTP_PORTA` | servidor SMTP; Gmail usa `smtp.gmail.com` e `587` |
-| `SMTP_USUARIO` | conta autorizada a enviar e-mails |
-| `SMTP_SENHA` | senha de app do provedor, nunca a senha normal da conta |
-| `SMTP_REMETENTE` | endereço remetente; pode ser igual ao usuário SMTP |
 
 No projeto do frontend, para usar o proxy incluído em `frontend/vercel.json`,
 mantenha `VITE_URL_DA_API=/api` (como em `frontend/.env.production`) e ajuste
@@ -142,13 +137,6 @@ disponível para as funções da Vercel. Depois de criar o banco, aplique as mig
 com `alembic upgrade head` usando uma conexão configurada para esse banco antes de
 usar a aplicação. Para previews em domínios diferentes, configure `ORIGEM_FRONTEND`
 no ambiente Preview com a origem correspondente.
-
-Para testar a redefinição de senha com Gmail, gere uma senha de app na conta que
-envia os e-mails, configure `SMTP_USUARIO` e `SMTP_SENHA` nas variáveis do backend
-e mantenha `EMAIL_RECUPERACAO=waldemarrobertokuehn@gmail.com`. A solicitação
-envia um link de uso único, válido por 30 minutos, para essa caixa. Depois de
-alterar a configuração ou aplicar a nova migration, reinicie o backend e execute
-`python criar_tabelas.py`.
 
 O deploy não cria automaticamente as contas de demonstração nem migra o banco.
 Essas tarefas devem ser executadas separadamente contra o PostgreSQL hospedado.

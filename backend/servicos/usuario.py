@@ -1,16 +1,9 @@
 """Regras de cadastro, busca e validação de contas de usuário."""
 
-import hashlib
-import secrets
-import smtplib
-from datetime import datetime, timedelta, timezone
-
-import configuracao
 import repositorios.cliente as repositorio_clientes
 import repositorios.grupo as repositorio_grupos
 import repositorios.usuario as repositorio_usuarios
 import seguranca
-import servicos.email as servico_email
 
 # Os códigos iniciais dos dois grupos de persona. A permissão efetiva vem agora
 # do vínculo de grupo e do catálogo administrável, não apenas destes códigos.
@@ -77,67 +70,6 @@ def buscar_por_id(usuario_id: int) -> dict | None:
             usuario_id
         )
     return usuario
-
-
-def trocar_senha(email: str, senha_nova: str) -> bool:
-    """Troca a senha da conta, e devolve False se a conta não existir.
-
-    A senha nova nunca é gravada: o que vai para o banco é o hash novo, e o
-    hash antigo morre junto com ele. É o mesmo caminho do cadastro, e por isso
-    a senha da conta nunca fica em texto em lugar nenhum.
-    """
-    usuario = repositorio_usuarios.buscar_por_email(email.strip().lower())
-
-    if usuario is None:
-        return False
-
-    repositorio_usuarios.atualizar_senha(
-        usuario["id"], seguranca.gerar_hash(senha_nova)
-    )
-    return True
-
-
-def solicitar_redefinicao_senha(email: str) -> None:
-    """Envia um link temporário para a caixa de recuperação do projeto."""
-    configuracao.configuracao_smtp()
-    usuario = repositorio_usuarios.buscar_por_email(email.strip().lower())
-    if usuario is None:
-        return
-
-    agora = datetime.now(timezone.utc)
-    token = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    expira_em = agora + timedelta(minutes=30)
-    if not repositorio_usuarios.criar_token_redefinicao(
-        usuario["id"],
-        token_hash,
-        agora,
-        expira_em,
-    ):
-        return
-
-    link = f"{configuracao.endereco_do_front()}/#token={token}"
-    try:
-        servico_email.enviar_link_redefinicao(
-            usuario["email"],
-            usuario["nome"],
-            link,
-        )
-    except (OSError, ValueError, smtplib.SMTPException):
-        repositorio_usuarios.remover_token_redefinicao(token_hash)
-        raise
-
-
-def redefinir_senha_com_token(token: str, senha_nova: str) -> bool:
-    """Valida o token de uso único e grava o hash da nova senha."""
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    if not repositorio_usuarios.token_redefinicao_valido(token_hash):
-        return False
-    senha_hash = seguranca.gerar_hash(senha_nova)
-    return repositorio_usuarios.consumir_token_redefinicao(
-        token_hash,
-        senha_hash,
-    )
 
 
 def mover_conta(cliente_id: int, papel: str) -> dict | None:
