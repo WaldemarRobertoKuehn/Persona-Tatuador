@@ -1194,6 +1194,36 @@
         filter: saturate(0.72);
       }
 
+      .acesso {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 30px;
+        width: min(900px, 100%);
+        margin: auto;
+        text-align: left;
+      }
+
+      .acesso-qr {
+        display: block;
+        width: clamp(200px, 30vw, 300px);
+        padding: 14px;
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      .acesso-qr img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .acesso-link {
+        color: var(--accent-light);
+        font-size: 0.88em;
+        overflow-wrap: anywhere;
+      }
+
       .notas {
         display: none;
         position: absolute;
@@ -1315,8 +1345,19 @@
         .provas,
         .kanban,
         .ia-grade,
-        .linha-tempo {
+        .linha-tempo,
+        .acesso {
           grid-template-columns: 1fr;
+        }
+
+        .acesso {
+          justify-items: center;
+          gap: 14px;
+          text-align: center;
+        }
+
+        .acesso-qr {
+          width: clamp(160px, 54vw, 220px);
         }
 
         .perfil-entrevista .retrato {
@@ -1961,7 +2002,7 @@
                 O MVP prova o fluxo. A UC3 prova que a IA pode ajudar sem assumir o controle.
               </p>
               <p style="margin-top: 10px; font-size: 0.72em">
-                Endereço publicado: <strong>SEU-PROJETO.vercel.app</strong> · Supabase: tabela <strong>usuarios</strong>
+                Endereço publicado: <strong>persona-tatuador-xst5.vercel.app</strong> · Supabase: tabela <strong>usuarios</strong>
               </p>
             </div>
             <img src="frontend/src/imagens/foto-vitrine.jpg" alt="Detalhe de tatuagem botânica feita com traço fino" />
@@ -1974,8 +2015,33 @@
             <p>
               Feche com as três ideias que a banca precisa levar: o problema é acompanhar,
               o MVP prova o fluxo e a IA é apoio com revisão humana. Se houver perguntas,
-              volte para a demonstração ou para o plano da UC3. Lembre de substituir
-              o endereço de exemplo pelo endereço real da Vercel antes de apresentar.
+              volte para a demonstração ou para o plano da UC3.
+            </p>
+          </aside>
+        </section>
+
+        <section class="slide" aria-labelledby="titulo-acesso">
+          <p class="sobrelinha">Acesse e teste</p>
+          <div class="acesso">
+            <div>
+              <h2 id="titulo-acesso">O Traço Fino está a um toque de distância.</h2>
+              <p class="grande">
+                Escaneie o QR code para abrir o site no celular, conhecer o MVP e testar o fluxo.
+              </p>
+              <a class="acesso-link" href="https://persona-tatuador-xst5.vercel.app/" target="_blank" rel="noopener noreferrer">
+                persona-tatuador-xst5.vercel.app
+              </a>
+            </div>
+            <a class="acesso-qr" href="https://persona-tatuador-xst5.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="Abrir o site Traço Fino">
+              <img src="docs/marca/qrcode-site.svg" alt="QR code para acessar o site Traço Fino" />
+            </a>
+          </div>
+          <aside class="notas">
+            <h3>Roteiro · 20 segundos</h3>
+            <p>
+              Convide a sala a escanear o QR code com a câmera do celular. O link também
+              está escrito no slide caso alguém prefira digitá-lo. É possível criar uma
+              conta de cliente no próprio site para explorar o MVP.
             </p>
           </aside>
         </section>
@@ -1986,7 +2052,7 @@
           <button class="controle" type="button" id="anterior" aria-label="Slide anterior">← Anterior</button>
           <button class="controle" type="button" id="proximo" aria-label="Próximo slide">Próximo →</button>
         </div>
-        <div id="contador" aria-live="polite">1 / 9</div>
+        <div id="contador" aria-live="polite">1 / 10</div>
         <div class="atalhos">
           <kbd>←</kbd> <kbd>→</kbd> navegar · <kbd>N</kbd> notas · <kbd>F</kbd> tela cheia · <kbd>P</kbd> imprimir
         </div>
