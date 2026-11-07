@@ -75,3 +75,25 @@ class TatuagemSaida(BaseModel):
             "ainda não tem desenho."
         ),
     )
+
+    tatuador_id: int | None = Field(
+        default=None,
+        description=(
+            "Conta do tatuador responsável pela agenda desta tatuagem. None "
+            "enquanto o administrador não atribuir um profissional."
+        ),
+    )
+
+    tatuador_nome: str | None = Field(
+        default=None,
+        description="Nome do tatuador responsável, já pronto para a tela.",
+    )
+
+
+class TatuadorAtribuicaoEntrada(BaseModel):
+    """O que o administrador manda ao trocar o responsável de uma tatuagem."""
+
+    tatuador_id: int = Field(
+        gt=0,
+        description="Conta do tatuador que passa a responder pela tatuagem.",
+    )

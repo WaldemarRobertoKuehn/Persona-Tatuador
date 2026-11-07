@@ -162,6 +162,13 @@ export default function Ficha({ tatuagem, perfil, aoVoltarParaAgenda }) {
                 <span>
                   cliente <strong>{tatuagem.nome_da_cliente}</strong>
                 </span>
+                <span className="separador" aria-hidden="true">
+                  ·
+                </span>
+                <span>
+                  tatuador{" "}
+                  <strong>{tatuagem.tatuador_nome ?? "a definir"}</strong>
+                </span>
               </div>
             </div>
 
@@ -267,6 +274,7 @@ export default function Ficha({ tatuagem, perfil, aoVoltarParaAgenda }) {
 
         <AgendaDaTatuagem
           tatuagemId={tatuagem.id}
+          tatuadorId={tatuagem.tatuador_id}
           etapa={etapaAtual}
           perfil={perfil}
         />

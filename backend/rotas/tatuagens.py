@@ -22,7 +22,12 @@ from rotas.dependencias import (
     exigir_uma_permissao,
 )
 import servicos.tatuagem as servico_tatuagens
-from esquemas.tatuagem import TatuagemEntrada, TatuagemSaida
+from servicos.excecoes import AgendamentoConflitante
+from esquemas.tatuagem import (
+    TatuadorAtribuicaoEntrada,
+    TatuagemEntrada,
+    TatuagemSaida,
+)
 
 # O APIRouter é o conjunto de rotas de um recurso. O prefixo "/tatuagens" evita
 # escrever o caminho inteiro em cada rota, e a tag é o que agrupa elas no /docs.
@@ -123,3 +128,31 @@ def buscar_tatuagem(
     isso é a rota, com HTTPException.
     """
     return tatuagem
+
+
+# Trocar o responsável é uma operação de administração da equipe, e não uma
+# escolha da cliente que pediu a tatuagem.
+@roteador_tatuagens.put(
+    "/{tatuagem_id}/tatuador",
+    response_model=TatuagemSaida,
+    dependencies=[Depends(exigir_permissao("usuarios:atribuir_grupo"))],
+)
+def atribuir_tatuador(
+    tatuagem_id: int,
+    dados: TatuadorAtribuicaoEntrada,
+) -> dict:
+    """Atribui ou substitui o tatuador responsável pela agenda da tatuagem."""
+    try:
+        atualizada = servico_tatuagens.atribuir_tatuador(
+            tatuagem_id,
+            dados.tatuador_id,
+        )
+    except AgendamentoConflitante as erro:
+        raise HTTPException(status_code=409, detail=str(erro)) from erro
+    except ValueError as erro:
+        raise HTTPException(status_code=422, detail=str(erro)) from erro
+
+    if atualizada is None:
+        raise HTTPException(status_code=404, detail="Tatuagem não encontrada.")
+
+    return atualizada

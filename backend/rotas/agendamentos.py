@@ -27,6 +27,7 @@ from servicos.excecoes import (
     EtapaNaoPermiteAgendamento,
     HorarioForaDoExpediente,
     HorarioIndisponivel,
+    TatuagemSemTatuador,
     TipoDeAgendamentoDesconhecido,
 )
 
@@ -58,6 +59,7 @@ def _traduzir_erro(erro: Exception) -> None:
         erro,
         (
             EtapaNaoPermiteAgendamento,
+            TatuagemSemTatuador,
             HorarioIndisponivel,
             AgendamentoJaCancelado,
         ),
@@ -131,6 +133,7 @@ def agendar(
     except (
         TipoDeAgendamentoDesconhecido,
         EtapaNaoPermiteAgendamento,
+        TatuagemSemTatuador,
         AgendamentoDeOutroTatuador,
         DataForaDoExpediente,
         HorarioForaDoExpediente,

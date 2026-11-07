@@ -30,11 +30,25 @@ const ROTULO_DO_STATUS = {
   cancelado: "Cancelado",
 };
 
-export default function AgendaDaTatuagem({ tatuagemId, etapa, perfil }) {
+export default function AgendaDaTatuagem({
+  tatuagemId,
+  tatuadorId,
+  etapa,
+  perfil,
+}) {
   const permissoes = new Set(perfil.permissoes ?? []);
   const podeGerenciar = permissoes.has("agendamentos:gerenciar");
   const podeConsultar = permissoes.has("agendamentos:consultar");
-  const podeAgendar = podeGerenciar && ETAPAS_QUE_AGENDAM.has(etapa);
+
+  /* A agenda é do tatuador responsável. Outro tatuador pode consultar os
+   * horários, mas não marca nem cancela: quem decide isso no servidor é o
+   * serviço, e a tela esconde o formulário para não oferecer uma ação que o
+   * back vai recusar. */
+  const ehResponsavel =
+    perfil.tipo !== "tatuador" || perfil.usuarioId === tatuadorId;
+  const podeGerenciarEstaAgenda = podeGerenciar && ehResponsavel;
+  const podeAgendar =
+    podeGerenciarEstaAgenda && ETAPAS_QUE_AGENDAM.has(etapa);
 
   const [agendamentos, setAgendamentos] = useState([]);
   const [agendamentosDa, setAgendamentosDa] = useState(null);
@@ -223,7 +237,7 @@ export default function AgendaDaTatuagem({ tatuagemId, etapa, perfil }) {
                 {ROTULO_DO_STATUS[agendamento.status] ?? agendamento.status}
               </span>
 
-              {podeGerenciar && agendamento.status === "agendado" ? (
+              {podeGerenciarEstaAgenda && agendamento.status === "agendado" ? (
                 <button
                   type="button"
                   className="botao-neutro"
@@ -307,7 +321,9 @@ export default function AgendaDaTatuagem({ tatuagemId, etapa, perfil }) {
                 ))}
               </div>
             ) : (
-              <AvisoVazio>O estúdio não atende nesse dia.</AvisoVazio>
+              <AvisoVazio>
+                {disponibilidade.motivo ?? "O estúdio não atende nesse dia."}
+              </AvisoVazio>
             )
           ) : null}
 
@@ -318,14 +334,14 @@ export default function AgendaDaTatuagem({ tatuagemId, etapa, perfil }) {
         </div>
       ) : null}
 
-      {podeGerenciar && !podeAgendar ? (
+      {podeGerenciarEstaAgenda && !podeAgendar ? (
         <p className="legenda">
           A agenda abre depois do desenho aprovado e fecha quando a tatuagem é
           finalizada.
         </p>
       ) : null}
 
-      {!podeGerenciar ? (
+      {!podeGerenciarEstaAgenda ? (
         <p className="legenda">
           A agenda é organizada pelo tatuador responsável.
         </p>

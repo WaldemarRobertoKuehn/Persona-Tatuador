@@ -82,6 +82,7 @@ export default function App() {
      * está olhando, e o filtro "minhas tatuagens" não teria o que enviar. */
     const perfilAutenticado = {
       ...perfilBase,
+      usuarioId: usuario.id,
       nome: usuario.nome,
       clienteId: usuario.cliente_id,
       permissoes: usuario.permissoes ?? [],
@@ -341,7 +342,7 @@ export default function App() {
         />
       ) : null}
 
-      {tela === "administracao" ? <Administracao /> : null}
+      {tela === "administracao" ? <Administracao perfil={perfil} /> : null}
 
       {tela === "pedir" ? (
         <PedirTatuagem perfil={perfil} aoConcluir={() => setTela("minhas")} />

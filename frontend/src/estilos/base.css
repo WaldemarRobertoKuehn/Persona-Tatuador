@@ -807,6 +807,25 @@ p {
   content: none;
 }
 
+/* O seletor de responsável dentro da tabela da administração. Ele não fica
+ * dentro de .campo, então repete os tokens do campo para manter a mesma cara. */
+.seletor-de-tatuador {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--espaco-1) var(--espaco-2);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font-family: var(--fonte-texto);
+  font-size: 0.9375rem;
+}
+
+.seletor-de-tatuador:focus {
+  outline: 2px solid var(--cor-acento-texto);
+  outline-offset: 1px;
+}
+
 /* A ficha. Uma coluna no celular, duas no computador, para o formulário não
  * esticar o campo no meio de uma tela grande. */
 .ficha {
@@ -1304,6 +1323,7 @@ p {
 }
 
 .formulario-de-imagem,
+.formulario-de-equipe,
 .marcador-de-horario {
   display: grid;
   gap: var(--espaco-2);
@@ -1313,6 +1333,7 @@ p {
 }
 
 .formulario-de-imagem h4,
+.formulario-de-equipe h4,
 .marcador-de-horario h4 {
   font-family: var(--fonte-titulo);
   font-size: 1rem;

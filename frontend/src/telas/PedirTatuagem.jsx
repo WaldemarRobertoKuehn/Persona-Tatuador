@@ -102,8 +102,8 @@ export default function PedirTatuagem({ perfil, aoConcluir }) {
 
           <h2>Pedido registrado</h2>
           <p className="entrada-apoio">
-            Sua ideia já consta na agenda do estúdio como pedida. O Vitor vai
-            preparar o desenho e submeter para você aprovar.
+            Sua ideia já consta na agenda do estúdio como pedida. O tatuador
+            responsável vai preparar o desenho e submeter para você aprovar.
           </p>
 
           <div className="sucesso-acao">

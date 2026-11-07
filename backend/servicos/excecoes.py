@@ -105,6 +105,19 @@ class EtapaNaoPermiteAgendamento(Exception):
     """A etapa atual da tatuagem não permite agendamento."""
 
 
+# TatuagemSemTatuador: a tatuagem ainda não tem um profissional responsável,
+# então não existe agenda para consultar ou marcar. É diferente de dia fechado:
+# o expediente existe, mas falta a agenda de quem atende.
+class TatuagemSemTatuador(Exception):
+    """A tatuagem ainda não tem tatuador responsável."""
+
+
+# AgendamentoConflitante: ao trocar o tatuador responsável, um dos horários já
+# marcados desta tatuagem colide com a agenda do profissional novo.
+class AgendamentoConflitante(Exception):
+    """O tatuador novo já atende em um dos horários marcados da tatuagem."""
+
+
 # DataForaDoExpediente: o dia escolhido é domingo ou não tem horário de
 # atendimento.
 class DataForaDoExpediente(Exception):

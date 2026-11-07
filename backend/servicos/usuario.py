@@ -65,6 +65,20 @@ def cadastrar(dados: dict) -> dict | None:
     return usuario
 
 
+def cadastrar_tatuador(dados: dict) -> dict | None:
+    """Cria uma conta no grupo tatuador; quem chama já passou pela permissão.
+
+    O papel não vem do corpo da requisição: ele é fixado aqui, para a rota
+    administrativa não poder criar administrador por engano.
+    """
+    return cadastrar({**dados, "papel": PAPEL_TATUADOR})
+
+
+def listar_tatuadores() -> list[dict]:
+    """Devolve as contas do grupo tatuador para a tela de administração."""
+    return repositorio_usuarios.listar_tatuadores()
+
+
 def _notificar_conta_criada(usuario: dict) -> None:
     """Envia a confirmação de cadastro sem interromper a criação da conta."""
     if not usuario.get("email") or configuracao.configuracao_smtp() is None:

@@ -22,6 +22,7 @@ from servicos.excecoes import (
     EtapaNaoPermiteAgendamento,
     HorarioForaDoExpediente,
     HorarioIndisponivel,
+    TatuagemSemTatuador,
     TipoDeAgendamentoDesconhecido,
 )
 
@@ -141,11 +142,36 @@ def obter_disponibilidade(tatuagem: dict | None, data: date_type) -> dict:
     """
     horarios = _horarios_do_dia(data.weekday())
 
-    if tatuagem is None or not horarios:
-        return {"data": data, "aberto": False, "horarios": []}
+    if tatuagem is None:
+        return {
+            "data": data,
+            "aberto": False,
+            "horarios": [],
+            "motivo": "Tatuagem não encontrada.",
+        }
+
+    if not horarios:
+        return {
+            "data": data,
+            "aberto": False,
+            "horarios": [],
+            "motivo": "O estúdio não atende nesse dia.",
+        }
+
+    tatuador_id = tatuagem.get("tatuador_id")
+    if tatuador_id is None:
+        return {
+            "data": data,
+            "aberto": False,
+            "horarios": [],
+            "motivo": (
+                "A tatuagem ainda não tem tatuador responsável. "
+                "O administrador precisa atribuir um profissional."
+            ),
+        }
 
     ocupados = repositorio_agendamentos.listar_ativos_do_tatuador(
-        tatuagem["tatuador_id"],
+        tatuador_id,
         data,
     )
 
@@ -173,7 +199,7 @@ def obter_disponibilidade(tatuagem: dict | None, data: date_type) -> dict:
             }
         )
 
-    return {"data": data, "aberto": True, "horarios": saida}
+    return {"data": data, "aberto": True, "horarios": saida, "motivo": None}
 
 
 def listar_agendamentos(tatuagem_id: int) -> list[dict]:
@@ -197,12 +223,16 @@ def agendar(
             f"Esta tatuagem está '{tatuagem['etapa']}'."
         )
 
+    tatuador_id = tatuagem.get("tatuador_id")
+    if tatuador_id is None:
+        raise TatuagemSemTatuador(
+            "A tatuagem ainda não tem tatuador responsável. "
+            "O administrador precisa atribuir um profissional antes de agendar."
+        )
+
     # A agenda é do tatuador responsável. Outro tatuador não marca horário na
     # agenda de um colega, mesmo tendo a permissão geral de gerenciar.
-    if (
-        usuario["papel"] == "tatuador"
-        and usuario["id"] != tatuagem["tatuador_id"]
-    ):
+    if usuario["papel"] == "tatuador" and usuario["id"] != tatuador_id:
         raise AgendamentoDeOutroTatuador(
             "A agenda desta tatuagem pertence a outro tatuador."
         )
@@ -216,7 +246,7 @@ def agendar(
     # do banco continua sendo a garantia final contra duas gravações ao mesmo
     # tempo.
     ocupados = repositorio_agendamentos.listar_ativos_do_tatuador(
-        tatuagem["tatuador_id"],
+        tatuador_id,
         data,
     )
 
@@ -228,7 +258,7 @@ def agendar(
     return repositorio_agendamentos.criar_agendamento(
         tatuagem_id,
         {
-            "tatuador_id": tatuagem["tatuador_id"],
+            "tatuador_id": tatuador_id,
             "tipo": tipo,
             "data": data,
             "hora_inicio": hora_inicio,

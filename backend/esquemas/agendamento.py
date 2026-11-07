@@ -52,3 +52,10 @@ class DisponibilidadeSaida(BaseModel):
     data: date
     aberto: bool
     horarios: list[HorarioDisponivel]
+    motivo: str | None = Field(
+        default=None,
+        description=(
+            "Por que o dia está fechado, quando aberto é false. Serve para a "
+            "tela distinguir domingo de tatuagem sem tatuador responsável."
+        ),
+    )

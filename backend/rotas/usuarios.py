@@ -46,6 +46,40 @@ def buscar_usuario_atual(usuario: dict = Depends(obter_usuario_atual)) -> dict:
     return _usuario_publico(usuario)
 
 
+# A listagem da equipe é administrativa: quem cadastra e troca o responsável de
+# uma tatuagem precisa das mesmas contas que a tela mostra.
+@roteador_usuarios.get(
+    "/tatuadores",
+    response_model=list[UsuarioSaida],
+    dependencies=[Depends(exigir_permissao("usuarios:atribuir_grupo"))],
+)
+def listar_tatuadores() -> list[dict]:
+    """Lista as contas do grupo tatuador, com o nome que a tela mostra."""
+    return [
+        _usuario_publico(usuario)
+        for usuario in servico_usuarios.listar_tatuadores()
+    ]
+
+
+# O cadastro de tatuador é público? Não: a rota pública cria somente cliente, e
+# esta exige a permissão que só o Administrador tem.
+@roteador_usuarios.post(
+    "/tatuadores",
+    response_model=UsuarioSaida,
+    status_code=201,
+    dependencies=[Depends(exigir_permissao("usuarios:atribuir_grupo"))],
+)
+def cadastrar_tatuador(dados: UsuarioCadastro) -> dict:
+    """Cria uma conta no grupo tatuador e devolve os dados públicos dela."""
+    usuario = servico_usuarios.cadastrar_tatuador(dados.model_dump())
+    if usuario is None:
+        raise HTTPException(status_code=409, detail="Este email já está cadastrado.")
+    usuario_criado = servico_usuarios.buscar_por_id(usuario["id"])
+    if usuario_criado is None:
+        raise HTTPException(status_code=500, detail="A conta criada não foi encontrada.")
+    return _usuario_publico(usuario_criado)
+
+
 # NOVO: consultar outros usuários exige permissão explícita de grupo.
 @roteador_usuarios.get(
     "/{usuario_id}",

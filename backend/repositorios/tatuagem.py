@@ -90,11 +90,14 @@ def listar_tatuagens(
         valores.append(cliente_id)
 
     sql = (
-        "SELECT t.id, t.cliente_id, t.ideia, t.local_do_corpo, t.tamanho, t.etapa, "
+        "SELECT t.id, t.cliente_id, t.tatuador_id, t.ideia, t.local_do_corpo, "
+        "t.tamanho, t.etapa, "
         "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
+        "u.nome AS tatuador_nome, "
         "d.id AS desenho_imagem_id "
         "FROM tatuagens AS t "
         "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
+        "LEFT JOIN usuarios AS u ON u.id = t.tatuador_id "
         + _IMAGEM_DO_DESENHO
     )
 
@@ -119,11 +122,14 @@ def buscar_tatuagem(tatuagem_id: int) -> dict | None:
     """
     with banco.cursor() as cursor:
         cursor.execute(
-            "SELECT t.id, t.cliente_id, t.ideia, t.local_do_corpo, t.tamanho, "
-            "t.etapa, COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
+            "SELECT t.id, t.cliente_id, t.tatuador_id, t.ideia, t.local_do_corpo, "
+            "t.tamanho, t.etapa, "
+            "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
+            "u.nome AS tatuador_nome, "
             "d.id AS desenho_imagem_id "
             "FROM tatuagens AS t "
             "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
+            "LEFT JOIN usuarios AS u ON u.id = t.tatuador_id "
             + _IMAGEM_DO_DESENHO
             + " WHERE t.id = %s",
             (tatuagem_id,),
@@ -155,10 +161,11 @@ def criar_tatuagem(dados: dict) -> dict:
     with banco.cursor() as cursor:
         cursor.execute(
             "INSERT INTO tatuagens "
-            "(cliente_id, ideia, local_do_corpo, tamanho, etapa) "
-            "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+            "(cliente_id, tatuador_id, ideia, local_do_corpo, tamanho, etapa) "
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
             (
                 dados["cliente_id"],
+                dados.get("tatuador_id"),
                 dados["ideia"],
                 dados["local_do_corpo"],
                 dados["tamanho"],
@@ -169,6 +176,60 @@ def criar_tatuagem(dados: dict) -> dict:
         novo_id = cursor.fetchone()["id"]
 
     return buscar_tatuagem(novo_id)
+
+
+def atualizar_tatuador(
+    tatuagem_id: int,
+    tatuador_id: int,
+) -> tuple[str, dict | None]:
+    """Troca o responsável e move os horários marcados para o novo tatuador.
+
+    A agenda é do tatuador, então os agendamentos ativos acompanham a tatuagem.
+    Antes de gravar, a função procura um horário já ocupado na agenda do
+    profissional novo; quando encontra, devolve "conflito" com a data e a hora,
+    e o serviço transforma isso na recusa que a rota devolve ao administrador.
+
+    A gravação das duas tabelas fica no mesmo cursor, e por isso no mesmo
+    commit: ou a tatuagem e todos os horários mudam de dono, ou nada muda.
+
+    Quem decide se o usuário é mesmo um tatuador é o serviço, que consulta o
+    grupo antes de chamar esta função. O depósito só grava o que recebeu.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT tatuador_id FROM tatuagens WHERE id = %s",
+            (tatuagem_id,),
+        )
+        atual = cursor.fetchone()
+        if atual is None:
+            return "nao_encontrada", None
+
+        if atual["tatuador_id"] != tatuador_id:
+            cursor.execute(
+                "SELECT a.data, a.hora_inicio FROM agendamentos AS a "
+                "WHERE a.tatuagem_id = %s AND a.status = 'agendado' AND EXISTS ("
+                "SELECT 1 FROM agendamentos AS b "
+                "WHERE b.tatuador_id = %s AND b.status = 'agendado' "
+                "AND b.tatuagem_id <> %s AND b.data = a.data "
+                "AND b.hora_inicio < a.hora_fim AND b.hora_fim > a.hora_inicio"
+                ") ORDER BY a.data, a.hora_inicio LIMIT 1",
+                (tatuagem_id, tatuador_id, tatuagem_id),
+            )
+            conflito = cursor.fetchone()
+            if conflito is not None:
+                return "conflito", conflito
+
+        cursor.execute(
+            "UPDATE tatuagens SET tatuador_id = %s WHERE id = %s",
+            (tatuador_id, tatuagem_id),
+        )
+        cursor.execute(
+            "UPDATE agendamentos SET tatuador_id = %s "
+            "WHERE tatuagem_id = %s AND status = 'agendado'",
+            (tatuador_id, tatuagem_id),
+        )
+
+    return "ok", buscar_tatuagem(tatuagem_id)
 
 
 def atualizar_etapa(tatuagem_id: int, etapa: str) -> dict | None:

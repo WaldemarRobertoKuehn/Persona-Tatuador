@@ -18,6 +18,7 @@ from servicos.excecoes import (
     EtapaNaoPermiteAgendamento,
     HorarioForaDoExpediente,
     HorarioIndisponivel,
+    TatuagemSemTatuador,
     TipoDeAgendamentoDesconhecido,
 )
 
@@ -82,7 +83,23 @@ def test_domingo_fica_fechado(monkeypatch):
 
     disponibilidade = servico.obter_disponibilidade(TATUAGEM, date(2026, 11, 8))
 
-    assert disponibilidade == {"data": date(2026, 11, 8), "aberto": False, "horarios": []}
+    assert disponibilidade == {
+        "data": date(2026, 11, 8),
+        "aberto": False,
+        "horarios": [],
+        "motivo": "O estúdio não atende nesse dia.",
+    }
+
+
+def test_tatuagem_sem_tatuador_fica_fechada():
+    disponibilidade = servico.obter_disponibilidade(
+        {**TATUAGEM, "tatuador_id": None},
+        date(2026, 11, 9),
+    )
+
+    assert disponibilidade["aberto"] is False
+    assert disponibilidade["horarios"] == []
+    assert "tatuador responsável" in disponibilidade["motivo"]
 
 
 def test_horario_ocupado_fica_indisponivel(monkeypatch):
@@ -176,6 +193,20 @@ def test_agendar_recusa_tatuagem_ainda_pedida(monkeypatch):
         servico.agendar(
             1,
             {**TATUAGEM, "etapa": "pedida"},
+            TATUADOR,
+            {
+                "tipo": "sessão",
+                "data": date(2026, 11, 9),
+                "hora_inicio": time(8, 30),
+            },
+        )
+
+
+def test_agendar_recusa_tatuagem_sem_tatuador(monkeypatch):
+    with pytest.raises(TatuagemSemTatuador):
+        servico.agendar(
+            1,
+            {**TATUAGEM, "tatuador_id": None},
             TATUADOR,
             {
                 "tipo": "sessão",

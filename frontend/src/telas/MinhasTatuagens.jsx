@@ -29,6 +29,7 @@ import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
  * esta tatuagem? */
 function Historico({
   tatuagemId,
+  tatuadorId,
   etapa,
   perfil,
   aoAtualizarTatuagem,
@@ -85,6 +86,7 @@ function Historico({
 
       <AgendaDaTatuagem
         tatuagemId={tatuagemId}
+        tatuadorId={tatuadorId}
         etapa={etapa}
         perfil={perfil}
       />
@@ -202,6 +204,7 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
                   {estaAberta ? (
                     <Historico
                       tatuagemId={tatuagem.id}
+                      tatuadorId={tatuagem.tatuador_id}
                       etapa={tatuagem.etapa}
                       perfil={perfil}
                       aoAtualizarTatuagem={recarregarTatuagens}

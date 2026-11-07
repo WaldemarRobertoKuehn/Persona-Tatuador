@@ -172,6 +172,27 @@ export function buscarUsuarioAtual(token = tokenAcesso) {
   ).then(conferirResposta);
 }
 
+/* Lista as contas do grupo tatuador para a tela de administração. */
+export function buscarTatuadores() {
+  return fetch(
+    caminho("/usuarios/tatuadores"),
+    opcoesAutenticadas(),
+  ).then(conferirResposta);
+}
+
+/* Cria uma conta no grupo tatuador. A rota é administrativa e fixa o papel no
+ * back: a tela não pode pedir outro grupo. */
+export function cadastrarTatuador({ nome, email, senha }) {
+  return fetch(
+    caminho("/usuarios/tatuadores"),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, email, senha }),
+    }),
+  ).then(conferirResposta);
+}
+
 /* Lista as tatuagens. Os dois filtros são opcionais, e são os mesmos filtros
  * que a rota do back aceita: etapa e cliente. Sem nenhum, volta tudo. */
 export function buscarTatuagens({ etapa, clienteId } = {}) {
@@ -211,6 +232,18 @@ export function criarTatuagem(dados) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dados),
+    }),
+  ).then(conferirResposta);
+}
+
+/* Troca o tatuador responsável pela agenda de uma tatuagem. */
+export function atribuirTatuador(tatuagemId, tatuadorId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/tatuador`),
+    opcoesAutenticadas({
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tatuador_id: tatuadorId }),
     }),
   ).then(conferirResposta);
 }

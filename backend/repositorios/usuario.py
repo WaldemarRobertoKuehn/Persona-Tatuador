@@ -87,6 +87,50 @@ def buscar_usuario_por_id(usuario_id: int) -> dict | None:
         return cursor.fetchone()
 
 
+def listar_tatuadores() -> list[dict]:
+    """Devolve as contas do grupo tatuador, em ordem de nome.
+
+    A consulta usa o mesmo JOIN de permissões das outras buscas, então cada
+    conta volta com o grupo e as permissões que valem agora. O hash da senha é
+    cortado pela rota, que responde com o esquema público.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            _CONSULTA_USUARIO
+            + "WHERE g.codigo = 'tatuador' ORDER BY u.nome, u.id"
+        )
+        return cursor.fetchall()
+
+
+def buscar_tatuador_por_id(usuario_id: int) -> dict | None:
+    """Busca uma conta somente se ela pertencer ao grupo tatuador."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            _CONSULTA_USUARIO
+            + "WHERE g.codigo = 'tatuador' AND u.id = %s",
+            (usuario_id,),
+        )
+        return cursor.fetchone()
+
+
+def buscar_tatuador_padrao_id() -> int | None:
+    """Devolve o tatuador mais antigo, que é o responsável padrão de um pedido.
+
+    A tatuagem nova nasce com um responsável para a agenda já abrir. Se ainda
+    não houver tatuador cadastrado, devolve None e a tatuagem fica sem
+    responsável até o administrador atribuir um.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT u.id FROM usuarios AS u "
+            "JOIN grupos AS g ON g.id = u.grupo_id "
+            "WHERE g.codigo = 'tatuador' ORDER BY u.id LIMIT 1"
+        )
+        achado = cursor.fetchone()
+
+    return achado["id"] if achado else None
+
+
 def guardar_token_redefinicao(
     usuario_id: int,
     token_hash: str,

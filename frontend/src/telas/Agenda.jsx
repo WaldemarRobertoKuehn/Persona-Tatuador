@@ -106,6 +106,7 @@ export default function Agenda({ aoAbrirFicha }) {
                 <th scope="col">Local</th>
                 <th scope="col">Tamanho</th>
                 <th scope="col">Cliente</th>
+                <th scope="col">Tatuador</th>
                 <th scope="col">Ficha</th>
               </tr>
             </thead>
@@ -130,6 +131,9 @@ export default function Agenda({ aoAbrirFicha }) {
                     {tatuagem.tamanho} cm
                   </td>
                   <td data-rotulo="Cliente">{tatuagem.nome_da_cliente}</td>
+                  <td data-rotulo="Tatuador">
+                    {tatuagem.tatuador_nome ?? "Sem tatuador"}
+                  </td>
                   <td data-rotulo="">
                     <button
                       type="button"
