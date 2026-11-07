@@ -28,6 +28,22 @@ O que o banco resolve sozinho, e o que ele exige
 import banco
 
 
+# A imagem que a agenda usa como miniatura é o desenho da tatuagem. A ordem
+# prefere o desenho aprovado; entre os que ainda não foram aprovados, prefere o
+# pendente ao recusado; e, dentro do mesmo status, o mais recente. A subconsulta
+# roda no mesmo SELECT da lista, então a agenda não abre uma consulta de imagem
+# por linha.
+_IMAGEM_DO_DESENHO = (
+    "LEFT JOIN LATERAL ("
+    "SELECT i.id FROM tatuagem_imagens AS i "
+    "WHERE i.tatuagem_id = t.id AND i.tipo = 'desenho' "
+    "ORDER BY (i.status = 'aprovada') DESC, "
+    "(i.status = 'recusada') ASC, i.id DESC "
+    "LIMIT 1"
+    ") AS d ON TRUE"
+)
+
+
 # O tamanho sai do PostgreSQL como Decimal, e não como float, porque a coluna é
 # DECIMAL(6,2). Decimal é número exato: 12.50 volta como 12.50, e não como
 # 12.499999, que é o defeito clássico do float em medida. O esquema de saída
@@ -75,9 +91,11 @@ def listar_tatuagens(
 
     sql = (
         "SELECT t.id, t.cliente_id, t.ideia, t.local_do_corpo, t.tamanho, t.etapa, "
-        "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente "
+        "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
+        "d.id AS desenho_imagem_id "
         "FROM tatuagens AS t "
-        "LEFT JOIN clientes AS c ON c.id = t.cliente_id"
+        "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
+        + _IMAGEM_DO_DESENHO
     )
 
     if condicoes:
@@ -102,10 +120,12 @@ def buscar_tatuagem(tatuagem_id: int) -> dict | None:
     with banco.cursor() as cursor:
         cursor.execute(
             "SELECT t.id, t.cliente_id, t.ideia, t.local_do_corpo, t.tamanho, "
-            "t.etapa, COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente "
+            "t.etapa, COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
+            "d.id AS desenho_imagem_id "
             "FROM tatuagens AS t "
             "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
-            "WHERE t.id = %s",
+            + _IMAGEM_DO_DESENHO
+            + " WHERE t.id = %s",
             (tatuagem_id,),
         )
 

@@ -66,3 +66,12 @@ class TatuagemSaida(BaseModel):
             "em sessões e finalizada. É o serviço que muda este valor, nunca o front."
         )
     )
+
+    desenho_imagem_id: int | None = Field(
+        default=None,
+        description=(
+            "Id da imagem do desenho usada como miniatura na agenda. É o desenho "
+            "aprovado, se houver; senão o mais recente. None quando a tatuagem "
+            "ainda não tem desenho."
+        ),
+    )

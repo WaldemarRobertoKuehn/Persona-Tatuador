@@ -20,6 +20,7 @@ import { buscarTatuagens } from "../api";
 import { AvisoCarregando, AvisoErro, AvisoVazio } from "../componentes/Avisos";
 import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
+import MiniaturaDoDesenho from "../componentes/MiniaturaDoDesenho";
 import { ETAPAS } from "../perfis";
 
 export default function Agenda({ aoAbrirFicha }) {
@@ -99,6 +100,7 @@ export default function Agenda({ aoAbrirFicha }) {
                 de cada célula. */}
             <thead className="so-leitor">
               <tr>
+                <th scope="col">Desenho</th>
                 <th scope="col">Etapa</th>
                 <th scope="col">Ideia</th>
                 <th scope="col">Local</th>
@@ -113,6 +115,12 @@ export default function Agenda({ aoAbrirFicha }) {
                 <tr key={tatuagem.id}>
                   {/* O data-rotulo é o nome da coluna, e só o CSS do celular usa
                       ele. No computador o nome vem do thead. */}
+                  <td data-rotulo="Desenho">
+                    <MiniaturaDoDesenho
+                      tatuagemId={tatuagem.id}
+                      imagemId={tatuagem.desenho_imagem_id}
+                    />
+                  </td>
                   <td data-rotulo="Etapa">
                     <Etiqueta etapa={tatuagem.etapa} />
                   </td>

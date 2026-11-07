@@ -1209,6 +1209,35 @@ p {
   text-align: center;
 }
 
+/* A miniatura do desenho na lista da agenda. O tamanho fixo mantém a linha
+ * estável enquanto a imagem carrega, e a imagem fica como identificador visual
+ * sem competir com a ideia e o nome da cliente. */
+.miniatura-da-agenda,
+.sem-miniatura-da-agenda {
+  width: 4rem;
+  height: 4rem;
+  flex: none;
+  border-radius: var(--raio);
+}
+
+.miniatura-da-agenda {
+  display: block;
+  object-fit: cover;
+  background: var(--cor-fundo);
+}
+
+.sem-miniatura-da-agenda {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espaco-1);
+  border: 1px dashed var(--cor-borda);
+  background: var(--cor-fundo);
+  color: var(--cor-texto-fraco);
+  font-size: 0.6875rem;
+  text-align: center;
+}
+
 .dados-da-imagem,
 .dados-do-agendamento {
   display: flex;
