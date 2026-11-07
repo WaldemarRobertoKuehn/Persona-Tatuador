@@ -1,6 +1,6 @@
 """Rota de login e dependência para identificar o usuário pelo token."""
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 import seguranca
@@ -56,17 +56,18 @@ def login(credenciais: CredenciaisEntrada) -> dict:
 
 
 @roteador_autenticacao.post("/esqueci-senha", status_code=status.HTTP_202_ACCEPTED)
-def solicitar_redefinicao(
-    dados: EmailRedefinicaoEntrada,
-    tarefas: BackgroundTasks,
-) -> dict:
-    """Solicita email de redefinição sem confirmar se o endereço está cadastrado."""
+def solicitar_redefinicao(dados: EmailRedefinicaoEntrada) -> dict:
+    """Solicita email de redefinição sem confirmar se o endereço está cadastrado.
+
+    O envio acontece antes da resposta, e não em BackgroundTasks, porque no
+    Vercel a função é congelada assim que responde e o email se perderia.
+    """
     if configuracao.configuracao_smtp() is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="A redefinição por email ainda não está configurada.",
         )
-    tarefas.add_task(servico_usuarios.solicitar_redefinicao_senha, dados.email)
+    servico_usuarios.solicitar_redefinicao_senha(dados.email)
     return {
         "detail": "Se houver uma conta com este email, enviaremos um link de redefinição."
     }
