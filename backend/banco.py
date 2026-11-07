@@ -1,9 +1,9 @@
 """A porta de entrada no PostgreSQL, compartilhada pelos três repositórios.
 
 Este arquivo é a única parte do back que sabe que existe um banco de dados, e ele
-guarda quatro coisas: o engine, a fábrica de sessão, a classe Base e a função que
-entrega a sessão para a rota. Os três repositórios não citam driver, conexão nem
-senha em lugar nenhum: eles recebem a sessão pronta.
+guarda o engine, a fábrica de sessão, a classe Base e a função cursor() que os
+repositórios usam. Os três repositórios não citam driver, conexão nem senha em
+lugar nenhum: eles recebem o cursor pronto.
 
 Por que o arquivo existe
 
@@ -15,17 +15,19 @@ Por que o arquivo existe
     arquivo só, com o nome do que ele é, é mais honesto do que um pedaço desse passo
     escondido dentro de um repositório.
 
-Por que a sessão nasce aqui e não dentro do repositório
+Por que a conexão nasce uma vez por requisição
 
-    Uma sessão é uma conversa com o banco, e uma conversa tem começo, meio e fim.
-    Se cada função de repositório abrisse a sua, a conversa da tatuagem e a do
-    passo que ela cria seriam duas conversas diferentes, e não existiria como
-    gravar as duas juntas. Por isso a sessão é criada uma vez por requisição, na
-    rota, pelo Depends, e passa de mão em mão: rota, serviço, repositório. Quem
-    decide a transação é a rota, e o motivo está em criar_tabelas.py e no serviço.
+    Uma conexão é uma conversa com o banco, e abrir uma conversa custa caro: TCP,
+    TLS e autenticação. Se cada função de repositório abrisse a sua, uma rota que
+    lê a tatuagem, a cliente e o histórico pagaria esse custo várias vezes. Por
+    isso o main.py abre uma conexão no começo da requisição e a guarda no
+    ContextVar; cursor() reutiliza essa conexão, e cada bloco ainda confirma ou
+    desfaz a sua transação. Fora de uma requisição, cursor() abre e fecha a
+    conexão sozinho, o que mantém scripts e testes funcionando.
 """
 
 from contextlib import contextmanager
+from contextvars import ContextVar
 
 # create_engine é o que cria o engine: o objeto que sabe falar com o banco e que
 # guarda o pool de conexões. O pool é o conjunto de conexões que o SQLAlchemy abre
@@ -64,11 +66,9 @@ engine = create_engine(
 )
 
 
-@contextmanager
-def cursor():
-    """Abre um cursor PostgreSQL em formato de dicionário para os repositórios."""
+def _abrir_conexao():
     endereco = configuracao.endereco_do_banco()
-    conexao = psycopg2.connect(
+    return psycopg2.connect(
         host=endereco.host,
         port=endereco.port,
         user=endereco.username,
@@ -77,15 +77,67 @@ def cursor():
         sslmode=endereco.query["sslmode"],
         connect_timeout=5,
     )
+
+
+class _ConexaoDaRequisicao:
+    """Guarda a conexão aberta uma vez e reutilizada durante a requisição."""
+
+    def __init__(self):
+        self.conexao = None
+
+    def obter(self):
+        if self.conexao is None or self.conexao.closed:
+            self.conexao = _abrir_conexao()
+        return self.conexao
+
+    def fechar(self):
+        conexao = self.conexao
+        self.conexao = None
+        if conexao is not None and not conexao.closed:
+            conexao.close()
+
+
+_conexao_da_requisicao: ContextVar[_ConexaoDaRequisicao | None] = ContextVar(
+    "conexao_da_requisicao",
+    default=None,
+)
+
+
+def iniciar_conexao_da_requisicao():
+    """Marca o início da requisição que vai compartilhar uma única conexão."""
+    return _conexao_da_requisicao.set(_ConexaoDaRequisicao())
+
+
+def encerrar_conexao_da_requisicao(token):
+    """Fecha a conexão da requisição e restaura o estado anterior."""
+    estado = _conexao_da_requisicao.get()
+    if estado is not None:
+        estado.fechar()
+    _conexao_da_requisicao.reset(token)
+
+
+@contextmanager
+def cursor():
+    """Abre um cursor PostgreSQL em formato de dicionário para os repositórios."""
+    estado = _conexao_da_requisicao.get()
+    conexao_propria = estado is None
+    conexao = _abrir_conexao() if conexao_propria else estado.obter()
+
     try:
         with conexao.cursor(cursor_factory=RealDictCursor) as cursor_banco:
             yield cursor_banco
         conexao.commit()
     except Exception:
-        conexao.rollback()
+        try:
+            conexao.rollback()
+        except Exception:
+            pass
+        if not conexao_propria and conexao.closed:
+            estado.conexao = None
         raise
     finally:
-        conexao.close()
+        if conexao_propria:
+            conexao.close()
 
 
 # Sessao é a fábrica, e não a sessão: o nome Sessao() na rota entrega uma sessão

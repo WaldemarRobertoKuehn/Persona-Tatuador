@@ -66,20 +66,24 @@ def listar_tatuagens(
     valores = []
 
     if etapa is not None:
-        condicoes.append("etapa = %s")
+        condicoes.append("t.etapa = %s")
         valores.append(etapa)
 
     if cliente_id is not None:
-        condicoes.append("cliente_id = %s")
+        condicoes.append("t.cliente_id = %s")
         valores.append(cliente_id)
 
     sql = (
-        "SELECT id, cliente_id, ideia, local_do_corpo, tamanho, etapa "
-        "FROM tatuagens"
+        "SELECT t.id, t.cliente_id, t.ideia, t.local_do_corpo, t.tamanho, t.etapa, "
+        "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente "
+        "FROM tatuagens AS t "
+        "LEFT JOIN clientes AS c ON c.id = t.cliente_id"
     )
 
     if condicoes:
         sql += " WHERE " + " AND ".join(condicoes)
+
+    sql += " ORDER BY t.id"
 
     with banco.cursor() as cursor:
         cursor.execute(sql, valores)
@@ -97,8 +101,11 @@ def buscar_tatuagem(tatuagem_id: int) -> dict | None:
     """
     with banco.cursor() as cursor:
         cursor.execute(
-            "SELECT id, cliente_id, ideia, local_do_corpo, tamanho, etapa "
-            "FROM tatuagens WHERE id = %s",
+            "SELECT t.id, t.cliente_id, t.ideia, t.local_do_corpo, t.tamanho, "
+            "t.etapa, COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente "
+            "FROM tatuagens AS t "
+            "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
+            "WHERE t.id = %s",
             (tatuagem_id,),
         )
 

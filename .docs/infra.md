@@ -33,6 +33,7 @@ Para testar no mermaid.live, cole **só o conteúdo** do diagrama, começando em
 | Tela | React servido pelo Vite em desenvolvimento na porta 5173. O projeto gera os arquivos de produção com `npm run build`, em `dist/`. | Arquivos gerados pelo build servidos pelo servidor web na mesma origem HTTPS da API. O Vite de desenvolvimento não é o servidor público. |
 | Banco | MySQL na porta 3306. O exemplo de configuração usa `localhost`; o endereço efetivo em uso não foi verificado (?). | MySQL acessível internamente na porta 3306, somente pela API. Sem acesso público direto ao banco. |
 | `.env` | `backend/configuracao.py` carrega a configuração do lado do servidor; existe um `backend/.env.exemplo`. Os valores efetivos do `.env` não foram verificados (?). | Configuração e segredos ficam apenas no ambiente do servidor, fora dos arquivos públicos da tela e do repositório. Os valores precisam corresponder aos endereços internos e ao domínio usado em produção; nenhum valor é definido aqui. |
+| Email transacional | Ainda não configurado. | A API envia links por SMTP com STARTTLS. `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM_EMAIL` ficam somente no ambiente do backend; o link usa `ORIGEM_FRONTEND`. |
 | CORS | A API configura CORS com uma origem exata lida pela configuração do servidor, conforme `backend/main.py` e `backend/configuracao.py`. | Tela e API são acessadas pela mesma origem, com `/api` encaminhado pelo servidor web. Portanto, o navegador não precisa de CORS entre elas. |
 
 ## 3. O caminho do login

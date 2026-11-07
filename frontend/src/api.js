@@ -114,6 +114,41 @@ export function autenticar(email, senha) {
     });
 }
 
+export function solicitarRedefinicaoSenha(email) {
+  return fetch(caminho("/autenticacao/esqueci-senha"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  }).then(conferirResposta);
+}
+
+export function redefinirSenha({ token, senha, confirmacaoSenha }) {
+  return fetch(caminho("/autenticacao/redefinir-senha"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token,
+      senha,
+      confirmacao_senha: confirmacaoSenha,
+    }),
+  }).then(conferirResposta);
+}
+
+export function alterarSenha({ senhaAtual, novaSenha, confirmacaoSenha }) {
+  return fetch(
+    caminho("/autenticacao/alterar-senha"),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        senha_atual: senhaAtual,
+        nova_senha: novaSenha,
+        confirmacao_senha: confirmacaoSenha,
+      }),
+    }),
+  ).then(conferirResposta);
+}
+
 export function cadastrarUsuario({ nome, email, senha }) {
   return fetch(caminho("/usuarios"), {
     method: "POST",

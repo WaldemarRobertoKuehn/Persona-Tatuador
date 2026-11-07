@@ -59,8 +59,8 @@ def criar_passo(tatuagem_id: int, dados: dict) -> dict:
     """Grava um passo numa tatuagem e devolve como ele ficou gravado.
 
     O id não é escrito no INSERT: o PostgreSQL gera o número automaticamente.
-    O INSERT retorna o identificador, que a função usa para buscar a linha
-    novamente, pelo mesmo motivo da tatuagem: o que volta é o que está gravado.
+    O RETURNING devolve a linha inteira na mesma ida ao banco, então não há uma
+    segunda consulta para buscar o que acabou de ser gravado.
 
     A tatuagem dona do passo entra pela função, e não pelo dicionário de dados,
     porque quem diz de que tatuagem é o passo é o caminho da rota, e a rota já
@@ -74,21 +74,14 @@ def criar_passo(tatuagem_id: int, dados: dict) -> dict:
     with banco.cursor() as cursor:
         cursor.execute(
             "INSERT INTO passos (tatuagem_id, tipo, data, observacao) "
-            "VALUES (%s, %s, %s, %s) RETURNING id",
+            "VALUES (%s, %s, %s, %s) "
+            "RETURNING id, tatuagem_id, tipo, data, observacao",
             (
                 tatuagem_id,
                 dados["tipo"],
                 date.today(),
                 dados["observacao"],
             ),
-        )
-
-        novo_id = cursor.fetchone()["id"]
-
-    with banco.cursor() as cursor:
-        cursor.execute(
-            "SELECT id, tatuagem_id, tipo, data, observacao FROM passos WHERE id = %s",
-            (novo_id,),
         )
 
         return cursor.fetchone()

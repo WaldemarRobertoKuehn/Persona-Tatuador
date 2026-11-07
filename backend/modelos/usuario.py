@@ -7,11 +7,9 @@ Tatuador ou Administrador. O vínculo e as permissões moram no banco, e o backe
 Por que a conta é uma tabela só dela
 
     Antes a conta morava na tabela clientes, com as colunas email e senha_hash.
-    Isso misturava duas coisas do negócio: quem é dona de tatuagem e quem tem
-    senha para entrar. O tatuador é dono do estúdio e não é dona de nenhuma
-    tatuagem, e mesmo assim precisava de uma linha em clientes só para ter
-    login. Com a tabela usuarios, a cliente continua em clientes e a conta fica
-    em usuarios, e o elo entre as duas é a coluna cliente_id.
+    Isso misturava quem é dona de tatuagem e quem tem senha para entrar. Agora
+    clientes, tatuadores e administradores têm contas em usuarios; cliente_id
+    liga somente a conta Cliente à respectiva linha de clientes.
 
 O que a coluna cliente_id faz
 
@@ -24,7 +22,7 @@ O que a coluna cliente_id faz
 # Column é o que transforma um atributo desta classe em coluna da tabela, com o
 # tipo e a restrição. primary_key=True marca a chave primária, nullable=False vira
 # NOT NULL no banco, e UniqueConstraint vira o índice único do email.
-from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
 
 # A Base é a do banco.py, e não a DeclarativeBase de novo: é dela que o
 # criar_tabelas.py e o Alembic leem o desenho de todas as tabelas do projeto.
@@ -56,6 +54,13 @@ class Usuario(Base):
     # argon2id devolve, e é o que a função verificar_senha compara com a senha
     # digitada na tela.
     senha_hash = Column(String(255), nullable=False)
+
+    # Hash do token temporário de redefinição; o token enviado por email nunca é guardado.
+    token_redefinicao_hash = Column(String(64), nullable=True)
+
+    # Validade e intervalo entre solicitações evitam reutilização e abuso do envio.
+    token_redefinicao_expira_em = Column(DateTime(timezone=True), nullable=True)
+    token_redefinicao_solicitado_em = Column(DateTime(timezone=True), nullable=True)
 
     # papel: compatibilidade com o front existente; o grupo vinculado é a fonte
     # de verdade para autorização e este campo recebe o código do grupo.

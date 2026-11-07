@@ -2,7 +2,7 @@
 
 import re
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class UsuarioCadastro(BaseModel):
@@ -38,6 +38,48 @@ class CredenciaisEntrada(BaseModel):
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor):
             raise ValueError("Informe um email válido.")
         return valor
+
+
+class EmailRedefinicaoEntrada(BaseModel):
+    """Email para solicitar uma redefinição sem revelar se a conta existe."""
+
+    email: str = Field(min_length=5, max_length=254)
+
+    @field_validator("email")
+    @classmethod
+    def normalizar_email(cls, valor: str) -> str:
+        valor = valor.strip().lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor):
+            raise ValueError("Informe um email válido.")
+        return valor
+
+
+class RedefinirSenhaEntrada(BaseModel):
+    """Token de email e senha que será definida depois da confirmação."""
+
+    token: str = Field(min_length=32, max_length=128)
+    senha: str = Field(min_length=8, max_length=128)
+    confirmacao_senha: str = Field(min_length=8, max_length=128)
+
+    @model_validator(mode="after")
+    def confirmar_senha(self):
+        if self.senha != self.confirmacao_senha:
+            raise ValueError("As senhas não coincidem.")
+        return self
+
+
+class AlterarSenhaEntrada(BaseModel):
+    """Senha atual e confirmação da nova senha para uma conta autenticada."""
+
+    senha_atual: str = Field(min_length=1, max_length=128)
+    nova_senha: str = Field(min_length=8, max_length=128)
+    confirmacao_senha: str = Field(min_length=8, max_length=128)
+
+    @model_validator(mode="after")
+    def confirmar_senha(self):
+        if self.nova_senha != self.confirmacao_senha:
+            raise ValueError("As senhas não coincidem.")
+        return self
 
 
 class UsuarioSaida(BaseModel):
@@ -89,3 +131,5 @@ class AtribuicaoGrupoEntrada(BaseModel):
 class TokenSaida(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    # A conta vai junto para o login não exigir uma segunda chamada a /usuarios/eu.
+    usuario: UsuarioSaida

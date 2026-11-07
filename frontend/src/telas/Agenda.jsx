@@ -5,14 +5,9 @@
  * na horizontal e a lista é uma tabela com a coluna da cliente visível, como
  * manda o styleguide, seção 5.
  *
- * O filtro vai para o back, e não para o front. A rota já aceita etapa, e filtrar
- * no back é o que faz a agenda mostrar só o que interessa em vez de trazer tudo e
- * esconder. Quando o filtro muda, a busca roda de novo.
- *
- * O número que aparece em cada aba é uma segunda chamada, sem filtro, e ela é
- * separada de propósito: a contagem é informação da tela, e quem guarda a lista
- * mostrada é a chamada com o filtro. Se a contagem viesse da chamada filtrada, o
- * número de cada aba seria sempre zero quando ela não estivesse selecionada.
+ * A agenda busca a lista uma única vez e filtra no front. A contagem das abas e a
+ * lista mostrada saem da mesma resposta, então trocar de aba não dispara outra
+ * consulta ao banco. Antes eram duas chamadas completas a cada abertura de tela.
  *
  * O que a agenda NÃO faz é dizer o que pode ser feito em cada etapa. Isso é
  * chamar de regra, e a regra mora no serviço. A agenda mostra a etapa; quem sabe
@@ -28,37 +23,28 @@ import Etiqueta from "../componentes/Etiqueta";
 import { ETAPAS } from "../perfis";
 
 export default function Agenda({ aoAbrirFicha }) {
-  /* etapa começa vazia, e vazia é "todas". Guardar a etapa no estado é o que faz
-   * o filtro ser do back: cada mudança deste estado dispara a busca de novo. */
+  /* etapa começa vazia, e vazia é "todas". */
   const [etapa, setEtapa] = useState("");
   const [estado, setEstado] = useState("carregando");
-  const [tatuagens, setTatuagens] = useState([]);
   const [todas, setTodas] = useState([]);
   const [erro, setErro] = useState("");
 
-  /* A contagem das abas. Esta busca não tem efeito colateral na tela: se ela
-   * falhar, a agenda continua mostrando a lista filtrada, e a aba mostra zero em
-   * vez da contagem. O catch vazio é por isso, e é o único lugar do projeto em que
-   * o erro é de propósito ignorado. */
+  /* Uma única busca ao abrir a tela. A contagem e a lista filtrada saem daqui. */
   useEffect(() => {
     buscarTatuagens()
-      .then(setTodas)
-      .catch(() => {});
-  }, []);
-
-  /* A busca depende só da etapa. Trocar de etapa é o único motivo para a agenda
-   * buscar de novo, e é por isso que o id da tatuagem não entra aqui. */
-  useEffect(() => {
-    buscarTatuagens({ etapa: etapa || undefined })
       .then((dados) => {
-        setTatuagens(dados);
+        setTodas(dados);
         setEstado("pronto");
       })
       .catch((erroRecebido) => {
         setErro(erroRecebido.message);
         setEstado("erro");
       });
-  }, [etapa]);
+  }, []);
+
+  const tatuagens = etapa
+    ? todas.filter((tatuagem) => tatuagem.etapa === etapa)
+    : todas;
 
   /* Quantas tatuagens existem em cada etapa. O forEach com filter é a mesma
    * contagem das cinco listas, e o objeto que começa com o total é o que faz uma

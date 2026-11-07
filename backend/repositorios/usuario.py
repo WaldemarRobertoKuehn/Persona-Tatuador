@@ -7,11 +7,9 @@ usuarios, e nada mais.
 Por que a conta não mora mais na tabela clientes
 
     Antes a conta era uma linha da tabela clientes, com email e senha_hash nela.
-    Isso misturava duas coisas do negócio: quem é dona de tatuagem e quem tem
-    senha para entrar. O tatuador é dono do estúdio e não é dona de nenhuma
-    tatuagem, e mesmo assim precisava de uma linha em clientes só para ter
-    login. Agora a conta mora na tabela usuarios, e a coluna cliente_id é o elo
-    com a cliente da cartilha: ele é preenchido só para o papel "cliente".
+    Isso misturava quem é dona de tatuagem e quem tem senha para entrar. Agora
+    clientes, tatuadores e administradores têm contas em usuarios; cliente_id
+    liga somente a conta Cliente à respectiva linha de clientes.
 
 O que as funções devolvem
 
@@ -28,7 +26,13 @@ import banco
 # NOVO: o JOIN devolve o código do grupo como papel, preservando o contrato do front.
 _CONSULTA_USUARIO = (
     "SELECT u.id, u.nome, u.email, u.senha_hash, u.papel, u.cliente_id, "
-    "u.grupo_id, g.codigo AS grupo_codigo, g.nome AS grupo_nome "
+    "u.grupo_id, g.codigo AS grupo_codigo, g.nome AS grupo_nome, "
+    "COALESCE(("
+    "SELECT array_agg(p.codigo ORDER BY p.codigo) "
+    "FROM permissoes AS p "
+    "JOIN grupos_permissoes AS gp ON gp.permissao_id = p.id "
+    "WHERE gp.grupo_id = u.grupo_id"
+    "), ARRAY[]::varchar[]) AS permissoes "
     "FROM usuarios AS u LEFT JOIN grupos AS g ON g.id = u.grupo_id "
 )
 
@@ -81,3 +85,58 @@ def buscar_usuario_por_id(usuario_id: int) -> dict | None:
             (usuario_id,),
         )
         return cursor.fetchone()
+
+
+def guardar_token_redefinicao(
+    usuario_id: int,
+    token_hash: str,
+    expira_em,
+    solicitado_em,
+    limite_anterior,
+) -> bool:
+    """Grava um token se a conta não solicitou outro durante o intervalo mínimo."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "UPDATE usuarios "
+            "SET token_redefinicao_hash = %s, "
+            "token_redefinicao_expira_em = %s, "
+            "token_redefinicao_solicitado_em = %s "
+            "WHERE id = %s AND (token_redefinicao_solicitado_em IS NULL "
+            "OR token_redefinicao_solicitado_em <= %s) RETURNING id",
+            (token_hash, expira_em, solicitado_em, usuario_id, limite_anterior),
+        )
+        return cursor.fetchone() is not None
+
+
+def invalidar_token_redefinicao(token_hash: str) -> None:
+    """Invalida somente o token correspondente quando o email não foi enviado."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "UPDATE usuarios SET token_redefinicao_hash = NULL, "
+            "token_redefinicao_expira_em = NULL "
+            "WHERE token_redefinicao_hash = %s",
+            (token_hash,),
+        )
+
+
+def redefinir_senha_com_token(token_hash: str, senha_hash: str, agora) -> bool:
+    """Troca a senha e consome o token numa única operação atômica."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "UPDATE usuarios SET senha_hash = %s, token_redefinicao_hash = NULL, "
+            "token_redefinicao_expira_em = NULL "
+            "WHERE token_redefinicao_hash = %s "
+            "AND token_redefinicao_expira_em > %s RETURNING id",
+            (senha_hash, token_hash, agora),
+        )
+        return cursor.fetchone() is not None
+
+
+def atualizar_senha(usuario_id: int, senha_hash: str) -> None:
+    """Atualiza a senha autenticada e invalida qualquer link de redefinição pendente."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "UPDATE usuarios SET senha_hash = %s, token_redefinicao_hash = NULL, "
+            "token_redefinicao_expira_em = NULL WHERE id = %s",
+            (senha_hash, usuario_id),
+        )

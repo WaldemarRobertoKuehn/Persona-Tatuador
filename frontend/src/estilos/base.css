@@ -133,9 +133,7 @@ p {
   gap: var(--espaco-2);
 }
 
-/* O cartão de identificação da pessoa dentro da barra: o retrato em círculo, o
- * nome e o tipo. No celular a plaquinha inteira é o que mostra quem está usando,
- * e o retrato é o que a faz ser reconhecida num olhar. */
+/* A identidade da pessoa usa iniciais da conta, sem compartilhar fotos de persona. */
 .pessoa {
   display: inline-flex;
   align-items: center;
@@ -146,11 +144,17 @@ p {
   background: var(--cor-fundo);
 }
 
-.pessoa-retrato {
+.pessoa-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2rem;
   height: 2rem;
   border-radius: var(--raio-cheio);
-  object-fit: cover;
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font-size: 0.75rem;
+  font-weight: 600;
   flex-shrink: 0;
 }
 

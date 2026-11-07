@@ -7,9 +7,9 @@
  *
  * Esta tela é onde a regra da cartilha fica visível. O Vitor registra um passo, e
  * duas coisas podem acontecer: o back aceita e a etapa muda, ou o back recusa e
- * devolve o motivo. Os dois casos aparecem na tela, e é por isso que ela recarrega
- * a tatuagem depois de registrar: a resposta do POST do passo é o passo, e a etapa é
- * outra coisa, que mora em outro recurso da API.
+ * devolve o motivo. Os dois casos aparecem na tela. Depois de registrar, a tela
+ * relê só a tatuagem, porque a etapa é outro recurso da API; o passo novo já vem
+ * na resposta do POST e entra no histórico sem uma segunda busca.
  *
  * A tela NÃO esconde os passos que a regra recusa, e também NÃO escreve a regra
  * aqui. As duas coisas são a mesma escolha: a regra de quais etapas aceitam quais
@@ -84,16 +84,12 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
     };
   }, [tatuagem.id]);
 
-  /* Depois de registrar, duas coisas precisam ser relidas: a etapa, porque ela
-   * mudou, e o histórico, porque ganhou um passo. São duas buscas, e não uma,
-   * porque a API separa a tatuagem do passo em recursos diferentes. */
+  /* Depois de registrar, só a etapa precisa ser relida: ela mora na tatuagem,
+   * que é outro recurso da API. O histórico não é buscado de novo porque o POST
+   * já devolveu o passo gravado; acrescentá-lo à lista evita uma chamada extra. */
   function recarregar() {
     buscarTatuagem(tatuagem.id)
       .then((atualizada) => setEtapaAtual(atualizada.etapa))
-      .catch((erroRecebido) => setErro(erroRecebido.message));
-
-    buscarPassos(tatuagem.id)
-      .then(setPassos)
       .catch((erroRecebido) => setErro(erroRecebido.message));
   }
 
@@ -114,6 +110,7 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
         setTipo("");
         setObservacao("");
         setEnviando(false);
+        setPassos((anteriores) => [...anteriores, passo]);
         recarregar();
       })
       .catch((erroRecebido) => {

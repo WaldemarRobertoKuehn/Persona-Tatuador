@@ -13,6 +13,12 @@ o que pode e o que não pode aparecer no código, estão em `REGRAS.md`.
 escritos, em `docs/marca.md` e `docs/styleguide/`. O front é servido e testado em
 `http://localhost:5173`.
 
+O cadastro público cria somente contas Cliente e, ao terminar, volta para o login sem iniciar uma
+sessão. A tela de entrada também permite pedir redefinição por email; quem já está conectado pode
+alterar a própria senha confirmando a senha atual. O envio depende de SMTP configurado no backend.
+Cliente, Tatuador e Administrador têm rótulos e áreas de acesso distintos. A barra usa iniciais do
+nome da conta, não as fotos das personas de demonstração.
+
 O back entrega as cinco coisas que a cartilha pede:
 
 | capacidade da cartilha | rota |
@@ -50,13 +56,13 @@ cópia nenhuma dentro do front.
 │   ├── marca/       os arquivos da marca, que o front serve de lá
 │   └── styleguide/  o styleguide, ou o link do Figma
 ├── Caddyfile        proxy HTTP local e arquivos do build do React
-├── frontend/        o React, com as quatro telas
+├── frontend/        o React, com as telas de cliente, tatuador, administrador e acesso
 │   ├── src/
-│   │   ├── componentes/  o logo, o botão de tema e as peças repetidas
+│   │   ├── componentes/  o logo, o botão de tema, CampoSenha e as peças repetidas
 │   │   ├── estilos/      os tokens do styleguide e o CSS das telas
 │   │   ├── fontes/       a Playfair Display, com a licença e a procedência
-│   │   ├── imagens/      as fotos do ateliê, da vitrine e dos dois perfis
-│   │   ├── telas/        as quatro telas da cartilha e a tela de login
+│   │   ├── imagens/      as fotos do ateliê e da vitrine
+│   │   ├── telas/        as telas da cartilha, login, administração e alteração de senha
 │   │   ├── api.js        o único lugar do front que fala com o back
 │   │   ├── datas.js      ISO do back virando dd/mm/aaaa na tela
 │   │   ├── perfis.js     os perfis fixos e a ordem das telas de cada um
@@ -120,6 +126,11 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 | `JWT_SEGREDO` | segredo aleatório com pelo menos 32 caracteres |
 | `JWT_MINUTOS` | validade do token em minutos, por exemplo `60` |
 | `ORIGEM_FRONTEND` | URL HTTPS exata do domínio onde o frontend está hospedado |
+| `SMTP_HOST` | host do serviço de email com STARTTLS |
+| `SMTP_PORT` | porta SMTP com STARTTLS, normalmente `587` |
+| `SMTP_USER` | usuário SMTP |
+| `SMTP_PASSWORD` | senha ou senha de aplicativo SMTP |
+| `SMTP_FROM_EMAIL` | endereço remetente autorizado pelo provedor SMTP |
 
 No projeto do frontend, para usar o proxy incluído em `frontend/vercel.json`,
 mantenha `VITE_URL_DA_API=/api` (como em `frontend/.env.production`) e ajuste
@@ -186,12 +197,23 @@ sem consultar o banco.
 O `.env` precisa ter `ORIGEM_FRONTEND` com o endereço exato do front, porque é dele que sai o CORS.
 Se o endereço mudar, mude no `.env` e reinicie o back.
 
+### Redefinir senha
+
+Na tela de entrada, use **Esqueci minha senha**. A API envia um link ao email cadastrado; o link
+vence em 15 minutos e só pode ser usado uma vez. A tela pede a nova senha duas vezes. Para trocar
+a senha já conectado, use **Alterar senha** e informe a senha atual.
+
+O envio exige as variáveis `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e
+`SMTP_FROM_EMAIL` no ambiente do backend. Em Docker Compose, coloque-as no `.env` da raiz; na
+Vercel, configure-as no projeto Backend. O link usa `ORIGEM_FRONTEND`, que deve apontar para a URL
+da tela. Depois de atualizar um banco existente, aplique a nova migration com `alembic upgrade head`.
+
 ### As contas de demonstração
 
 Quem entra no sistema é uma **conta**, e a conta mora na tabela `usuarios`, com o papel dela
-escrito no banco: `cliente` ou `tatuador`. As contas de demonstração são criadas por um script, e
-não pela tela, porque a tela de login não tem cadastro e porque o papel `tatuador` é do estúdio, e
-não de quem se cadastrou:
+escrito no banco: `cliente`, `tatuador` ou `administrador`. As contas de demonstração são criadas
+por um script. O cadastro público também existe, mas só cria Cliente; o papel Tatuador é atribuído
+pelo estúdio, e Administrador é provisionado por comando local:
 
 ```bash
 cd backend
@@ -202,25 +224,39 @@ python criar_contas_de_demonstracao.py
 | --- | --- | --- | --- | --- |
 | Bruna | `bruna@tracofino.com.br` | `bruna123` | cliente | "Pedir tatuagem" e "Minhas tatuagens" |
 | Vitor | `vitor@tracofino.com.br` | `vitor123` | tatuador | "A agenda" e "A ficha" |
-| Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | tatuador | o dono do estúdio |
+| Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | administrador | administrador do sistema |
 
 A conta da Bruna fica ligada à cliente 1 da tabela `clientes`, que é a mesma pessoa: por isso ela
 enxerga as cinco tatuagens da Bruna. A conta do Vitor não tem cliente nenhuma, porque tatuador não é
-dono de tatuagem. O script pode rodar de novo: conta que já existe é pulada, e a senha do dono não
-muda, porque o hash que já estava na tabela `clientes` é copiado para a `usuarios`.
+dono de tatuagem. Ao repetir o script, contas de demonstração já existentes são preservadas; a
+conta do dono é promovida para Administrador sem trocar a senha. Para corrigir essa conta num banco
+que já existe, use `python promover_administrador.py` dentro de `backend/`.
 
-O login devolve um **token Bearer**, e o front o guarda na sessão da aba. Quem entra manda esse
-token em `Authorization: Bearer ...`, e o back valida ele em `/usuarios/eu`, que é a rota que devolve
-o papel e o `cliente_id` da conta. O front é quem escolhe a tela a partir do papel, e o papel vem do
-back: o front não tem nenhum id de usuário escrito no código.
+No cadastro público, depois que `POST /usuarios` confirma a criação, a tela volta para o formulário
+de login com o email preenchido. Ela não autentica automaticamente. O link **Esqueci minha senha**
+envia um token por email, válido por 15 minutos e de uso único; o banco guarda somente o hash do
+token. A resposta da API não revela se o endereço está cadastrado. A opção **Alterar senha** pede a
+senha atual e a confirmação da nova senha.
 
-O cadastro `POST /usuarios` é público e sempre cria uma conta Cliente. As demais operações
-protegidas verificam permissões do grupo no banco a cada requisição, incluindo o acesso às
-tatuagens e aos passos próprios. As rotas de gestão de grupos são exclusivas do Administrador.
+Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM_EMAIL` somente no
+ambiente do backend. `ORIGEM_FRONTEND` define o endereço usado no link. Sem SMTP, a recuperação
+responde que o recurso não está configurado. Depois de atualizar um banco existente, rode
+`alembic upgrade head` para incluir os campos do token.
+
+O login devolve um **token Bearer** e os dados públicos da conta; o front guarda o token na sessão
+da aba e escolhe a tela pelo papel retornado pelo back. Nas requisições protegidas, envia o token
+em `Authorization: Bearer ...`. A rota `/usuarios/eu` também permite consultar o perfil da sessão.
+O front não tem nenhum id de usuário escrito no código.
+
+O cadastro `POST /usuarios` é público e sempre cria uma conta Cliente; depois do sucesso, a pessoa
+precisa entrar com email e senha. As demais operações protegidas verificam permissões do grupo no
+banco a cada requisição, incluindo o acesso às tatuagens e aos passos próprios. As rotas de gestão
+de grupos são exclusivas do Administrador.
 O catálogo pode ser consultado em `GET /grupos/permissoes`; o Administrador lista e cria grupos,
-troca permissões e atribui contas a grupos pela API. O primeiro Administrador é criado localmente
-com `python criar_administrador.py`, depois das migrations, e a senha é solicitada sem eco no
-terminal.
+troca permissões e atribui contas a grupos pela API. O primeiro Administrador pode ser criado
+localmente com `python criar_administrador.py`, depois das migrations, e a senha é solicitada sem
+eco no terminal. `python promover_administrador.py` altera apenas o papel da conta do administrador
+já identificada no projeto.
 
 ## Mudança no banco: migrations
 
@@ -248,21 +284,19 @@ O passo é sempre o mesmo, e a ordem importa: mudo o modelo, gero a migration, *
 gerado** e só então aplico com `alembic upgrade head`. O `--autogenerate` acerta tabela, coluna e
 chave; em troca de nome de coluna ele não é confiável, porque lê como apagar uma e criar outra.
 
-**O banco atual ainda não tem migration.** As duas chaves estrangeiras (`fk_tatuagens_cliente` e
-`fk_passos_tatuagem`) já estão no PostgreSQL, e `backend/esquema.sql` é o desenho que as criou. A pasta
-`migracoes/versions/` começa vazia de propósito: o banco foi montado direto do desenho, sem passar
-por migration, e a primeira migration vai nascer da **primeira mudança de verdade** que vier. Como o
-Alembic compara os modelos com o banco que está rodando, e não com a pasta de migrations, essa
-primeira migration sai com só a diferença do dia, sem nada do que já estava lá.
+O histórico de migrations já existe em `migracoes/versions/`. A migration `20261106_01` acrescenta
+à tabela `usuarios` os campos que guardam o hash e os horários do link temporário de redefinição.
+Em uma instalação existente, `alembic upgrade head` aplica essa migration antes de usar a
+recuperação de senha. Não altere o banco manualmente: mudança de modelo deve ser versionada.
 
 Conferindo o estado sem escrever nada: `alembic check` responde `No new upgrade operations detected`
 quando o banco bate com os modelos.
 
 ## Como rodar o front
 
-O front é o React, na pasta `frontend/`. Ele precisa do back no ar, porque todas as telas chamam a
-API. Só React e React DOM são dependência de execução: não há biblioteca de rotas, nem de requisição,
-porque a cartilha tem quatro telas e não precisa de mais que isso.
+O front é o React, na pasta `frontend/`. Ele precisa do back no ar, porque as telas de trabalho
+chamam a API. Só React e React DOM são dependência de execução: não há biblioteca de rotas, nem de
+requisição. As quatro telas principais da cartilha e os fluxos de acesso usam o estado do App.
 
 ```bash
 cd frontend
@@ -271,23 +305,25 @@ npm run dev
 ```
 
 O esperado é o Vite abrir `http://localhost:5173` e a tela de login aparecer. Entre com uma das
-contas de demonstração, que estão na tabela de contas do back: a Bruna entra como cliente e o Vitor
-como tatuador. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do `.env` do back, senão o
-navegador bloqueia a chamada por CORS.
+contas de demonstração, que estão na tabela de contas do back: Bruna entra como Cliente, Vitor como
+Tatuador e Waldemar como Administrador. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do
+`.env` do back, senão o navegador bloqueia a chamada por CORS.
 
 As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as cinco
 tatuagens dela, com a etapa de cada uma e o histórico ao clicar em "Ver histórico", e "Pedir
 tatuagem" grava no back e volta com a etapa `pedida`. Escolhendo Vitor, "A agenda" lista as oito
-tatuagens do estúdio com filtro por etapa, e "Abrir ficha" abre a ficha de uma delas, onde o passo
-é registrado. A ficha mostra os dois resultados do back: quando a regra aceita, a etapa nova
-aparece; quando a regra recusa, o motivo aparece embaixo do campo, e a etapa não muda.
+tatuagens do estúdio com filtro por etapa, e "Abrir ficha" abre uma delas para registrar passos.
+Waldemar recebe a tela "Administração" e a identificação de Administrador. A ficha mostra os
+resultados da regra do back: quando aceita, a etapa nova aparece; quando recusa, o motivo aparece e
+a etapa não muda.
 
 ### A cara da tela
 
-A entrada tem a foto do ateliê e uma vitrine, e os dois perfis são cartões com retrato. A barra
-fixa do alto é a mesma nas quatro telas: logo, plaquinha do estúdio, quem está usando e o botão de
-tema. Cada tatuagem ganha a linha do tempo das quatro etapas em cima do botão do histórico, e o
-histórico é desenhado como uma linha do tempo com um ponto por passo.
+A entrada tem a foto do ateliê e uma vitrine. Na barra, cada conta é identificada pelas iniciais do
+próprio nome e pelo papel retornado pelo backend; as fotos de Bruna e Vitor não são usadas como
+avatar de outras pessoas. A barra reúne logo, plaquinha do estúdio, identidade da conta e botão de
+tema. O Administrador recebe a tela de administração; Cliente e Tatuador veem as telas do próprio
+papel. Cada tatuagem ganha a linha do tempo das quatro etapas e o histórico registra cada passo.
 
 Tudo isso é CSS em `estilos/base.css`, e nada disso é uma cor nova: as cores continuam sendo só as
 do styleguide, seção 1. As fotos são importadas como arquivo (`import`), e não com caminho escrito

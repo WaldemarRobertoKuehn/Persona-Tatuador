@@ -1,14 +1,22 @@
 """Regras de cadastro, busca e validação de contas de usuário."""
 
+from datetime import datetime, timedelta, timezone
+import hashlib
+import logging
+import secrets
+
+import configuracao
 import repositorios.cliente as repositorio_clientes
 import repositorios.grupo as repositorio_grupos
 import repositorios.usuario as repositorio_usuarios
 import seguranca
+import servicos.email as servico_email
 
 # Os códigos iniciais dos dois grupos de persona. A permissão efetiva vem agora
 # do vínculo de grupo e do catálogo administrável, não apenas destes códigos.
 PAPEL_CLIENTE = "cliente"
 PAPEL_TATUADOR = "tatuador"
+logger = logging.getLogger(__name__)
 
 
 def cadastrar(dados: dict) -> dict | None:
@@ -61,15 +69,59 @@ def autenticar(email: str, senha: str) -> dict | None:
     return usuario
 
 
-def buscar_por_id(usuario_id: int) -> dict | None:
+def solicitar_redefinicao_senha(email: str) -> None:
+    """Envia um link temporário sem revelar se existe uma conta para o email."""
+    usuario = repositorio_usuarios.buscar_por_email(email.strip().lower())
+    if usuario is None:
+        return
+
+    agora = datetime.now(timezone.utc)
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    limite_anterior = agora - timedelta(seconds=60)
+    foi_gravado = repositorio_usuarios.guardar_token_redefinicao(
+        usuario["id"],
+        token_hash,
+        agora + timedelta(minutes=15),
+        agora,
+        limite_anterior,
+    )
+    if not foi_gravado:
+        return
+
+    link = f"{configuracao.endereco_do_front()}/#redefinir-senha={token}"
+    try:
+        servico_email.enviar_link_redefinicao(usuario["email"], usuario["nome"], link)
+    except Exception:
+        repositorio_usuarios.invalidar_token_redefinicao(token_hash)
+        logger.exception("Falha ao enviar email de redefinição de senha.")
+
+
+def redefinir_senha(token: str, senha: str) -> bool:
+    """Valida e consome o token de email ao salvar a senha nova."""
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return repositorio_usuarios.redefinir_senha_com_token(
+        token_hash,
+        seguranca.gerar_hash(senha),
+        datetime.now(timezone.utc),
+    )
+
+
+def alterar_senha(usuario_id: int, senha_atual: str, senha_nova: str) -> bool:
+    """Exige a senha atual antes de atualizar a senha da sessão autenticada."""
     usuario = repositorio_usuarios.buscar_usuario_por_id(usuario_id)
-    if usuario is not None:
-        # NOVO: permissões são lidas do banco em toda requisição para que uma
-        # alteração administrativa tenha efeito imediato, sem esperar o JWT vencer.
-        usuario["permissoes"] = repositorio_grupos.listar_permissoes_do_usuario(
-            usuario_id
-        )
-    return usuario
+    if usuario is None or not seguranca.verificar_senha(
+        senha_atual, usuario["senha_hash"]
+    ):
+        return False
+    repositorio_usuarios.atualizar_senha(usuario_id, seguranca.gerar_hash(senha_nova))
+    return True
+
+
+def buscar_por_id(usuario_id: int) -> dict | None:
+    # As permissões vêm na mesma consulta do usuário, para que uma alteração
+    # administrativa continue tendo efeito imediato sem abrir outra conexão.
+    return repositorio_usuarios.buscar_usuario_por_id(usuario_id)
 
 
 def mover_conta(cliente_id: int, papel: str) -> dict | None:

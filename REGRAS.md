@@ -3,6 +3,11 @@
 Atualizado até a **aula 3** da UC2, Práticas DevOps em Projetos Web. Salve na raiz do repositório
 da cartilha com o nome `REGRAS.md`, por cima da versão da UC4. Só vale a versão mais nova.
 
+O estado atual inclui melhorias solicitadas depois da aula: cadastro público de clientes sem login
+automático, recuperação e troca de senha, perfis distintos de Cliente, Tatuador e Administrador, e
+identificação visual por iniciais da conta. Essas funcionalidades já fazem parte do projeto e não
+devem ser tratadas como propostas pendentes.
+
 ## O projeto
 
 - Repositório da cartilha sorteada na UC4. Na UC2, ele é o caso que vai para produção: a aplicação
@@ -23,10 +28,12 @@ da cartilha com o nome `REGRAS.md`, por cima da versão da UC4. Só vale a vers�
   `.env.production` tem `/api`. Os dois arquivos vão para o Git e não têm segredo.
 - `frontend/dist/`: gerado pelo `npm run build`, fora do Git.
 - `backend/`: a API em FastAPI, em camadas (`rotas/`, `servicos/`, `repositorios/`, `esquemas/`,
-  `modelos/`), com MySQL pelo SQLAlchemy, migrations com Alembic e login com JWT. Fora do Docker, roda com
-  `fastapi dev main.py`. No contêiner, usa `fastapi run main.py --port 8000`. O MySQL roda na porta 3306.
-- `.docs/` tem `README.md`, `arquitetura.md`, `decisoes.md`, `proximos-passos.md`, `roadmap.md`
-  e `ia.md`, mais o `infra.md`, com a arquitetura de produção, e a pasta `prints/`.
+  `modelos/`), com PostgreSQL pelo SQLAlchemy/psycopg2, migrations com Alembic e login com JWT. Fora do Docker, roda com
+  `fastapi dev main.py`. No contêiner, usa `fastapi run main.py --port 8000`. O Compose declara um
+  serviço MySQL na porta interna 3306; não presumir que esse serviço e a configuração PostgreSQL do
+  backend formem uma conexão funcional sem validar o ambiente.
+- `.docs/` contém os registros de IA e infraestrutura mantidos no repositório, incluindo `ia.md`,
+  `infra.md` e `proximos-passos.md`.
 - Trabalho individual, inclusive o desenho de abertura. Cada aluno usa o próprio projeto e repositório.
 - Código, nomes, comentários, documentação e respostas sempre em português do Brasil.
 - Cartilha: escreva aqui o número e o nome, e em uma linha a pessoa e a regra.
@@ -71,16 +78,38 @@ da cartilha com o nome `REGRAS.md`, por cima da versão da UC4. Só vale a vers�
 - IaaS, PaaS e SaaS como modelos. EC2, SSH com chave `.pem`, o domínio apontando para o IP e o Caddy
   emitindo o certificado após configurar domínio, DNS e portas: vistos na demonstração do professor, opcionais.
 
+## Funcionalidades implementadas depois da aula
+
+- O cadastro público `POST /usuarios` cria somente contas Cliente. Depois do cadastro, a tela volta
+  ao login; criar uma conta não inicia uma sessão.
+- O login retorna o token e os dados públicos do perfil. Cliente, Tatuador e Administrador recebem
+  telas e rótulos próprios; a autorização continua sendo decidida pelos grupos e permissões do backend.
+- A recuperação de senha envia um link por SMTP. O token expira em 15 minutos, só pode ser usado
+  uma vez e é persistido como hash. A troca autenticada exige a senha atual; as duas operações
+  confirmam a nova senha.
+- O envio de email depende de `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e
+  `SMTP_FROM_EMAIL`, configurados somente no ambiente do backend.
+- A conta do Administrador tem painel próprio. `backend/promover_administrador.py` promove a conta
+  existente identificada pelo projeto; o script de demonstração mantém esse papel ao ser repetido.
+- A barra usa iniciais do nome retornado pelo backend. As imagens das personas de demonstração não
+  são mais avatares compartilhados entre todas as contas.
+- `backend/migracoes/versions/20261106_01_tokens_redefinicao_senha.py` adiciona os campos de
+  expiração e hash do token. O banco existente precisa receber essa migration antes de usar a recuperação.
+- Há testes unitários focados na redefinição em `backend/tests/`; eles não substituem testes de integração
+  com banco ou provedor SMTP.
+
 ## O que ainda não foi visto, e não deve aparecer
 
-- Mudança na lógica do `backend/`: rota, serviço, repositório, esquema, modelo ou migration.
+- Mudanças adicionais na lógica do backend além das funcionalidades implementadas e registradas
+  nesta seção, salvo quando forem solicitadas explicitamente. Mudanças em tabelas continuam exigindo
+  migrations versionadas; não altere o banco manualmente.
 - Redes do Docker declaradas à mão, `network_mode: host`, Docker Swarm e Kubernetes.
 - Nginx configurado no projeto. Ele só foi mostrado para comparar.
 - Domínio e HTTPS no `Caddyfile` do repositório. Isso só existe no servidor da demonstração.
 - Trocar o MySQL por outro banco ou configurar Supabase e Vercel nesta aula.
 - Scripts `.sh` e `Makefile`.
 - Branches, pull request, tags e proteção da `main`. O Git continua como na UC4.
-- GitHub Actions, pipeline de CI/CD, testes automatizados.
+- GitHub Actions e pipeline de CI/CD. Os testes unitários existentes devem continuar passando.
 - Ferramenta de monitoramento, logs centralizados, métricas.
 
 ## Como escrever o código

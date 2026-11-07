@@ -1,41 +1,65 @@
 /* Tela de entrada do Traço Fino: apresentação do estúdio e login da conta. */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import fotoAtelie from "../imagens/foto-atelie.jpg";
 import fotoVitrine from "../imagens/foto-vitrine.jpg";
 import AlternadorTema from "../componentes/AlternadorTema";
+import CampoSenha from "../componentes/CampoSenha";
 import Logo from "../componentes/Logo";
 import { ESCURO } from "../tema";
 
 export default function Login({
   aoEntrar,
   aoCadastrar,
+  aoSolicitarRedefinicao,
+  aoRedefinirSenha,
   aoLimparErro,
   erro,
   entrando,
   cadastrando,
+  solicitandoRedefinicao,
+  redefinindoSenha,
   tema,
   trocarTema,
 }) {
-  const [modo, setModo] = useState("entrar");
+  const tokenInicial = new URLSearchParams(window.location.hash.slice(1)).get(
+    "redefinir-senha",
+  );
+  const [modo, setModo] = useState(tokenInicial ? "redefinir" : "entrar");
+  const [tokenRedefinicao, setTokenRedefinicao] = useState(tokenInicial || "");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [erroConfirmacao, setErroConfirmacao] = useState("");
+  const [mensagemSucesso, setMensagemSucesso] = useState("");
   const ehCadastro = modo === "cadastrar";
-  const ocupado = entrando || cadastrando;
+  const ehEsqueciSenha = modo === "esqueci";
+  const ehRedefinicao = modo === "redefinir";
+  const ocupado =
+    entrando || cadastrando || solicitandoRedefinicao || redefinindoSenha;
+
+  useEffect(() => {
+    if (tokenRedefinicao) {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+    }
+  }, [tokenRedefinicao]);
 
   function trocarModo(novoModo) {
     setModo(novoModo);
     setSenha("");
     setConfirmacaoSenha("");
     setErroConfirmacao("");
+    setMensagemSucesso("");
     aoLimparErro();
   }
 
-  function enviar(evento) {
+  async function enviar(evento) {
     evento.preventDefault();
 
     if (ehCadastro) {
@@ -44,7 +68,35 @@ export default function Login({
         return;
       }
 
-      aoCadastrar(nome, email, senha);
+      const cadastroConcluido = await aoCadastrar(nome, email, senha);
+      if (cadastroConcluido) {
+        trocarModo("entrar");
+      }
+    } else if (ehEsqueciSenha) {
+      const solicitado = await aoSolicitarRedefinicao(email);
+      if (solicitado) {
+        setMensagemSucesso(
+          "Se houver uma conta com este email, enviaremos um link para redefinir a senha.",
+        );
+      }
+    } else if (ehRedefinicao) {
+      if (senha !== confirmacaoSenha) {
+        setErroConfirmacao("As senhas não coincidem.");
+        return;
+      }
+
+      const redefinida = await aoRedefinirSenha(
+        tokenRedefinicao,
+        senha,
+        confirmacaoSenha,
+      );
+      if (redefinida) {
+        setTokenRedefinicao("");
+        setSenha("");
+        setConfirmacaoSenha("");
+        setMensagemSucesso("Senha alterada. Entre com sua nova senha.");
+        setModo("entrar");
+      }
     } else {
       aoEntrar(email, senha);
     }
@@ -84,11 +136,23 @@ export default function Login({
         </div>
       </section>
 
-      <h2>{ehCadastro ? "Criar sua conta" : "Entrar no Traço Fino"}</h2>
+      <h2>
+        {ehCadastro
+          ? "Criar sua conta"
+          : ehEsqueciSenha
+            ? "Recuperar acesso"
+            : ehRedefinicao
+              ? "Criar nova senha"
+              : "Entrar no Traço Fino"}
+      </h2>
       <p className="legenda">
         {ehCadastro
           ? "Nome, e-mail e senha. Sua conta começa como Cliente."
-          : "Use o e-mail e a senha da sua conta."}
+          : ehEsqueciSenha
+            ? "Informe o email da conta para receber um link seguro."
+            : ehRedefinicao
+              ? "Escolha uma senha nova e confirme antes de salvar."
+              : "Use o e-mail e a senha da sua conta."}
       </p>
 
       <form className="cartao" onSubmit={enviar}>
@@ -108,40 +172,44 @@ export default function Login({
           </label>
         ) : null}
 
-        <label className="campo">
-          <span className="campo-rodape">E-mail</span>
-          <input
-            type="email"
-            name="email"
-            value={email}
-            onChange={(evento) => setEmail(evento.target.value)}
-            autoComplete={ehCadastro ? "email" : "username"}
-            maxLength={254}
-            required
+        {!ehRedefinicao ? (
+          <label className="campo">
+            <span className="campo-rodape">E-mail</span>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(evento) => setEmail(evento.target.value)}
+              autoComplete={ehCadastro || ehEsqueciSenha ? "email" : "username"}
+              maxLength={254}
+              required
+            />
+          </label>
+        ) : null}
+
+        {!ehEsqueciSenha ? (
+          <CampoSenha
+            id="senha"
+            name="senha"
+            label={ehRedefinicao ? "Nova senha" : "Senha"}
+            dica={ehCadastro || ehRedefinicao ? "mínimo 8 caracteres" : null}
+            value={senha}
+            onChange={(valor) => {
+              setSenha(valor);
+              setErroConfirmacao("");
+            }}
+            autoComplete={ehCadastro || ehRedefinicao ? "new-password" : "current-password"}
+            minLength={ehCadastro || ehRedefinicao ? 8 : 1}
+            maxLength={128}
           />
-        </label>
+        ) : null}
 
-        <CampoSenha
-          id="senha"
-          name="senha"
-          label="Senha"
-          dica={ehCadastro ? "mínimo 8 caracteres" : null}
-          value={senha}
-          onChange={(valor) => {
-            setSenha(valor);
-            setErroConfirmacao("");
-          }}
-          autoComplete={ehCadastro ? "new-password" : "current-password"}
-          minLength={ehCadastro ? 8 : 1}
-          maxLength={128}
-        />
-
-        {ehCadastro ? (
+        {ehCadastro || ehRedefinicao ? (
           <>
             <CampoSenha
               id="confirmacao-senha"
               name="confirmacaoSenha"
-              label="Confirmar senha"
+              label={ehRedefinicao ? "Confirmar nova senha" : "Confirmar senha"}
               value={confirmacaoSenha}
               onChange={(valor) => {
                 setConfirmacaoSenha(valor);
@@ -171,14 +239,28 @@ export default function Login({
           </p>
         ) : null}
 
+        {mensagemSucesso ? (
+          <p className="aviso" role="status">
+            {mensagemSucesso}
+          </p>
+        ) : null}
+
         <button className="botao botao-largo" type="submit" disabled={ocupado}>
           {ehCadastro
             ? cadastrando
               ? "Criando conta..."
               : "Criar conta"
-            : entrando
-              ? "Entrando..."
-              : "Entrar"}
+            : ehEsqueciSenha
+              ? solicitandoRedefinicao
+                ? "Enviando..."
+                : "Enviar link"
+              : ehRedefinicao
+                ? redefinindoSenha
+                  ? "Salvando..."
+                  : "Salvar nova senha"
+                : entrando
+                  ? "Entrando..."
+                  : "Entrar"}
         </button>
       </form>
 
@@ -197,15 +279,40 @@ export default function Login({
       ) : null}
 
       {modo === "entrar" ? (
+        <>
+          <p className="alternar-acesso">
+            <button
+              type="button"
+              className="link-acao"
+              onClick={() => trocarModo("esqueci")}
+              disabled={ocupado}
+            >
+              Esqueci minha senha
+            </button>
+          </p>
+          <p className="alternar-acesso">
+            Ainda não tem conta?{" "}
+            <button
+              type="button"
+              className="link-acao"
+              onClick={() => trocarModo("cadastrar")}
+              disabled={ocupado}
+            >
+              Criar conta
+            </button>
+          </p>
+        </>
+      ) : null}
+
+      {ehEsqueciSenha || ehRedefinicao ? (
         <p className="alternar-acesso">
-          Ainda não tem conta?{" "}
           <button
             type="button"
             className="link-acao"
-            onClick={() => trocarModo("cadastrar")}
+            onClick={() => trocarModo("entrar")}
             disabled={ocupado}
           >
-            Criar conta
+            Voltar para entrar
           </button>
         </p>
       ) : null}
@@ -231,73 +338,3 @@ export default function Login({
   );
 }
 
-function CampoSenha({
-  id,
-  name,
-  label,
-  dica,
-  value,
-  onChange,
-  autoComplete,
-  minLength,
-  maxLength,
-  invalido = false,
-  descricaoId,
-}) {
-  const [visivel, setVisivel] = useState(false);
-
-  return (
-    <div className="campo">
-      <label className="campo-rodape" htmlFor={id}>
-        {label}
-        {dica ? <span className="campo-dica">{dica}</span> : null}
-      </label>
-      <div className="campo-senha">
-        <input
-          id={id}
-          type={visivel ? "text" : "password"}
-          name={name}
-          value={value}
-          onChange={(evento) => onChange(evento.target.value)}
-          autoComplete={autoComplete}
-          minLength={minLength}
-          maxLength={maxLength}
-          aria-invalid={invalido}
-          aria-describedby={invalido ? descricaoId : undefined}
-          required
-        />
-        <button
-          className="botao-olho"
-          type="button"
-          aria-label={visivel ? "Ocultar senha" : "Mostrar senha"}
-          aria-pressed={visivel}
-          onClick={() => setVisivel(!visivel)}
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            {visivel ? (
-              <>
-                <path d="M3 3l18 18" />
-                <path d="M10.6 10.6a2 2 0 002.8 2.8" />
-                <path d="M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.5 4.5 9.5 7-.4 1-1.3 2.3-2.6 3.5" />
-                <path d="M6.2 6.2C3.9 7.6 2.7 9.8 2.5 12c.5 1.2 2.7 5 7.5 6.6a10 10 0 004 .3" />
-              </>
-            ) : (
-              <>
-                <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
-                <circle cx="12" cy="12" r="2.5" />
-              </>
-            )}
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}

@@ -88,7 +88,11 @@ def registrar_passo(
     fora do try, porque não é recusa: é o 404 da tatuagem que não existe.
     """
     try:
-        resultado = servico_passos.registrar_passo(tatuagem_id, passo.model_dump())
+        resultado = servico_passos.registrar_passo(
+            tatuagem_id,
+            passo.model_dump(),
+            tatuagem,
+        )
     except PassoDesconhecido as erro:
         raise HTTPException(status_code=422, detail=str(erro))
     except EtapaNaoAceitaPasso as erro:

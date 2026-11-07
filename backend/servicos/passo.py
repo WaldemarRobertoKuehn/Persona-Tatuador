@@ -107,17 +107,25 @@ def aplicar_passo(tatuagem: dict, tipo: str) -> str:
     return regra["etapa_nova"]
 
 
-def registrar_passo(tatuagem_id: int, dados: dict) -> dict | None:
+def registrar_passo(
+    tatuagem_id: int,
+    dados: dict,
+    tatuagem: dict | None = None,
+) -> dict | None:
     """Registra um passo numa tatuagem, se a regra da cartilha deixar.
 
     Devolve o passo gravado quando a regra aceita, e None quando a tatuagem não
     existe. A recusa da regra não volta: ela sai como exceção de
     servicos/excecoes.py, e quem escolhe o status HTTP é a rota, pegando a
     exceção com except.
+
+    A rota já recebe a tatuagem da dependência de autorização e a passa aqui,
+    evitando uma segunda consulta à mesma linha.
     """
     # Primeiro a tatuagem existe? Sem ela não há sobre o que aplicar a regra, e a
     # rota precisa de um None para responder 404.
-    tatuagem = repositorio_tatuagens.buscar_tatuagem(tatuagem_id)
+    if tatuagem is None:
+        tatuagem = repositorio_tatuagens.buscar_tatuagem(tatuagem_id)
 
     if tatuagem is None:
         return None

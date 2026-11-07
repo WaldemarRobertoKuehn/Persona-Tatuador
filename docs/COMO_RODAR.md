@@ -43,7 +43,7 @@ python criar_contas_de_demonstracao.py
 | --- | --- | --- | --- |
 | Bruna | `bruna@tracofino.com.br` | `bruna123` | cliente |
 | Vitor | `vitor@tracofino.com.br` | `vitor123` | tatuador |
-| Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | tatuador |
+| Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | administrador |
 
 O script pode rodar de novo sem quebrar nada: conta que já existe é pulada, e
 a senha do dono não muda, porque o hash que já estava na tabela `clientes` é

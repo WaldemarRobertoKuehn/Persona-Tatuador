@@ -10,7 +10,7 @@ As três contas
             vê "pedir tatuagem" e "minhas tatuagens", e ela enxerga as cinco
             tatuagens que a Bruna tem.
     Vitor   papel tatuador. É a conta que vê "a agenda" e "a ficha".
-    Waldemar  papel tatuador, a conta do dono do estúdio. A senha desta conta
+    Waldemar  papel administrador, a conta do administrador do sistema. A senha desta conta
             não muda: o hash que já estava na tabela clientes é copiado para a
             tabela usuarios, e as colunas velhas são esvaziadas.
 
@@ -36,10 +36,13 @@ Repetir o comando
 # O serviço, que é a camada das decisões: quem entra, com que papel e de que
 # jeito a senha é guardada.
 import servicos.usuario as servico_usuarios
+import servicos.grupo as servico_grupos
 
 # O repositório de clientes, só para achar a Bruna pelo nome: a conta dela é
 # ligada à linha da Bruna na tabela clientes, e não a uma linha nova.
 import repositorios.cliente as repositorio_clientes
+import repositorios.grupo as repositorio_grupos
+import repositorios.usuario as repositorio_usuarios
 
 
 # As contas de demonstração. A senha de cada uma é conhecida de propósito: este
@@ -58,6 +61,7 @@ CONTAS_DE_DEMONSTRACAO = [
         "papel": "tatuador",
     },
 ]
+EMAIL_DO_ADMINISTRADOR = "waldemarroberto.kuehn@gmail.com"
 
 
 def criar_conta_de_demonstracao(conta: dict) -> None:
@@ -88,24 +92,32 @@ def criar_conta_de_demonstracao(conta: dict) -> None:
 
 
 def mover_conta_do_dono() -> None:
-    """Leva a conta do dono do estúdio da tabela clientes para a tabela usuarios."""
+    """Cria ou promove a conta do dono para o grupo Administrador."""
     # A conta do dono é a linha de clientes que ainda tem email e senha_hash, e
     # é o próprio banco que diz qual é: o email preenchido é a pista.
     acesso = repositorio_clientes.buscar_conta_antiga()
 
-    if acesso is None or not acesso.get("email"):
-        print("- Waldemar: nao ha conta antiga para mover.")
-        return
-
-    conta = servico_usuarios.mover_conta(acesso["id"], "tatuador")
+    conta = None
+    if acesso is not None and acesso.get("email"):
+        conta = servico_usuarios.mover_conta(acesso["id"], "administrador")
 
     if conta is None:
-        print("- Waldemar: conta ja existia na tabela usuarios, pulada.")
+        conta = repositorio_usuarios.buscar_por_email(EMAIL_DO_ADMINISTRADOR)
+
+    if conta is None:
+        print("- Administrador: conta antiga nao encontrada.")
         return
 
+    if conta["papel"] != "administrador":
+        grupo = repositorio_grupos.buscar_grupo_por_codigo("administrador")
+        if grupo is None or not servico_grupos.atribuir_usuario_ao_grupo(
+            conta["id"], grupo["id"]
+        ):
+            raise RuntimeError("Nao foi possivel promover a conta do Administrador.")
+        conta = repositorio_usuarios.buscar_por_email(EMAIL_DO_ADMINISTRADOR)
+
     print(
-        f"- {conta['nome']}: id {conta['id']}, papel {conta['papel']}, "
-        "senha mantida."
+        f"- {conta['nome']}: id {conta['id']}, papel administrador, senha mantida."
     )
 
 
@@ -117,4 +129,4 @@ mover_conta_do_dono()
 print("Entrar com:")
 print("  Bruna    bruna@tracofino.com.br  bruna123  (cliente)")
 print("  Vitor    vitor@tracofino.com.br  vitor123  (tatuador)")
-print("  Waldemar waldemarroberto.kuehn@gmail.com  (senha de antes)")
+print("  Waldemar waldemarroberto.kuehn@gmail.com  (administrador, senha de antes)")

@@ -87,3 +87,26 @@ def validade_token_segundos() -> int:
     if minutos < 1:
         raise ValueError("JWT_MINUTOS precisa ser maior que zero.")
     return minutos * 60
+
+
+def configuracao_smtp() -> dict[str, str | int] | None:
+    """Devolve os dados SMTP ou None quando o envio de email não foi configurado."""
+    host = os.getenv("SMTP_HOST", "").strip()
+    usuario = os.getenv("SMTP_USER", "").strip()
+    senha = os.getenv("SMTP_PASSWORD", "")
+    remetente = os.getenv("SMTP_FROM_EMAIL", usuario).strip()
+
+    if not all((host, usuario, senha, remetente)):
+        return None
+
+    porta = int(os.getenv("SMTP_PORT", "587"))
+    if porta < 1 or porta > 65535:
+        raise ValueError("SMTP_PORT precisa ser uma porta válida.")
+
+    return {
+        "host": host,
+        "porta": porta,
+        "usuario": usuario,
+        "senha": senha,
+        "remetente": remetente,
+    }

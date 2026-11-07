@@ -9,25 +9,11 @@ from esquemas.usuario import (
     UsuarioCadastro,
     UsuarioSaida,
 )
-from rotas.autenticacao import obter_usuario_atual
+from rotas.autenticacao import obter_usuario_atual, usuario_publico as _usuario_publico
 from rotas.dependencias import exigir_permissao
 
 
 roteador_usuarios = APIRouter(prefix="/usuarios", tags=["usuarios"])
-
-
-def _usuario_publico(usuario: dict) -> dict:
-    """NOVO: mantém a resposta de conta sem devolver hash de senha."""
-    return {
-        "id": usuario["id"],
-        "nome": usuario["nome"],
-        "email": usuario["email"],
-        "papel": usuario["papel"],
-        "cliente_id": usuario["cliente_id"],
-        "grupo_id": usuario["grupo_id"],
-        "grupo": usuario["grupo_codigo"],
-        "permissoes": usuario.get("permissoes", []),
-    }
 
 
 # NOVO: o cadastro permanece público, mas cria somente contas Cliente.
