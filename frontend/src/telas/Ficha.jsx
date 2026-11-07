@@ -21,19 +21,22 @@
 import { useEffect, useState } from "react";
 
 import { buscarPassos, buscarTatuagem, registrarPasso } from "../api";
+import AgendaDaTatuagem from "../componentes/AgendaDaTatuagem";
 import { AvisoCarregando } from "../componentes/Avisos";
 import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
+import ImagensDaTatuagem from "../componentes/ImagensDaTatuagem";
 import LinhaDoTempo from "../componentes/LinhaDoTempo";
 import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
 import { formatarData } from "../datas";
 
-/* Os três passos que a cartilha fecha. A lista vem para desenhar o seletor, e
- * não para validar: quem valida é o serviço, e a recusa dele é o que o Vitor
- * precisa ver. */
-const TIPOS_DE_PASSO = ["desenho aprovado", "sessão", "retoque"];
+/* "desenho aprovado" não aparece mais aqui: esse passo nasce da aprovação do
+ * cliente na imagem, e o tatuador não o digita. O seletor continua mostrando
+ * sessão e retoque mesmo quando a etapa ainda não aceita, para o back ser quem
+ * explica a recusa. */
+const TIPOS_DE_PASSO = ["sessão", "retoque"];
 
-export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
+export default function Ficha({ tatuagem, perfil, aoVoltarParaAgenda }) {
   const [etapaAtual, setEtapaAtual] = useState(tatuagem.etapa);
   const [passos, setPassos] = useState([]);
   /* O que está guardado aqui não é um "carregando", é de qual tatuagem os
@@ -191,7 +194,9 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
           <h2>Registrar um passo</h2>
           <p className="legenda legenda-folgada">
             A regra do estúdio é do servidor: se a etapa atual não aceitar o passo,
-            o motivo da recusa aparece embaixo do campo.
+            o motivo da recusa aparece embaixo do campo. O passo "desenho aprovado"
+            não é registrado aqui: ele nasce quando o cliente aprova a imagem do
+            desenho.
           </p>
 
           <form onSubmit={enviar}>
@@ -248,6 +253,23 @@ export default function Ficha({ tatuagem, aoVoltarParaAgenda }) {
             </button>
           </form>
         </section>
+      </div>
+
+      {/* As imagens e a agenda ficam fora das duas colunas porque usam a largura
+          toda: uma grade de imagens e uma fileira de horários não cabem na
+          coluna estreita da ficha. */}
+      <div className="secoes-da-ficha">
+        <ImagensDaTatuagem
+          tatuagemId={tatuagem.id}
+          perfil={perfil}
+          aoAtualizarTatuagem={recarregar}
+        />
+
+        <AgendaDaTatuagem
+          tatuagemId={tatuagem.id}
+          etapa={etapaAtual}
+          perfil={perfil}
+        />
       </div>
     </main>
   );

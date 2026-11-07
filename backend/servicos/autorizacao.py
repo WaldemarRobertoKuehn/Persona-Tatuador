@@ -18,6 +18,11 @@ CATALOGO_PERMISSOES = {
     "passos:registrar_todos": "Registrar passos em qualquer tatuagem.",
     "grupos:consultar": "Listar grupos e suas permissões.",
     "grupos:gerenciar": "Criar grupos e alterar suas permissões.",
+    "imagens:enviar": "Enviar imagens para uma tatuagem.",
+    "imagens:remover": "Remover imagens de uma tatuagem.",
+    "imagens:aprovar": "Aprovar ou recusar o desenho de uma tatuagem própria.",
+    "agendamentos:gerenciar": "Agendar e cancelar sessões e retoques.",
+    "agendamentos:consultar": "Consultar os agendamentos de uma tatuagem.",
 }
 
 # NOVO: as permissões iniciais registradas pela migration correspondem às
@@ -31,6 +36,9 @@ PERMISSOES_INICIAIS = {
         "tatuagens:consultar_propria",
         "passos:listar_proprios",
         "passos:registrar_proprio",
+        "imagens:enviar",
+        "imagens:aprovar",
+        "agendamentos:consultar",
     ],
     "tatuador": [
         "perfil:consultar_proprio",
@@ -41,6 +49,10 @@ PERMISSOES_INICIAIS = {
         "tatuagens:consultar_todas",
         "passos:listar_todos",
         "passos:registrar_todos",
+        "imagens:enviar",
+        "imagens:remover",
+        "agendamentos:gerenciar",
+        "agendamentos:consultar",
     ],
     "administrador": list(CATALOGO_PERMISSOES),
 }

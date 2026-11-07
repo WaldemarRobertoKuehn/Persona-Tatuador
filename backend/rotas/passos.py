@@ -30,7 +30,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from rotas.dependencias import exigir_acesso_a_tatuagem
 import servicos.passo as servico_passos
 from esquemas.passo import PassoEntrada, PassoSaida
-from servicos.excecoes import EtapaNaoAceitaPasso, PassoDesconhecido
+from servicos.excecoes import (
+    AprovacaoDoClienteNecessaria,
+    EtapaNaoAceitaPasso,
+    PassoDesconhecido,
+)
 
 # O prefixo é "/tatuagens/{tatuagem_id}/passos" e não só "/passos", porque o
 # histórico é sempre o de uma tatuagem. A tag é o que agrupa as duas rotas no
@@ -95,6 +99,8 @@ def registrar_passo(
         )
     except PassoDesconhecido as erro:
         raise HTTPException(status_code=422, detail=str(erro))
+    except AprovacaoDoClienteNecessaria as erro:
+        raise HTTPException(status_code=409, detail=str(erro))
     except EtapaNaoAceitaPasso as erro:
         raise HTTPException(status_code=409, detail=str(erro))
 

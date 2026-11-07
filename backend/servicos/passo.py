@@ -29,7 +29,11 @@ import repositorios.tatuagem as repositorio_tatuagens
 # As duas recusas da regra, com o nome de cada motivo. Este arquivo não escreve
 # número de status em lugar nenhum: quem escolhe o status é a rota, que pega estas
 # exceções com except.
-from servicos.excecoes import EtapaNaoAceitaPasso, PassoDesconhecido
+from servicos.excecoes import (
+    AprovacaoDoClienteNecessaria,
+    EtapaNaoAceitaPasso,
+    PassoDesconhecido,
+)
 
 # A regra da cartilha escrita como tabela, para caber num lugar só e ser fácil de
 # defender na apresentação. Cada linha diz em que etapas o passo é aceito e para
@@ -111,6 +115,8 @@ def registrar_passo(
     tatuagem_id: int,
     dados: dict,
     tatuagem: dict | None = None,
+    *,
+    aprovado_pelo_cliente: bool = False,
 ) -> dict | None:
     """Registra um passo numa tatuagem, se a regra da cartilha deixar.
 
@@ -120,7 +126,9 @@ def registrar_passo(
     exceção com except.
 
     A rota já recebe a tatuagem da dependência de autorização e a passa aqui,
-    evitando uma segunda consulta à mesma linha.
+    evitando uma segunda consulta à mesma linha. O parâmetro
+    aprovado_pelo_cliente existe para o serviço de imagens registrar o passo
+    quando o próprio cliente aprova o desenho.
     """
     # Primeiro a tatuagem existe? Sem ela não há sobre o que aplicar a regra, e a
     # rota precisa de um None para responder 404.
@@ -129,6 +137,15 @@ def registrar_passo(
 
     if tatuagem is None:
         return None
+
+    # O passo "desenho aprovado" não é digitado pelo tatuador: ele nasce da
+    # aprovação da imagem pelo cliente. A recusa evita que a tela da ficha burle
+    # o fluxo novo.
+    if dados["tipo"] == "desenho aprovado" and not aprovado_pelo_cliente:
+        raise AprovacaoDoClienteNecessaria(
+            "O desenho é aprovado pelo cliente na imagem enviada, "
+            "não pelo formulário de passos."
+        )
 
     # A regra roda antes de qualquer gravação. Se ela levantar, o passo não foi
     # escrito e a etapa não mudou: o raise sai da função e nada abaixo roda.

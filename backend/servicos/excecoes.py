@@ -49,3 +49,85 @@ class PassoDesconhecido(Exception):
 # desenho aprovado antes, e a etapa dele sozinha não muda.
 class EtapaNaoAceitaPasso(Exception):
     """A tatuagem não está numa etapa que aceite esse passo."""
+
+
+# AprovaçãoDoClienteNecessaria: o tatuador tentou registrar "desenho aprovado"
+# pelo formulário de passos. A etapa só anda quando o cliente aprova uma imagem de
+# desenho, então o serviço recusa o atalho.
+class AprovacaoDoClienteNecessaria(Exception):
+    """O desenho só pode ser aprovado pelo cliente, na imagem enviada."""
+
+
+# TipoDeImagemDesconhecido: o tipo enviado não é desenho nem referência.
+class TipoDeImagemDesconhecido(Exception):
+    """O tipo de imagem enviado não é aceito."""
+
+
+# ImagemNaoEncontrada: o id da imagem não pertence à tatuagem consultada.
+class ImagemNaoEncontrada(Exception):
+    """A imagem não existe nesta tatuagem."""
+
+
+# ArquivoDeImagemInvalido: o arquivo está vazio, é grande demais ou não é uma
+# imagem de um formato permitido.
+class ArquivoDeImagemInvalido(Exception):
+    """O arquivo enviado não serve como imagem."""
+
+
+# ImagemNaoAprovavel: o cliente tentou aprovar uma referência, e não o desenho.
+class ImagemNaoAprovavel(Exception):
+    """Só uma imagem do tipo desenho pode ser aprovada."""
+
+
+# ImagemJaAprovada: o cliente tentou recusar uma imagem que já aprovou.
+class ImagemJaAprovada(Exception):
+    """A imagem já foi aprovada e não pode ser recusada."""
+
+
+# AgendamentoNaoEncontrado: o id não pertence à tatuagem consultada.
+class AgendamentoNaoEncontrado(Exception):
+    """O agendamento não existe nesta tatuagem."""
+
+
+# AgendamentoJaCancelado: o tatuador tentou cancelar duas vezes o mesmo horário.
+class AgendamentoJaCancelado(Exception):
+    """O agendamento já está cancelado."""
+
+
+# TipoDeAgendamentoDesconhecido: o texto não é "sessão" nem "retoque".
+class TipoDeAgendamentoDesconhecido(Exception):
+    """O tipo de agendamento enviado não é aceito."""
+
+
+# EtapaNaoPermiteAgendamento: a tatuagem ainda está esperando o desenho ou já
+# foi finalizada, então não há o que agendar.
+class EtapaNaoPermiteAgendamento(Exception):
+    """A etapa atual da tatuagem não permite agendamento."""
+
+
+# DataForaDoExpediente: o dia escolhido é domingo ou não tem horário de
+# atendimento.
+class DataForaDoExpediente(Exception):
+    """O estúdio não atende nesse dia."""
+
+
+# HorarioForaDoExpediente: a hora escolhida não é o começo de um bloco de uma
+# hora do expediente.
+class HorarioForaDoExpediente(Exception):
+    """O horário escolhido não faz parte do expediente."""
+
+
+# AgendamentoNoPassado: o horário já começou ou já passou.
+class AgendamentoNoPassado(Exception):
+    """Não é possível agendar um horário que já passou."""
+
+
+# HorarioIndisponivel: o tatuador já tem outro agendamento ativo nesse horário.
+class HorarioIndisponivel(Exception):
+    """O tatuador já está ocupado nesse horário."""
+
+
+# AgendamentoDeOutroTatuador: o tatuador tentou cancelar um horário que pertence
+# à agenda de outra pessoa.
+class AgendamentoDeOutroTatuador(Exception):
+    """O agendamento pertence à agenda de outro tatuador."""

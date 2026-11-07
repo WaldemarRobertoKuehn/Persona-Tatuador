@@ -16,22 +16,33 @@
 import { useEffect, useState } from "react";
 
 import { buscarPassos, buscarTatuagens } from "../api";
+import AgendaDaTatuagem from "../componentes/AgendaDaTatuagem";
 import { AvisoCarregando, AvisoErro, AvisoVazio } from "../componentes/Avisos";
 import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
+import ImagensDaTatuagem from "../componentes/ImagensDaTatuagem";
 import LinhaDoTempo from "../componentes/LinhaDoTempo";
 import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
 
-/* O histórico de uma tatuagem, buscado só quando a Bruna abre ela. */
-function Historico({ tatuagemId }) {
+/* O histórico de uma tatuagem, buscado só quando a Bruna abre ela. As imagens e
+ * a agenda entram junto porque são a mesma pergunta: o que está acontecendo com
+ * esta tatuagem? */
+function Historico({
+  tatuagemId,
+  etapa,
+  perfil,
+  aoAtualizarTatuagem,
+  versaoDaTatuagem,
+}) {
   /* O estado dos três: começa carregando porque a busca só vai começar agora. */
   const [estado, setEstado] = useState("carregando");
   const [passos, setPassos] = useState([]);
   const [erro, setErro] = useState("");
 
   /* useEffect com o array de dependências é o que roda o código quando a tela
-   * entra. O segundo argumento é a lista do que precisa mudar para rodar de
-   * novo: aqui, só o id da tatuagem. */
+   * entra. Além do id, a versão muda quando o cliente aprova um desenho: a
+   * aprovação grava um passo novo no back, e o histórico precisa ser relido
+   * para a linha do tempo acompanhar a etapa. */
   useEffect(() => {
     /* Chamada imperativa dentro do useEffect, porque buscar dado é trabalho de
      * efeito colateral: a tela monta primeiro e o dado chega depois. */
@@ -46,21 +57,39 @@ function Historico({ tatuagemId }) {
         setErro(erroRecebido.message);
         setEstado("erro");
       });
-  }, [tatuagemId]);
+  }, [tatuagemId, versaoDaTatuagem]);
 
-  if (estado === "carregando") {
-    return <AvisoCarregando oQue="o histórico" />;
-  }
+  return (
+    <div className="detalhe-da-tatuagem">
+      <h3>Histórico</h3>
 
-  if (estado === "erro") {
-    return <AvisoErro erro={erro} />;
-  }
+      {estado === "carregando" ? <AvisoCarregando oQue="o histórico" /> : null}
 
-  if (passos.length === 0) {
-    return <AvisoVazio>Nenhum passo ainda. A tatuagem está esperando o desenho.</AvisoVazio>;
-  }
+      {estado === "erro" ? <AvisoErro erro={erro} /> : null}
 
-  return <LinhaDoTempo passos={passos} />;
+      {estado === "pronto" && passos.length === 0 ? (
+        <AvisoVazio>
+          Nenhum passo ainda. A tatuagem está esperando o desenho.
+        </AvisoVazio>
+      ) : null}
+
+      {estado === "pronto" && passos.length > 0 ? (
+        <LinhaDoTempo passos={passos} />
+      ) : null}
+
+      <ImagensDaTatuagem
+        tatuagemId={tatuagemId}
+        perfil={perfil}
+        aoAtualizarTatuagem={aoAtualizarTatuagem}
+      />
+
+      <AgendaDaTatuagem
+        tatuagemId={tatuagemId}
+        etapa={etapa}
+        perfil={perfil}
+      />
+    </div>
+  );
 }
 
 export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
@@ -68,6 +97,9 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
   const [tatuagens, setTatuagens] = useState([]);
   const [erro, setErro] = useState("");
   const [aberta, setAberta] = useState(null);
+  /* Cada recarga depois de uma ação soma um, e isso obriga o histórico aberto
+   * a buscar os passos de novo. */
+  const [versaoDaTatuagem, setVersaoDaTatuagem] = useState(0);
 
   /* O filtro de cliente vai na requisição, e ele é o id da cliente da conta que
    * entrou, que veio do back no campo cliente_id. É por isso que a Bruna não vê
@@ -87,6 +119,23 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
         setEstado("erro");
       });
   }, [perfil.clienteId]);
+
+  /* Depois que o cliente aprova um desenho, a etapa da tatuagem muda no back.
+   * A lista é relida para o cartão mostrar a etiqueta nova sem recarregar a
+   * página inteira. */
+  function recarregarTatuagens() {
+    setVersaoDaTatuagem((anterior) => anterior + 1);
+
+    return buscarTatuagens({ clienteId: perfil.clienteId })
+      .then((dados) => {
+        setTatuagens(dados);
+        setEstado("pronto");
+      })
+      .catch((erroRecebido) => {
+        setErro(erroRecebido.message);
+        setEstado("erro");
+      });
+  }
 
   return (
     <main className="tela">
@@ -150,7 +199,15 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
                     </button>
                   </div>
 
-                  {estaAberta ? <Historico tatuagemId={tatuagem.id} /> : null}
+                  {estaAberta ? (
+                    <Historico
+                      tatuagemId={tatuagem.id}
+                      etapa={tatuagem.etapa}
+                      perfil={perfil}
+                      aoAtualizarTatuagem={recarregarTatuagens}
+                      versaoDaTatuagem={versaoDaTatuagem}
+                    />
+                  ) : null}
                 </article>
               );
             })}

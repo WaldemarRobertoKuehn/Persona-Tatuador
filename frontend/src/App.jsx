@@ -84,6 +84,7 @@ export default function App() {
       ...perfilBase,
       nome: usuario.nome,
       clienteId: usuario.cliente_id,
+      permissoes: usuario.permissoes ?? [],
     };
 
     setPerfil(perfilAutenticado);
@@ -359,6 +360,7 @@ export default function App() {
         tatuagemAberta ? (
           <Ficha
             tatuagem={tatuagemAberta}
+            perfil={perfil}
             aoVoltarParaAgenda={() => setTela("agenda")}
           />
         ) : (

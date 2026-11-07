@@ -98,6 +98,12 @@ async function conferirResposta(resposta) {
     throw new Error(motivo);
   }
 
+  /* O DELETE bem-sucedido responde 204, sem corpo. Chamar .json() aqui viraria
+   * um erro de JSON em uma resposta que deu certo. */
+  if (resposta.status === 204) {
+    return null;
+  }
+
   return resposta.json();
 }
 
@@ -228,5 +234,117 @@ export function registrarPasso(tatuagemId, dados) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dados),
     }),
+  ).then(conferirResposta);
+}
+
+/* Lista os metadados das imagens. Os bytes não vêm nesta resposta. */
+export function buscarImagens(tatuagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/imagens`),
+    opcoesAutenticadas(),
+  ).then(conferirResposta);
+}
+
+/* Envia o arquivo cru no corpo da requisição. O nome e o tipo vão na query
+ * string; o Content-Type é o do próprio arquivo, e não JSON. */
+export function enviarImagem(tatuagemId, { arquivo, tipo, nome }) {
+  const parametros = new URLSearchParams();
+  parametros.set("tipo", tipo);
+  parametros.set("nome", nome || arquivo.name || "imagem");
+
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/imagens?${parametros.toString()}`),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": arquivo.type },
+      body: arquivo,
+    }),
+  ).then(conferirResposta);
+}
+
+/* Busca os bytes da imagem. O <img> não manda o token, então a tela precisa
+ * buscar o arquivo por aqui e criar um object URL com o blob recebido. */
+export function buscarConteudoImagem(tatuagemId, imagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/imagens/${imagemId}`),
+    opcoesAutenticadas(),
+  ).then(async (resposta) => {
+    if (!resposta.ok) {
+      let motivo = `A API respondeu ${resposta.status}.`;
+
+      try {
+        const corpo = await resposta.json();
+        if (typeof corpo.detail === "string") {
+          motivo = corpo.detail;
+        }
+      } catch {
+        motivo = `A API respondeu ${resposta.status}, sem detalhe.`;
+      }
+
+      throw new Error(motivo);
+    }
+
+    return resposta.blob();
+  });
+}
+
+export function aprovarImagem(tatuagemId, imagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/imagens/${imagemId}/aprovacao`),
+    opcoesAutenticadas({ method: "POST" }),
+  ).then(conferirResposta);
+}
+
+export function recusarImagem(tatuagemId, imagemId, motivo) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/imagens/${imagemId}/recusa`),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ motivo }),
+    }),
+  ).then(conferirResposta);
+}
+
+export function removerImagem(tatuagemId, imagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/imagens/${imagemId}`),
+    opcoesAutenticadas({ method: "DELETE" }),
+  ).then(conferirResposta);
+}
+
+/* Lista a agenda da tatuagem, inclusive os agendamentos cancelados. */
+export function buscarAgendamentos(tatuagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/agendamentos`),
+    opcoesAutenticadas(),
+  ).then(conferirResposta);
+}
+
+/* Pede os horários de um dia. A data vai no formato ISO, "2026-11-07". */
+export function buscarDisponibilidade(tatuagemId, data) {
+  const parametros = new URLSearchParams({ data });
+
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/agendamentos/disponibilidade?${parametros.toString()}`),
+    opcoesAutenticadas(),
+  ).then(conferirResposta);
+}
+
+export function criarAgendamento(tatuagemId, dados) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/agendamentos`),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados),
+    }),
+  ).then(conferirResposta);
+}
+
+export function cancelarAgendamento(tatuagemId, agendamentoId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/agendamentos/${agendamentoId}`),
+    opcoesAutenticadas({ method: "DELETE" }),
   ).then(conferirResposta);
 }

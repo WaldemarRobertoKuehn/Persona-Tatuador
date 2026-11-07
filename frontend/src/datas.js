@@ -27,3 +27,25 @@ export function formatarData(dataIso) {
 
   return `${dia}/${mes}/${ano}`;
 }
+
+/* Devolve a data de hoje no fuso do navegador, no formato ISO.
+ *
+ * toISOString não serve para isso: ele converte para UTC e, à noite no Brasil, o
+ * dia já teria virado. A data montada com getFullYear, getMonth e getDate é a
+ * data que a pessoa vê no calendário dela. */
+export function dataLocalISO(data = new Date()) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+/* O back devolve o horário como "08:30:00". A tela mostra só "08:30". */
+export function formatarHora(hora) {
+  if (!hora) {
+    return "";
+  }
+
+  return hora.slice(0, 5);
+}
