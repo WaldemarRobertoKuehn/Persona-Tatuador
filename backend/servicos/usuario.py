@@ -49,7 +49,7 @@ def cadastrar(dados: dict) -> dict | None:
         cliente_id = None
 
     try:
-        return repositorio_usuarios.criar_usuario(
+        usuario = repositorio_usuarios.criar_usuario(
             nome, email, senha_hash, grupo["codigo"], cliente_id, grupo["id"]
         )
     except Exception as erro:
@@ -57,6 +57,26 @@ def cadastrar(dados: dict) -> dict | None:
         if getattr(erro, "errno", None) == 1062:
             return None
         raise
+
+    # A confirmação de cadastro vale para qualquer grupo (cliente, tatuador ou
+    # administrador) e usa o email da própria conta. Uma falha no envio nunca
+    # desfaz a conta, que já está gravada.
+    _notificar_conta_criada(usuario)
+    return usuario
+
+
+def _notificar_conta_criada(usuario: dict) -> None:
+    """Envia a confirmação de cadastro sem interromper a criação da conta."""
+    if not usuario.get("email") or configuracao.configuracao_smtp() is None:
+        return
+    try:
+        servico_email.enviar_boas_vindas(
+            usuario["email"],
+            usuario["nome"],
+            f"{configuracao.endereco_do_front()}/",
+        )
+    except Exception:
+        logger.exception("Falha ao enviar email de confirmação de cadastro.")
 
 
 def autenticar(email: str, senha: str) -> dict | None:

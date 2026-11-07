@@ -94,7 +94,7 @@ def configuracao_smtp() -> dict[str, str | int] | None:
     host = os.getenv("SMTP_HOST", "").strip()
     usuario = os.getenv("SMTP_USER", "").strip()
     senha = os.getenv("SMTP_PASSWORD", "")
-    remetente = os.getenv("SMTP_FROM_EMAIL", usuario).strip()
+    remetente = os.getenv("SMTP_FROM_EMAIL", "").strip() or usuario
 
     if not all((host, usuario, senha, remetente)):
         return None
