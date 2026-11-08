@@ -4,8 +4,12 @@ Este documento é a referência de estilo do sistema. A paleta e a tipografia aq
 definidas são escolha minha, e a cartilha avisa que não se pode combinar paleta
 com o colega de cartilha.
 
-O styleguide não é enfeite: é o contrato entre as quatro telas. Se uma tela
+O styleguide não é enfeite: é o contrato entre as telas do sistema. Se uma tela
 usar uma cor ou uma fonte que não está aqui, ela está errada.
+
+A cartilha desenha quatro telas, e o sistema ganhou três de apoio: Login,
+Administração e Alterar senha. As três seguem este mesmo documento; quando o
+texto abaixo fala das “telas 1 a 4”, ele está usando a numeração da cartilha.
 
 ## 1. Cores
 
@@ -144,7 +148,7 @@ carregar na apresentação, a queda para Georgia mantém a ideia.
 | Corpo | 1 rem | 400 | 1,5 |
 | Rótulo e legenda | 0,8125 rem | 500 | 1,4 |
 
-O corpo nunca sai de 1 rem. As quatro telas são lidas no celular, e texto miúdo é
+O corpo nunca sai de 1 rem. As telas são lidas no celular, e texto miúdo é
 o primeiro defeito de interface que aparece quando a tela é pequena.
 
 ## 3. Espaço, raio e sombra
@@ -186,7 +190,7 @@ etiqueta fica em cima à direita, porque a etapa é o que se procura primeiro.
 **Etiqueta de etapa.** Cantos arredondados, texto de 0,8125 rem em maiúscula, e
 a cor vem da tabela da seção 1. Sem borda: a cor do fundo já separa.
 
-**Barra fixa.** Uma barra só, no alto, igual nas quatro telas: o logo, a plaquinha
+**Barra fixa.** Uma barra só, no alto, igual nas telas autenticadas: o logo, a plaquinha
 do estúdio, o cartão de quem está usando e o botão de tema. Ela acompanha a
 rolagem (`position: sticky`), e é por isso que as duas telas da Bruna não
 precisam repetir o logo. Nenhum elemento dela é cor de destaque: o único acento da
@@ -205,10 +209,10 @@ componente nas duas telas que o mostram.
 **Cartão de perfil.** Só na tela de escolha de perfil: retrato em círculo, nome,
 tipo, uma frase de descrição e a ação escrita. O botão é o cartão inteiro.
 
-## 5. As duas telas não são a mesma tela encolhida
+## 5. O celular e o computador não são a mesma tela encolhida
 
 A cartilha é clara: o aparelho de cada perfil diz onde a tela precisa estar
-impecável. Isso vira regra de código.
+impecável. Isso vira regra de código, e vale também para as telas de apoio.
 
 1. **Escrevo para o celular primeiro.** O CSS é mobile-first, e a regra de
   (width) maior entra por `@media (min-width: 48rem)`. Nenhuma tela ganha
@@ -222,7 +226,7 @@ impecável. Isso vira regra de código.
    com o formulário em duas colunas para não esticar o campo no meio da tela. No
    celular a tabela vira uma lista de cartões, e o nome de cada coluna é escrito
    no começo da própria linha, para a linha continuar se explicando sozinha.
-4. **As quatro funcionam nos dois tamanhos.** Quem abre a agenda no celular
+4. **Todas funcionam nos dois tamanhos.** Quem abre a agenda no celular
    recebe a mesma informação, empilhada. Isso não muda o que a tela diz, muda
    como ela se acomoda.
 5. **A lista de tatuagens nunca fica dentro de um contêiner com largura fixa.**

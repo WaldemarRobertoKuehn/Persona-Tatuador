@@ -4,34 +4,35 @@ Atualizado até a **aula 3** da UC2, Práticas DevOps em Projetos Web. Salve na 
 da cartilha com o nome `REGRAS.md`, por cima da versão da UC4. Só vale a versão mais nova.
 
 O estado atual inclui melhorias solicitadas depois da aula: cadastro público de clientes sem login
-automático, recuperação e troca de senha, perfis distintos de Cliente, Tatuador e Administrador, e
-identificação visual por iniciais da conta. Essas funcionalidades já fazem parte do projeto e não
-devem ser tratadas como propostas pendentes.
+automático, recuperação e troca de senha, perfis distintos de Cliente, Tatuador e Administrador,
+identificação visual por iniciais da conta, imagens de referência e desenho, agenda por tatuador
+responsável e tela de Administração. Essas funcionalidades já fazem parte do projeto e não devem ser
+tratadas como propostas pendentes.
 
 ## O projeto
 
 - Repositório da cartilha sorteada na UC4. Na UC2, ele é o caso que vai para produção: a aplicação
   foi desenvolvida na UC4. Agora vamos preparar a infraestrutura e a publicação.
-- Na raiz: `README.md`, `docs/` (a cartilha, o briefing e o DER), `.docs/` (o diário de obra),
-  `frontend/` e `backend/`.
-- `docker-compose.yml` na raiz, com três serviços: `banco` (MySQL 8.4, com o volume
-  `dados_do_banco`), `api` (imagem do `backend/Dockerfile`) e `web` (imagem do `frontend/Dockerfile`,
-  com o Caddy acessível pela porta 8080 da máquina). As senhas vêm do `.env` da raiz, que fica fora do Git; o `.env.exemplo`
-  tem as mesmas chaves, sem valor.
-- `Caddyfile` na raiz: o servidor web. Atende na porta 80 do contêiner, entrega o `/srv` e encaminha
-  `/api/*` para `api:8000`, tirando o prefixo `/api`.
+- Na raiz: `README.md`, `REGRAS.md`, `docs/` (a cartilha, o briefing, o DER, o COMO_RODAR e a
+  arquitetura), `.docs/` (o diário de obra), `frontend/`, `backend/`, `api/` e os arquivos de deploy.
+- A infraestrutura real é **Vercel + Supabase**: o React é estático na Vercel, a API roda como função
+  serverless e o banco é um PostgreSQL do Supabase. O `.env` fica na raiz e o `configuracao.py` é o
+  único que o lê. O `docker-compose.yml` é legado: ele ainda declara MySQL 8.4, `banco`, `api` e
+  `web`; não é o caminho de produção nem prova que a API atual se conecta a esse MySQL.
+- `Caddyfile` na raiz: do caminho local com contêineres. Atende na porta 80, entrega o `/srv` e
+  encaminha `/api/*` para `api:8000`, tirando o prefixo `/api`.
 - `backend/Dockerfile`, `backend/.dockerignore` e `backend/requirements.txt`, gerado com `pip freeze`.
 - `frontend/Dockerfile`, em duas etapas (Node para o build, Caddy com o `dist/`), e `frontend/.dockerignore`.
 - `frontend/`: o React, rodando com `npm run dev` na porta 5173. O endereço da API vem da variável
   `VITE_URL_DA_API`, lida em `src/api.js`: `.env.development` tem o endereço local que o projeto já usa (no exemplo,
-  `http://127.0.0.1:8000`) e
+  `http://localhost:8000`) e
   `.env.production` tem `/api`. Os dois arquivos vão para o Git e não têm segredo.
 - `frontend/dist/`: gerado pelo `npm run build`, fora do Git.
 - `backend/`: a API em FastAPI, em camadas (`rotas/`, `servicos/`, `repositorios/`, `esquemas/`,
   `modelos/`), com PostgreSQL pelo SQLAlchemy/psycopg2, migrations com Alembic e login com JWT. Fora do Docker, roda com
-  `fastapi dev main.py`. No contêiner, usa `fastapi run main.py --port 8000`. O Compose declara um
-  serviço MySQL na porta interna 3306; não presumir que esse serviço e a configuração PostgreSQL do
-  backend formem uma conexão funcional sem validar o ambiente.
+  `fastapi dev main.py`. No contêiner, usa `fastapi run main.py --port 8000`.
+- `api/index.py` e `vercel.json` na raiz: o deploy que serve o front e a API no mesmo projeto da
+  Vercel. `backend/vercel.json` e `backend/api/index.py` fazem o mesmo para o projeto separado de API.
 - `.docs/` contém os registros de IA e infraestrutura mantidos no repositório, incluindo `ia.md`,
   `infra.md` e `proximos-passos.md`.
 - Trabalho individual, inclusive o desenho de abertura. Cada aluno usa o próprio projeto e repositório.
@@ -97,6 +98,18 @@ devem ser tratadas como propostas pendentes.
   expiração e hash do token. O banco existente precisa receber essa migration antes de usar a recuperação.
 - Há testes unitários focados na redefinição em `backend/tests/`; eles não substituem testes de integração
   com banco ou provedor SMTP.
+- As imagens de uma tatuagem ficam na tabela `tatuagem_imagens`, em `BYTEA`, com limite de 4 MB e
+  tipos JPEG, PNG e WebP. O cliente envia referência e aprova ou recusa o desenho; o tatuador envia o
+  desenho. A aprovação do desenho na etapa `pedida` registra o passo e move a etapa.
+- A agenda é do tatuador responsável, em blocos de uma hora, no fuso UTC-3. Sábado tem expediente
+  reduzido e domingo é fechado. Um índice único parcial impede dois agendamentos ativos no mesmo
+  horário do mesmo tatuador; cancelar libera o horário sem apagar o histórico.
+- `tatuagens.tatuador_id` é o responsável pela agenda, atribuído pelo Administrador. A migration
+  `20261107_02` criou a coluna; o modelo ORM de `tatuagens` ainda não a declara, e o repositório a
+  acessa por SQL explícito.
+- A tela **Administração** cadastra tatuadores e atribui o responsável de cada tatuagem. A gestão de
+  grupos e permissões continua disponível pelas rotas `/grupos` e `/usuarios/{id}/grupo`.
+- Há testes unitários de agenda, imagem e tatuador em `backend/tests/`, além dos de redefinição.
 
 ## O que ainda não foi visto, e não deve aparecer
 
@@ -106,7 +119,6 @@ devem ser tratadas como propostas pendentes.
 - Redes do Docker declaradas à mão, `network_mode: host`, Docker Swarm e Kubernetes.
 - Nginx configurado no projeto. Ele só foi mostrado para comparar.
 - Domínio e HTTPS no `Caddyfile` do repositório. Isso só existe no servidor da demonstração.
-- Trocar o MySQL por outro banco ou configurar Supabase e Vercel nesta aula.
 - Scripts `.sh` e `Makefile`.
 - Branches, pull request, tags e proteção da `main`. O Git continua como na UC4.
 - GitHub Actions e pipeline de CI/CD. Os testes unitários existentes devem continuar passando.

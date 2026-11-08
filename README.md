@@ -5,7 +5,8 @@ etapas de cada tatuagem (pedido, desenho aprovado, sessões e retoque) ficam reg
 se perderem em conversa de mensagem.
 
 A fonte do que o sistema precisa fazer é `docs/CARTILHA.md`, sem alteração. As decisões do projeto,
-o que pode e o que não pode aparecer no código, estão em `REGRAS.md`.
+o que pode e o que não pode aparecer no código, estão em `REGRAS.md`. O desenho das camadas, dos
+fluxos e do deploy está em `docs/ARQUITETURA.md`.
 
 ## Estado atual
 
@@ -19,7 +20,7 @@ alterar a própria senha confirmando a senha atual. O envio depende de SMTP conf
 Cliente, Tatuador e Administrador têm rótulos e áreas de acesso distintos. A barra usa iniciais do
 nome da conta, não as fotos das personas de demonstração.
 
-O back entrega as cinco coisas que a cartilha pede:
+O back entrega as cinco capacidades que a cartilha pede:
 
 | capacidade da cartilha | rota |
 | --- | --- |
@@ -29,11 +30,28 @@ O back entrega as cinco coisas que a cartilha pede:
 | Listar os passos de uma tatuagem | `GET /tatuagens/{tatuagem_id}/passos` |
 | Registrar um passo numa tatuagem | `POST /tatuagens/{tatuagem_id}/passos` |
 
-A agenda abre com **oito tatuagens de demonstração** — cinco da Bruna e três da Camila — e os
-históricos delas estão coerentes com a regra. Esses dados estão no PostgreSQL, e as contas que entram
-nele estão na tabela `usuarios`: são criadas por `backend/criar_contas_de_demonstracao.py`, que é
-o mesmo caminho do `criar_tabelas.py` e do `alembic upgrade head`, ou seja, montagem de banco, e
-não rota da API.
+Além delas, o sistema tem as capacidades que foram acrescentadas depois da cartilha:
+
+| capacidade | rota |
+| --- | --- |
+| Entrar, cadastrar Cliente e trocar senha | `POST /autenticacao/login`, `POST /usuarios`, `POST /autenticacao/esqueci-senha`, `POST /autenticacao/redefinir-senha`, `POST /autenticacao/alterar-senha` |
+| Consultar o próprio perfil | `GET /usuarios/eu` |
+| Cadastrar e listar tatuadores | `POST /usuarios/tatuadores`, `GET /usuarios/tatuadores` |
+| Atribuir o tatuador responsável pela tatuagem | `PUT /tatuagens/{tatuagem_id}/tatuador` |
+| Enviar, listar, baixar e remover imagens | `POST/GET /tatuagens/{tatuagem_id}/imagens`, `GET/DELETE /tatuagens/{tatuagem_id}/imagens/{imagem_id}` |
+| Aprovar ou recusar o desenho | `POST /tatuagens/{tatuagem_id}/imagens/{imagem_id}/aprovacao`, `.../recusa` |
+| Consultar e marcar a agenda | `GET/POST /tatuagens/{tatuagem_id}/agendamentos`, `GET .../disponibilidade`, `DELETE .../{agendamento_id}` |
+| Administrar grupos e permissões | `GET/POST /grupos`, `PUT /grupos/{grupo_id}/permissoes`, `GET /grupos/permissoes`, `PUT /usuarios/{usuario_id}/grupo` |
+
+As imagens ficam no próprio PostgreSQL, na coluna `conteudo` de `tatuagem_imagens`, e o download é
+autenticado. A agenda é do tatuador responsável: cada sessão ou retoque ocupa um bloco de uma hora,
+e o índice único parcial impede dois agendamentos ativos no mesmo horário do mesmo profissional.
+
+A agenda abre com **oito tatuagens de demonstração** — cinco da Bruna e três da Camila —, cada uma
+com tatuador responsável e histórico coerente com a regra. Esses dados estão no PostgreSQL, e as
+contas que entram nele estão na tabela `usuarios`: são criadas por
+`backend/criar_contas_de_demonstracao.py`, que é o mesmo caminho do `criar_tabelas.py` e do
+`alembic upgrade head`, ou seja, montagem de banco, e não rota da API.
 
 A agenda também mostra o nome da cliente, e não o `cliente_id`. O nome mora no back, em
 `repositorios/cliente.py`, e entra na resposta como `nome_da_cliente`. A cartilha lista o usuário
@@ -48,45 +66,58 @@ cópia nenhuma dentro do front.
 
 ```
 .
+├── .docs/           o diário de obra: IA, infraestrutura e próximos passos
 ├── docs/            o que não é código
+│   ├── ARQUITETURA.md o desenho das camadas, dos fluxos e do deploy
 │   ├── CARTILHA.md  a cartilha sorteada, sem alteração
 │   ├── BRIEFING.md  o briefing, escrito por mim
 │   ├── COMO_RODAR.md o passo a passo de abrir e de fechar os dois servidores
+│   ├── DER.md       o desenho do banco, coluna por coluna
 │   ├── marca.md     o que a marca é e as regras de uso
 │   ├── marca/       os arquivos da marca, que o front serve de lá
 │   └── styleguide/  o styleguide, ou o link do Figma
+├── .env             o que muda de máquina para máquina, fora do Git
+├── .env.exemplo     as mesmas chaves, sem os valores, dentro do Git
+├── api/index.py     a entrada da API quando o deploy usa a raiz da Vercel
+├── vercel.json      o deploy alternativo que serve o front e a API juntos
+├── docker-compose.yml  caminho legado em contêiner, ainda com MySQL
 ├── Caddyfile        proxy HTTP local e arquivos do build do React
 ├── frontend/        o React, com as telas de cliente, tatuador, administrador e acesso
+│   ├── .env.development / .env.production  o endereço da API em cada ambiente
+│   ├── vercel.json  o proxy /api do projeto de front separado
 │   ├── src/
-│   │   ├── componentes/  o logo, o botão de tema, CampoSenha e as peças repetidas
+│   │   ├── componentes/  logo, tema, senha, avisos, imagens, agenda e linha do tempo
 │   │   ├── estilos/      os tokens do styleguide e o CSS das telas
 │   │   ├── fontes/       a Playfair Display, com a licença e a procedência
 │   │   ├── imagens/      as fotos do ateliê e da vitrine
 │   │   ├── telas/        as telas da cartilha, login, administração e alteração de senha
 │   │   ├── api.js        o único lugar do front que fala com o back
+│   │   ├── App.jsx       a conta autenticada, a tela atual e a tatuagem aberta
 │   │   ├── datas.js      ISO do back virando dd/mm/aaaa na tela
-│   │   ├── perfis.js     os perfis fixos e a ordem das telas de cada um
+│   │   ├── perfis.js     os perfis e a ordem das telas de cada papel
 │   │   └── tema.js       o tema da tela e o botão que o troca
 │   ├── index.html    a página, e o script que aplica o tema antes de pintar
 │   └── vite.config.js onde o Vite serve a marca, sem copiar
 ├── backend/         a API, com FastAPI
-│   ├── .env         o que muda de máquina para máquina, fora do Git
-│   ├── .env.exemplo as mesmas chaves, sem os valores, dentro do Git
+│   ├── .env.exemplo exemplo do formato do .env da raiz
 │   ├── configuracao.py  o único arquivo que lê o .env
-│   ├── banco.py          o engine, a fábrica Sessao, a Base e o obter_sessao
-│   ├── criar_tabelas.py  o desenho do banco, do zero, em um banco vazio
-│   ├── criar_contas_de_demonstracao.py  as contas de demonstração, na tabela usuarios
+│   ├── banco.py          o engine, o cursor por requisição e a Base
+│   ├── seguranca.py      o hash de senha e o JWT HS256
+│   ├── criar_tabelas.py  aplica as migrations em um banco vazio
+│   ├── criar_contas_de_demonstracao.py  as contas de demonstração
+│   ├── criar_administrador.py / promover_administrador.py  o primeiro Administrador
+│   ├── trocar_senha.py   troca local de senha, sem passar pela API
+│   ├── importar_mysql_para_supabase.py  migração avulsa do banco antigo
 │   ├── alembic.ini       a configuração do Alembic, sem a senha
 │   ├── migracoes/        o env.py, onde o Alembic acha os modelos e o banco
 │   │   └── versions/     uma migration por arquivo, e elas vão para o Git
 │   ├── modelos/          o desenho das tabelas, uma classe por entidade
 │   ├── main.py          cria o app, registra o CORS e liga os routers
 │   ├── rotas/           o que conhece HTTP
-│   │   └── health.py    confirmação de disponibilidade da API
 │   ├── servicos/        as decisões e a regra da cartilha
 │   ├── repositorios/    as funções que leem e gravam no banco
-│   │   └── cliente.py       o nome de quem é dona da tatuagem
-│   └── esquemas/        o formato de entrada e de saída
+│   ├── esquemas/        o formato de entrada e de saída
+│   └── tests/           os testes unitários dos serviços
 ├── REGRAS.md        as regras do projeto para a IA
 └── README.md        este arquivo
 ```
@@ -117,11 +148,8 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 
 | variável | valor |
 | --- | --- |
-| `BANCO_HOST` | host do PostgreSQL acessível pela Vercel |
-| `BANCO_PORTA` | porta do PostgreSQL, normalmente `5432` |
-| `BANCO_NOME` | nome do banco |
-| `BANCO_USUARIO` | usuário do banco |
-| `BANCO_SENHA` | senha do banco |
+| `SUPABASE_DB_URL` | URL do PostgreSQL do Supabase (pooler), acessível pela Vercel |
+| `SUPABASE_DB_PASSWORD` | senha do banco; fica separada da URL para não precisar de escape |
 | `BANCO_SSLMODE` | `require` |
 | `JWT_SEGREDO` | segredo aleatório com pelo menos 32 caracteres |
 | `JWT_MINUTOS` | validade do token em minutos, por exemplo `60` |
@@ -132,6 +160,10 @@ Configure estas variáveis no projeto Vercel, em **Settings → Environment Vari
 | `SMTP_PASSWORD` | senha ou senha de aplicativo SMTP |
 | `SMTP_FROM_EMAIL` | endereço remetente autorizado pelo provedor SMTP |
 
+O `configuracao.py` também aceita um PostgreSQL local ou outro provedor pelas variáveis
+`BANCO_HOST`, `BANCO_PORTA`, `BANCO_NOME`, `BANCO_USUARIO` e `BANCO_SENHA`, usadas quando
+`SUPABASE_DB_URL` não está preenchida. O caminho usado hoje é o Supabase.
+
 No projeto do frontend, para usar o proxy incluído em `frontend/vercel.json`,
 mantenha `VITE_URL_DA_API=/api` (como em `frontend/.env.production`) e ajuste
 nesse arquivo o domínio para o projeto Backend da Vercel. O proxy remove o
@@ -139,11 +171,12 @@ prefixo `/api` ao encaminhar a chamada: por exemplo, `/api/usuarios` chega ao
 backend como `/usuarios`. Se preferir chamar o backend diretamente, configure
 `VITE_URL_DA_API` somente com a URL base dele, sem acrescentar `/api`.
 
-Na raiz deste repositório, `vercel.json` mantém apenas o build estático do frontend
-para instalações criadas com a raiz do repositório. Para os dois projetos separados,
-selecione `frontend/` e `backend/` como Root Directory de cada projeto.
+Na raiz deste repositório, `vercel.json` monta o front em `frontend/dist` e encaminha
+`/api/*` para a função `api/index.py`, que importa o app de `backend/main.py`. Esse é
+o desenho de projeto único. Para os dois projetos separados, selecione `frontend/` e
+`backend/` como Root Directory de cada projeto.
 
-Use um PostgreSQL hospedado externamente, pois o banco local do Docker não fica
+Use um PostgreSQL hospedado externamente, pois um banco local da máquina não fica
 disponível para as funções da Vercel. Depois de criar o banco, aplique as migrations
 com `alembic upgrade head` usando uma conexão configurada para esse banco antes de
 usar a aplicação. Para previews em domínios diferentes, configure `ORIGEM_FRONTEND`
@@ -152,19 +185,24 @@ no ambiente Preview com a origem correspondente.
 O deploy não cria automaticamente as contas de demonstração nem migra o banco.
 Essas tarefas devem ser executadas separadamente contra o PostgreSQL hospedado.
 
-O banco é o **PostgreSQL**, e ele precisa existir antes do back subir. O desenho dele mora nos modelos,
-em `backend/modelos/`, e o banco é montado em três passos:
+O banco é o **PostgreSQL**, e ele precisa existir antes do back subir. O caminho usado hoje é um
+banco do Supabase, configurado no `.env` da **raiz** do repositório (o `configuracao.py` lê esse
+arquivo, não o `backend/.env`). O desenho dele mora nos modelos, em `backend/modelos/`, e nas
+migrations em `backend/migracoes/versions/`.
 
 ```bash
 cd backend
-createdb -U postgres traco_fino
 python criar_tabelas.py
-alembic upgrade head
 ```
 
-O `criar_tabelas.py` cria as tabelas que ainda não existem, e o `alembic upgrade head` aplica as
-migrations que faltam. Configure `BANCO_HOST`, `BANCO_PORTA`, `BANCO_NOME`,
-`BANCO_USUARIO` e `BANCO_SENHA` no `.env` antes de executar os comandos.
+O `criar_tabelas.py` executa `alembic upgrade head`: cria as tabelas e carrega os grupos e as
+permissões iniciais. Ele pode ser executado de novo para aplicar só o que falta. Um banco local
+também funciona; nesse caso preencha `BANCO_HOST`, `BANCO_PORTA`, `BANCO_NOME`, `BANCO_USUARIO` e
+`BANCO_SENHA` no `.env` da raiz.
+
+> O `docker-compose.yml` da raiz ainda descreve um MySQL 8.4 e variáveis `BANCO_*` de outro
+> momento do projeto. A API atual usa PostgreSQL/Supabase e não se conecta a esse serviço MySQL;
+> o Compose não é o caminho de execução recomendado.
 
 Depois, prepare o ambiente do Python e instale as dependências do `requirements.txt`:
 
@@ -189,7 +227,7 @@ Com o back no ar, o esperado é:
 - o terminal mostrar `http://localhost:8000`;
 - abrir `http://localhost:8000/docs` e ver as rotas principais e administrativas da API;
 - fazer login em `/autenticacao/login` e enviar o token Bearer em `Authorization` para acessar
-  as rotas de usuários, tatuagens e passos.
+  as rotas de usuários, tatuagens, passos, imagens, agenda e grupos.
 
 A raiz `http://localhost:8000` responde `{"status":"ok"}` para confirmar que o back está no ar,
 sem consultar o banco.
@@ -204,7 +242,7 @@ vence em 15 minutos e só pode ser usado uma vez. A tela pede a nova senha duas 
 a senha já conectado, use **Alterar senha** e informe a senha atual.
 
 O envio exige as variáveis `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e
-`SMTP_FROM_EMAIL` no ambiente do backend. Em Docker Compose, coloque-as no `.env` da raiz; na
+`SMTP_FROM_EMAIL` no ambiente do backend. No ambiente local, coloque-as no `.env` da raiz; na
 Vercel, configure-as no projeto Backend. O link usa `ORIGEM_FRONTEND`, que deve apontar para a URL
 da tela. Depois de atualizar um banco existente, aplique a nova migration com `alembic upgrade head`.
 
@@ -296,7 +334,7 @@ quando o banco bate com os modelos.
 
 O front é o React, na pasta `frontend/`. Ele precisa do back no ar, porque as telas de trabalho
 chamam a API. Só React e React DOM são dependência de execução: não há biblioteca de rotas, nem de
-requisição. As quatro telas principais da cartilha e os fluxos de acesso usam o estado do App.
+requisição. As telas da cartilha e as telas de apoio usam o estado do `App.jsx`.
 
 ```bash
 cd frontend
@@ -307,15 +345,16 @@ npm run dev
 O esperado é o Vite abrir `http://localhost:5173` e a tela de login aparecer. Entre com uma das
 contas de demonstração, que estão na tabela de contas do back: Bruna entra como Cliente, Vitor como
 Tatuador e Waldemar como Administrador. Esse endereço tem que ser igual ao `ORIGEM_FRONTEND` do
-`.env` do back, senão o navegador bloqueia a chamada por CORS.
+`.env` da raiz, senão o navegador bloqueia a chamada por CORS.
 
-As quatro telas da cartilha estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as cinco
-tatuagens dela, com a etapa de cada uma e o histórico ao clicar em "Ver histórico", e "Pedir
+As telas estão escritas. Escolhendo Bruna, "Minhas tatuagens" mostra as cinco tatuagens dela, com a
+etapa de cada uma, o histórico ao clicar em "Ver histórico", as imagens e a agenda; "Pedir
 tatuagem" grava no back e volta com a etapa `pedida`. Escolhendo Vitor, "A agenda" lista as oito
-tatuagens do estúdio com filtro por etapa, e "Abrir ficha" abre uma delas para registrar passos.
-Waldemar recebe a tela "Administração" e a identificação de Administrador. A ficha mostra os
-resultados da regra do back: quando aceita, a etapa nova aparece; quando recusa, o motivo aparece e
-a etapa não muda.
+tatuagens do estúdio com filtro por etapa e miniatura do desenho, e "Abrir ficha" abre uma delas
+para registrar passos, enviar o desenho e marcar sessões ou o retoque. Waldemar recebe a tela
+"Administração", onde cadastra tatuadores e atribui o responsável de cada tatuagem. A ficha mostra
+os resultados da regra do back: quando aceita, a etapa nova aparece; quando recusa, o motivo aparece
+e a etapa não muda.
 
 ### A cara da tela
 
@@ -374,8 +413,9 @@ As duas paletas e os contrastes de cada uma estão no `docs/styleguide/styleguid
 ## Regras de ouro deste repositório
 
 - Rota chama serviço, serviço chama repositório. Nunca o contrário.
-- Os dados ficam no PostgreSQL, e o desenho do banco mora nos modelos, em `modelos/`. A sessão nasce na
-  rota, pelo `Depends(obter_sessao)`, e passa de mão em mão.
+- Os dados ficam no PostgreSQL, e o desenho do banco mora nos modelos, em `modelos/`. A conexão
+  nasce no middleware de `main.py`, é guardada por requisição e chega aos repositórios por
+  `banco.cursor()`.
 - Mudança numa tabela que já existe é migration, em `migracoes/versions/`, versionada no Git. Nunca
   `DROP TABLE` e nunca `ALTER TABLE` escrito à mão.
 - A regra da cartilha mora no serviço. Quando ela recusa, o serviço devolve `None` ou o motivo, e

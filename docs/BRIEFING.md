@@ -42,7 +42,8 @@ O que ela faz no sistema:
 2. **Vê as tatuagens dela**, com a etapa de cada uma.
 3. **Abre uma tatuagem** e lê o histórico: desenho, sessões e retoque.
 
-O que ela não é: cliente de loja, não negocia preço, não envia foto. Ela quer saber a etapa.
+O que ela não é: cliente de loja e não negocia preço. Ela envia imagem de referência, aprova ou
+recusa o desenho e quer saber a etapa.
 
 ### Vitor, o tatuador. Usa no computador.
 
@@ -55,6 +56,8 @@ O que ele faz no sistema:
 2. **Abre uma tatuagem e registra um passo**: o desenho aprovado, uma sessão ou o retoque.
 3. **Confere que a etapa mudou.** O registro precisa dar retorno visível, senão ele não sabe se
    funcionou.
+4. **Envia o desenho, marca as sessões e o retoque** na agenda do tatuador responsável.
+5. **Vê a própria agenda**, com os horários ocupados e a miniatura do desenho de cada tatuagem.
 
 ## 4. A regra que o serviço cuida
 
@@ -86,7 +89,7 @@ Repare que **sessão pode se repetir** e que o passo aceito é o que muda a etap
 E é por isso que a tela do Vitor precisa mostrar a etapa depois do registro: é o único jeito dele
 saber que a regra rodou.
 
-## 5. As quatro telas
+## 5. As quatro telas da cartilha
 
 | tela | de quem | onde tem que estar impecável | o que resolve |
 | --- | --- | --- | --- |
@@ -103,6 +106,10 @@ Duas regras de layout que eu carrego para o código:
 2. **O aparelho de cada perfil diz onde a tela precisa estar impecável.** Telas 1 e 2 são desenhadas
    para a tela pequena do celular; telas 3 e 4, para a tela grande do computador. A agenda é a que
    mais sofre se eu só esticar: filtro e lista precisam caber sem corte.
+
+Depois da cartilha o sistema ganhou três telas de apoio, que não mudam as quatro acima: **Login**
+(com cadastro e recuperação de senha), **Administração** e **Alterar senha**. A Administração é do
+papel Administrador e cadastra tatuadores e atribui o responsável de cada tatuagem.
 
 ## 6. O que não faz parte
 
@@ -122,9 +129,11 @@ Nenhum destes pontos pode ser combinado com o colega de cartilha.
 
 Já decidi:
 
-- **os nomes das rotas da API.** São `/tatuagens` e `/tatuagens/{tatuagem_id}/passos`, e os status
-  `pedida`, `desenho aprovado`, `em sessões` e `finalizada` são os da cartilha. O caminho aninhado
-  dos passos existe porque um passo sem tatuagem dona não tem onde ficar.
+- **os nomes das rotas da API.** As rotas centrais são `/tatuagens` e
+  `/tatuagens/{tatuagem_id}/passos`, e os status `pedida`, `desenho aprovado`, `em sessões` e
+  `finalizada` são os da cartilha. O caminho aninhado dos passos existe porque um passo sem tatuagem
+  dona não tem onde ficar. Depois da cartilha entraram `/autenticacao`, `/usuarios`, `/grupos`,
+  `/tatuagens/{id}/imagens` e `/tatuagens/{id}/agendamentos`; o detalhe está em `README.md`.
 - **decisão original sobre a lista de perfis, substituída.** O briefing previa os dois perfis fixos
   no front, sem senha. A decisão atual é usar login e senhas por grupos de usuários; os detalhes e
   motivos informados estão em [O que mudou](#o-que-mudou).
@@ -181,12 +190,15 @@ estão anotados no fim de `docs/marca.md`.
 - **Regra:** a tatuagem nasce `pedida` e só anda por `desenho aprovado` → `sessão` → `retoque`,
   nessa ordem. Sessão antes do desenho aprovado é recusada. Retoque antes de pelo menos uma sessão é
   recusado. Cada passo aceito muda a etapa.
-- **Quatro telas:** Pedir tatuagem, Minhas tatuagens, A agenda, A ficha. As duas primeiras do
-  celular, as duas últimas do computador, todas responsivas.
+- **Quatro telas da cartilha** mais três de apoio: Pedir tatuagem, Minhas tatuagens, A agenda e A
+  ficha; Login, Administração e Alterar senha. As duas primeiras do celular, as duas últimas do
+  computador, todas responsivas.
 - **Quem usa:** Bruna é a cliente, e usa o celular. Vitor é o tatuador e o dono, e usa o
-  computador. As telas 1 e 2 são da Bruna, as telas 3 e 4 são do Vitor.
-- **Três entidades:** usuário (cliente ou tatuador), tatuagem (pertence a um cliente) e passo
-  (pertence a uma tatuagem).
+  computador. As telas 1 e 2 são da Bruna, as telas 3 e 4 são do Vitor. O Administrador usa a tela
+  de Administração.
+- **Três entidades de negócio:** usuário (cliente, tatuador ou administrador), tatuagem (pertence a
+  um cliente) e passo (pertence a uma tatuagem). O banco também guarda grupos, permissões, imagens e
+  agendamentos.
 - **Fora de escopo:** orçamento, sinal, pagamento, portfólio e aviso por mensagem.
 - **Login:** a escolha de perfil sem senha era a decisão original do briefing; foi substituída por
   login com e-mail e senha, com o perfil definido pelo papel recebido do backend.
@@ -200,11 +212,18 @@ estão anotados no fim de `docs/marca.md`.
   de login e senhas por grupos de usuários.
 - **Rotas de usuários e grupos:** além das rotas centrais de tatuagens e passos, há rotas de
   usuários (`/usuarios`) e de grupos/permissões (`/grupos`), em `backend/rotas/usuarios.py` e
-  `backend/rotas/grupos.py`. A gestão de grupos é por API; não há tela React para isso.
-  **Motivo informado:** essas rotas agora são necessárias.
-- **Persistência:** o sistema atual usa MySQL e migrations Alembic, embora a cartilha descreva a
-  ida da memória ao MySQL como etapa posterior. **Orientação confirmada:** mantê-los incorporados.
-  O motivo original para antecipá-los não foi detalhado: **?**
+  `backend/rotas/grupos.py`. A tela **Administração**, em `frontend/src/telas/Administracao.jsx`,
+  cadastra tatuadores e atribui o responsável de cada tatuagem; a gestão de permissões continua
+  pela API. **Motivo informado:** essas rotas agora são necessárias.
+- **Persistência:** o sistema atual usa PostgreSQL, com SQLAlchemy, psycopg2 e migrations Alembic.
+  Em produção, o banco é um PostgreSQL do Supabase, e a API e o front estão na Vercel.
+  **Orientação confirmada:** manter banco e migrations incorporados. A cartilha descrevia a ida da
+  memória ao banco como etapa posterior, e o projeto já passou dela.
+- **Imagens:** cada tatuagem pode ter referências e desenhos, guardados em `tatuagem_imagens`. O
+  cliente aprova ou recusa o desenho; a aprovação na etapa `pedida` registra o passo e move a etapa.
+- **Agenda e tatuador responsável:** a agenda é por tatuador, em blocos de uma hora, com sessões e
+  retoque. Cada tatuagem tem um `tatuador_id`, atribuído na tela de Administração. As duas mudanças
+  entraram pelas migrations `20261107_01` e `20261107_02`.
 
 ## Funcionalidade planejada com IA
 

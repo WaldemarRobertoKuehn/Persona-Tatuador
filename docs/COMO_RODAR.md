@@ -7,8 +7,9 @@ fechar a aba.
 
 ## O que precisa existir na máquina
 
-- **PostgreSQL do Supabase**, para o banco. Configure host, porta, banco, usuário,
-  senha e SSL no `backend/.env`.
+- **PostgreSQL do Supabase**, para o banco. Configure `SUPABASE_DB_URL`,
+  `SUPABASE_DB_PASSWORD` e `BANCO_SSLMODE` no `.env` da **raiz** do repositório,
+  que é o arquivo que o `backend/configuracao.py` lê.
 - **Python**, para o back. O `venv` já está criado em `backend/venv`, então não é
   preciso instalar nada: é só ativar.
 - **Node.js**, para o front. O `node_modules` já está em `frontend/`, então
@@ -18,7 +19,7 @@ fechar a aba.
 
 O back não sobe sem o PostgreSQL, porque é nele que os dados moram. O desenho do
 banco mora nos modelos e nas migrations em `backend/migracoes/`. Configure o
-`backend/.env` com os dados de conexão do Supabase e aplique as migrations:
+`.env` da raiz com os dados de conexão do Supabase e aplique as migrations:
 
 ```powershell
 cd backend
@@ -45,9 +46,8 @@ python criar_contas_de_demonstracao.py
 | Vitor | `vitor@tracofino.com.br` | `vitor123` | tatuador |
 | Waldemar | `waldemarroberto.kuehn@gmail.com` | a de sempre | administrador |
 
-O script pode rodar de novo sem quebrar nada: conta que já existe é pulada, e
-a senha do dono não muda, porque o hash que já estava na tabela `clientes` é
-copiado para a `usuarios`.
+O script pode rodar de novo sem quebrar nada: conta que já existe é pulada, e a
+senha de quem já tem conta não muda.
 
 ### Criar o primeiro Administrador
 
@@ -60,12 +60,17 @@ cd backend
 python criar_administrador.py
 ```
 
+A conta Administrador entra na tela **Administração**, onde cadastra tatuadores
+(`POST /usuarios/tatuadores`) e atribui o tatuador responsável por cada tatuagem
+(`PUT /tatuagens/{tatuagem_id}/tatuador`). A gestão de grupos e permissões
+continua disponível pela API: `/grupos` permite consultar e criar grupos,
+atribuir permissões e trocar o grupo de usuários, e `/grupos/permissoes` lista os
+códigos aceitos. O último Administrador não pode ser rebaixado, para evitar
+bloquear a gestão.
+
 No `/docs`, execute `POST /autenticacao/login`, copie `access_token`, clique em
-**Authorize** e cole o token Bearer. A interface React não possui tela
-administrativa; a gestão é feita pela API. As rotas `/grupos` permitem consultar
-e criar grupos, atribuir permissões e trocar o grupo de usuários. A rota
-`/grupos/permissoes` lista os códigos aceitos. O último Administrador não pode
-ser rebaixado, para evitar bloquear a gestão.
+**Authorize** e cole o token Bearer. As rotas de tatuagem, imagem, agenda e grupo
+passam a responder para a conta autenticada.
 
 As permissões iniciais seguem a matriz escolhida: Cliente consulta e altera
 somente as próprias tatuagens e passos; Tatuador acessa tatuagens e passos do
@@ -96,7 +101,7 @@ necessárias para continuar gerindo o sistema.
 
 ### Se o `venv` for apagado
 
-São sete pacotes, e o README explica o porquê de cada um:
+As dependências estão no `requirements.txt`, com as versões fixadas:
 
 ```powershell
 cd backend
@@ -106,8 +111,11 @@ pip install -r requirements.txt
 ```
 
 O `fastapi-cli` é o que dá o comando `fastapi dev`: sem ele, o `fastapi.exe`
-responde que falta o `fastapi[standard]` e não sobe nada. O `alembic` é o que dá o
-comando `alembic`, para escrever e aplicar migration.
+responde que falta o `fastapi[standard]` e não sobe nada. Ele já está no `venv`
+deste projeto; se o comando faltar em um `venv` recriado, instale `fastapi-cli`.
+O `alembic` é o que dá o comando `alembic`, para escrever e aplicar migration. O
+`psycopg2-binary` é o driver do PostgreSQL, e o `pytest` roda os testes de
+`backend/tests/`.
 
 ## Abrir o back
 
@@ -128,12 +136,16 @@ subiu mesmo, abra `http://127.0.0.1:8000/`; a resposta esperada é
 - o cadastro `POST /usuarios` é público e cria somente contas do grupo Cliente;
 - as rotas administrativas de grupos são acessíveis somente ao grupo Administrador;
 - `/autenticacao/login` aceita as credenciais de uma conta de demonstração e
-  devolve o token Bearer necessário para acessar as rotas de usuários, tatuagens
-  e passos.
+  devolve o token Bearer necessário para acessar as rotas de usuários, tatuagens,
+  passos, imagens, agenda e grupos;
+- as imagens ficam no PostgreSQL e o download exige o mesmo token;
+- a agenda é por tatuador responsável e não aceita dois horários ativos no mesmo
+  bloco de uma hora.
 
-A raiz `http://localhost:8000` responde **404**, e isso é de propósito: a REGRAS
-proíbe rota no `main.py`. O `Caddyfile` na raiz configura o proxy HTTP na porta 80
-e serve os arquivos React que estiverem em `/srv`.
+A raiz `http://localhost:8000` responde `{"status":"ok"}` pela rota de `health`,
+que confirma a disponibilidade da API sem consultar o banco. O `Caddyfile` na raiz
+é do caminho local com contêineres: ele faz proxy da API na porta 80 e serve os
+arquivos React que estiverem em `/srv`.
 
 ## Abrir o front
 
@@ -146,9 +158,10 @@ npm run dev
 ```
 
 O Vite abre `http://localhost:5173` e a tela de login aparece. Entre com uma das
-contas de demonstração: a Bruna entra como cliente e o Vitor como tatuador, e
-cada um vê as telas do papel dele. Esse endereço tem que ser igual ao
-`ORIGEM_FRONTEND` do `backend/.env`, senão o navegador bloqueia a chamada por
+contas de demonstração: a Bruna entra como Cliente, o Vitor como Tatuador e o
+Waldemar como Administrador, e cada um vê as telas do papel dele. Esse endereço
+tem que ser igual ao
+`ORIGEM_FRONTEND` do `.env` da raiz, senão o navegador bloqueia a chamada por
 CORS.
 
 Para conferir o front sem depender do navegador:
@@ -184,27 +197,28 @@ Sem resultado é sinal de que os dois estão parados. Com resultado, a coluna
 
 ## O que acontece com os dados quando o back fecha
 
-**Nada: eles continuam onde estão.** Os dados das tatuagens, das clientes e dos
-passos estão no MySQL, e fechar o back não toca em nada disso. É a diferença entre
-guardar em lista na memória e guardar em banco: a lista morre com o processo, a
-tabela não.
+**Nada: eles continuam onde estão.** Os dados das tatuagens, das clientes, dos
+passos, das imagens e da agenda estão no PostgreSQL, e fechar o back não toca em
+nada disso. É a diferença entre guardar em lista na memória e guardar em banco: a
+lista morre com o processo, a tabela não.
 
 Consequência prática: o que você grava pela API continua lá depois de reiniciar o
-back, e continua lá depois de trocar de máquina. Para desfazer, apaga o banco e
-roda o `esquema.sql` de novo:
+back, e continua lá depois de trocar de máquina. Para recomeçar do zero em um
+banco de estudo, apague as tabelas pelo SQL Editor do Supabase (ou por um cliente
+`psql`) e rode as migrations de novo:
 
 ```powershell
-mysql -u root -p -e "DROP DATABASE traco_fino"
 cd backend
-mysql -u root -p < esquema.sql
+python criar_tabelas.py
 ```
 
-Isso apaga os dados de demonstração **e** tudo que você tenha criado pela API, e
-só é seguro porque é um banco de estudo.
+O `criar_tabelas.py` não apaga dado nenhum: ele só aplica o que falta. Quem apaga
+as tabelas é o comando de banco, e isso apaga os dados de demonstração **e** tudo
+que você tenha criado pela API.
 
-Se você quer a API vazia, sem apagar nada: `DELETE FROM passos; DELETE FROM
-tatuagens; DELETE FROM clientes;`, nessa ordem, porque o passo aponta para a
-tatuagem e a tatuagem aponta para a cliente. As contas ficam na tabela
+Se você quer um banco vazio sem apagar as tabelas, a ordem é a das dependências:
+`DELETE FROM agendamentos; DELETE FROM tatuagem_imagens; DELETE FROM passos;
+DELETE FROM tatuagens; DELETE FROM clientes;`. As contas ficam na tabela
 `usuarios`, que não é apagada junto: o `DELETE FROM clientes` esvazia o
 `cliente_id` das contas de cliente, e quem recria a ligação é o
 `criar_contas_de_demonstracao.py`.
