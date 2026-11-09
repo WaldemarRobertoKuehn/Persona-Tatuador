@@ -4,6 +4,8 @@ import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from validacao_email import EmailInvalidoError, validar_email_entregavel
+
 
 class UsuarioCadastro(BaseModel):
     nome: str = Field(min_length=2, max_length=100)
@@ -24,6 +26,10 @@ class UsuarioCadastro(BaseModel):
         valor = valor.strip().lower()
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor):
             raise ValueError("Informe um email válido.")
+        try:
+            validar_email_entregavel(valor)
+        except EmailInvalidoError as erro:
+            raise ValueError(str(erro)) from erro
         return valor
 
 
