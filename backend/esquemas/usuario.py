@@ -2,14 +2,26 @@
 
 import re
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
-from validacao_email import EmailInvalidoError, validar_email_entregavel
+
+PADRAO_USUARIO = re.compile(r"[a-z0-9][a-z0-9._-]{2,49}")
+
+
+def _normalizar_usuario(valor: str) -> str:
+    """Aceita só o identificador curto, sem espaços nem acentos."""
+    valor = valor.strip().lower()
+    if not PADRAO_USUARIO.fullmatch(valor):
+        raise ValueError(
+            "Use de 3 a 50 caracteres: letras, números, ponto, hífen ou sublinhado."
+        )
+    return valor
 
 
 class UsuarioCadastro(BaseModel):
     nome: str = Field(min_length=2, max_length=100)
     email: str = Field(min_length=5, max_length=254)
+    usuario: str = Field(min_length=3, max_length=50)
     senha: str = Field(min_length=8, max_length=128)
 
     @field_validator("nome")
@@ -26,23 +38,41 @@ class UsuarioCadastro(BaseModel):
         valor = valor.strip().lower()
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor):
             raise ValueError("Informe um email válido.")
-        try:
-            validar_email_entregavel(valor)
-        except EmailInvalidoError as erro:
-            raise ValueError(str(erro)) from erro
         return valor
+
+    @field_validator("usuario")
+    @classmethod
+    def normalizar_usuario(cls, valor: str) -> str:
+        return _normalizar_usuario(valor)
+
+
+class DefinirUsuarioEntrada(BaseModel):
+    """Usuário curto que a conta autenticada define ou troca depois."""
+
+    usuario: str = Field(min_length=3, max_length=50)
+
+    @field_validator("usuario")
+    @classmethod
+    def normalizar_usuario(cls, valor: str) -> str:
+        return _normalizar_usuario(valor)
 
 
 class CredenciaisEntrada(BaseModel):
-    email: str = Field(min_length=5, max_length=254)
+    # O login aceita o e-mail ou o usuário curto. O alias "email" mantém o
+    # contrato antigo funcionando enquanto o front passa a mandar "identificador".
+    identificador: str = Field(
+        min_length=1,
+        max_length=254,
+        validation_alias=AliasChoices("identificador", "email"),
+    )
     senha: str = Field(min_length=1, max_length=128)
 
-    @field_validator("email")
+    @field_validator("identificador")
     @classmethod
-    def normalizar_email(cls, valor: str) -> str:
+    def normalizar_identificador(cls, valor: str) -> str:
         valor = valor.strip().lower()
-        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor):
-            raise ValueError("Informe um email válido.")
+        if not valor:
+            raise ValueError("Informe o e-mail ou usuário.")
         return valor
 
 
@@ -92,6 +122,9 @@ class UsuarioSaida(BaseModel):
     id: int
     nome: str
     email: str | None
+    # usuario é o identificador curto que também serve para entrar. Fica nulo
+    # enquanto a conta antiga ainda não definiu um.
+    usuario: str | None
     # papel permanece por compatibilidade com a tela; a autorização usa o grupo
     # persistido e as permissões que o back carrega para a conta.
     papel: str

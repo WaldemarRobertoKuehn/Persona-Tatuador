@@ -107,11 +107,11 @@ async function conferirResposta(resposta) {
   return resposta.json();
 }
 
-export function autenticar(email, senha) {
+export function autenticar(identificador, senha) {
   return fetch(caminho("/autenticacao/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, senha }),
+    body: JSON.stringify({ identificador, senha }),
   })
     .then(conferirResposta)
     .then((dados) => {
@@ -155,11 +155,11 @@ export function alterarSenha({ senhaAtual, novaSenha, confirmacaoSenha }) {
   ).then(conferirResposta);
 }
 
-export function cadastrarUsuario({ nome, email, senha }) {
+export function cadastrarUsuario({ nome, email, usuario, senha }) {
   return fetch(caminho("/usuarios"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nome, email, senha }),
+    body: JSON.stringify({ nome, email, usuario, senha }),
   }).then(conferirResposta);
 }
 
@@ -168,6 +168,19 @@ export function buscarUsuarioAtual(token = tokenAcesso) {
     caminho("/usuarios/eu"),
     opcoesAutenticadas({
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }),
+  ).then(conferirResposta);
+}
+
+/* Define ou troca o usuário curto da conta logada. A conta antiga, que nasceu
+ * sem usuário, usa esta rota para escolher um. */
+export function definirUsuario(usuario) {
+  return fetch(
+    caminho("/usuarios/eu/usuario"),
+    opcoesAutenticadas({
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario }),
     }),
   ).then(conferirResposta);
 }
@@ -182,13 +195,13 @@ export function buscarTatuadores() {
 
 /* Cria uma conta no grupo tatuador. A rota é administrativa e fixa o papel no
  * back: a tela não pode pedir outro grupo. */
-export function cadastrarTatuador({ nome, email, senha }) {
+export function cadastrarTatuador({ nome, email, usuario, senha }) {
   return fetch(
     caminho("/usuarios/tatuadores"),
     opcoesAutenticadas({
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, email, senha }),
+      body: JSON.stringify({ nome, email, usuario, senha }),
     }),
   ).then(conferirResposta);
 }

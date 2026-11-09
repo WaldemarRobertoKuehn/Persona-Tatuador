@@ -51,12 +51,14 @@ CONTAS_DE_DEMONSTRACAO = [
     {
         "nome": "Bruna",
         "email": "bruna@tracofino.com.br",
+        "usuario": "bruna",
         "senha": "bruna123",
         "papel": "cliente",
     },
     {
         "nome": "Vitor",
         "email": "vitor@tracofino.com.br",
+        "usuario": "vitor",
         "senha": "vitor123",
         "papel": "tatuador",
     },
@@ -74,20 +76,21 @@ def criar_conta_de_demonstracao(conta: dict) -> None:
     dados = {
         "nome": conta["nome"],
         "email": conta["email"],
+        "usuario": conta["usuario"],
         "senha": conta["senha"],
         "papel": conta["papel"],
         "cliente_id": cliente["id"] if cliente else None,
     }
 
-    usuario = servico_usuarios.cadastrar(dados)
+    usuario = servico_usuarios.cadastrar(dados, validar_email=False)
 
     if usuario is None:
         print(f"- {conta['nome']}: conta ja existia, pulada.")
         return
 
     print(
-        f"- {usuario['nome']}: id {usuario['id']}, papel {usuario['papel']}, "
-        f"cliente_id {usuario['cliente_id']}."
+        f"- {usuario['nome']}: id {usuario['id']}, usuário {usuario['usuario']}, "
+        f"papel {usuario['papel']}, cliente_id {usuario['cliente_id']}."
     )
 
 

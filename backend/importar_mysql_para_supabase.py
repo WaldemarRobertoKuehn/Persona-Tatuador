@@ -34,6 +34,7 @@ from psycopg2 import sql
 from psycopg2.extras import RealDictCursor, execute_values
 
 import configuracao
+import nome_usuario
 
 TABELAS_DADOS = ("clientes", "usuarios", "tatuagens", "passos")
 TABELAS_ORIGEM = ("clientes", "usuarios", "tatuagens", "passos", "grupos")
@@ -231,6 +232,19 @@ def proximo_id_usuarios(cursor, dados: dict[str, list[dict]]) -> int:
     return max(maior_supabase, maior_origem) + 1
 
 
+def definir_usuario(usuario: dict, usados: set[str]) -> None:
+    """Garante um identificador curto único para a conta importada."""
+    nome = usuario.get("nome") or usuario.get("email") or "usuario"
+    login = str(usuario.get("usuario") or "").strip().lower()
+    if not login or login in usados:
+        login = nome_usuario.gerar_usuario_unico(
+            str(nome),
+            lambda candidato: candidato in usados,
+        )
+    usados.add(login)
+    usuario["usuario"] = login
+
+
 def montar_dados(
     dados: dict[str, list[dict]],
     grupos: dict[str, int],
@@ -240,6 +254,7 @@ def montar_dados(
     avisos = []
     clientes = [dict(linha) for linha in dados.get("clientes", [])]
     usuarios = []
+    usuarios_usados = set()
 
     mapa_grupos_origem = {}
     for grupo in dados.get("grupos", []):
@@ -275,6 +290,7 @@ def montar_dados(
         usuario["grupo_id"] = grupos[codigo]
         if codigo != "cliente":
             usuario["cliente_id"] = None
+        definir_usuario(usuario, usuarios_usados)
         usuarios.append(usuario)
 
     if not args.sem_contas:
@@ -311,6 +327,7 @@ def montar_dados(
                 "cliente_id": cliente.get("id") if codigo == "cliente" else None,
             }
             proximo_id += 1
+            definir_usuario(usuario, usuarios_usados)
             usuarios.append(usuario)
             emails_usuarios.add(email)
             cliente["email"] = None
@@ -544,7 +561,15 @@ def main() -> int:
                 exigir_campos(
                     "usuarios",
                     preparados["usuarios"],
-                    ("id", "nome", "email", "senha_hash", "papel", "grupo_id"),
+                    (
+                        "id",
+                        "nome",
+                        "email",
+                        "usuario",
+                        "senha_hash",
+                        "papel",
+                        "grupo_id",
+                    ),
                 )
                 exigir_campos(
                     "tatuagens",

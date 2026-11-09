@@ -36,7 +36,10 @@ class Usuario(Base):
     # Usuario, no singular, e a tabela se chama usuarios, no plural: é a convenção
     # do projeto.
     __tablename__ = "usuarios"
-    __table_args__ = (UniqueConstraint("email", name="uq_usuarios_email"),)
+    __table_args__ = (
+        UniqueConstraint("email", name="uq_usuarios_email"),
+        UniqueConstraint("usuario", name="uq_usuarios_usuario"),
+    )
 
     # id: a chave primária. autoincrement=True diz que quem escolhe o próximo número
     # é o banco, e não o código.
@@ -49,6 +52,11 @@ class Usuario(Base):
     # email, e o índice único é o que o banco usa para recusar o cadastro repetido
     # sem precisar varrer a tabela.
     email = Column(String(254), nullable=False)
+
+    # usuario: o identificador curto que também serve para entrar. A conta nova
+    # escolhe no cadastro; a conta antiga pode deixar vazio e definir depois. O
+    # índice único mantém o login sem ambiguidade.
+    usuario = Column(String(50), nullable=True)
 
     # senha_hash: a senha guardada como hash, nunca como texto. O hash é o que o
     # argon2id devolve, e é o que a função verificar_senha compara com a senha

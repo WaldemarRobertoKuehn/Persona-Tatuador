@@ -6,11 +6,13 @@ import servicos.usuario as servico_usuarios
 import servicos.grupo as servico_grupos
 from esquemas.usuario import (
     AtribuicaoGrupoEntrada,
+    DefinirUsuarioEntrada,
     UsuarioCadastro,
     UsuarioSaida,
 )
 from rotas.autenticacao import obter_usuario_atual, usuario_publico as _usuario_publico
 from rotas.dependencias import exigir_permissao
+from validacao_email import EmailInvalidoError
 
 
 roteador_usuarios = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -26,9 +28,15 @@ def cadastrar_usuario(dados: UsuarioCadastro) -> dict:
     """
     # NOVO: cadastro público só cria contas no grupo Cliente; papel e grupo não
     # são aceitos no corpo, impedindo que uma pessoa se cadastre como admin.
-    usuario = servico_usuarios.cadastrar(dados.model_dump())
+    try:
+        usuario = servico_usuarios.cadastrar(dados.model_dump())
+    except EmailInvalidoError as erro:
+        raise HTTPException(status_code=422, detail=str(erro)) from erro
     if usuario is None:
-        raise HTTPException(status_code=409, detail="Este email já está cadastrado.")
+        raise HTTPException(
+            status_code=409,
+            detail="Este e-mail ou usuário já está cadastrado.",
+        )
     usuario_criado = servico_usuarios.buscar_por_id(usuario["id"])
     if usuario_criado is None:
         raise HTTPException(status_code=500, detail="A conta criada não foi encontrada.")
@@ -44,6 +52,24 @@ def cadastrar_usuario(dados: UsuarioCadastro) -> dict:
 def buscar_usuario_atual(usuario: dict = Depends(obter_usuario_atual)) -> dict:
     """Devolve os dados públicos do usuário autenticado pelo token."""
     return _usuario_publico(usuario)
+
+
+@roteador_usuarios.put("/eu/usuario", response_model=UsuarioSaida)
+def definir_usuario(
+    dados: DefinirUsuarioEntrada,
+    usuario: dict = Depends(obter_usuario_atual),
+) -> dict:
+    """Define ou troca o usuário curto da conta autenticada.
+
+    A conta antiga, que nasceu sem usuário, usa esta rota para escolher um; a
+    conta nova pode trocar o que escolheu no cadastro.
+    """
+    if not servico_usuarios.definir_usuario(usuario["id"], dados.usuario):
+        raise HTTPException(status_code=409, detail="Este usuário já está em uso.")
+    atualizado = servico_usuarios.buscar_por_id(usuario["id"])
+    if atualizado is None:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    return _usuario_publico(atualizado)
 
 
 # A listagem da equipe é administrativa: quem cadastra e troca o responsável de
@@ -71,9 +97,15 @@ def listar_tatuadores() -> list[dict]:
 )
 def cadastrar_tatuador(dados: UsuarioCadastro) -> dict:
     """Cria uma conta no grupo tatuador e devolve os dados públicos dela."""
-    usuario = servico_usuarios.cadastrar_tatuador(dados.model_dump())
+    try:
+        usuario = servico_usuarios.cadastrar_tatuador(dados.model_dump())
+    except EmailInvalidoError as erro:
+        raise HTTPException(status_code=422, detail=str(erro)) from erro
     if usuario is None:
-        raise HTTPException(status_code=409, detail="Este email já está cadastrado.")
+        raise HTTPException(
+            status_code=409,
+            detail="Este e-mail ou usuário já está cadastrado.",
+        )
     usuario_criado = servico_usuarios.buscar_por_id(usuario["id"])
     if usuario_criado is None:
         raise HTTPException(status_code=500, detail="A conta criada não foi encontrada.")

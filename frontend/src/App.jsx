@@ -30,6 +30,7 @@ import {
   alterarSenha as solicitarAlteracaoSenha,
   buscarUsuarioAtual,
   cadastrarUsuario,
+  definirUsuario as solicitarDefinicaoUsuario,
   limparToken,
   milissegundosAteExpirar,
   redefinirSenha as enviarNovaSenha,
@@ -39,6 +40,7 @@ import {
 import Agenda from "./telas/Agenda";
 import Administracao from "./telas/Administracao";
 import AlterarSenha from "./telas/AlterarSenha";
+import DefinirUsuario from "./telas/DefinirUsuario";
 import Ficha from "./telas/Ficha";
 import Login from "./telas/Login";
 import MinhasTatuagens from "./telas/MinhasTatuagens";
@@ -57,8 +59,10 @@ export default function App() {
   const [cadastrando, setCadastrando] = useState(false);
   const [processandoRecuperacao, setProcessandoRecuperacao] = useState(false);
   const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [salvandoUsuario, setSalvandoUsuario] = useState(false);
   const [erroAutenticacao, setErroAutenticacao] = useState("");
   const [erroSenha, setErroSenha] = useState("");
+  const [erroUsuario, setErroUsuario] = useState("");
 
   /* O tema é do App e não de cada tela, porque o botão fica na barra, que é
    * compartilhada. Se cada tela guardasse o seu, o botão de uma tela trocaria
@@ -84,6 +88,7 @@ export default function App() {
       ...perfilBase,
       usuarioId: usuario.id,
       nome: usuario.nome,
+      usuario: usuario.usuario ?? null,
       clienteId: usuario.cliente_id,
       permissoes: usuario.permissoes ?? [],
     };
@@ -131,20 +136,20 @@ export default function App() {
     return () => clearTimeout(temporizador);
   }, [estadoAutenticacao]);
 
-  async function concluirAcesso(email, senha) {
-    const dados = await autenticar(email, senha);
+  async function concluirAcesso(identificador, senha) {
+    const dados = await autenticar(identificador, senha);
     /* O login já devolve a conta; o fallback mantém o front funcionando se ele
      * for publicado antes do back que passou a incluí-la na resposta. */
     const usuario = dados.usuario ?? (await buscarUsuarioAtual());
     ativarConta(usuario);
   }
 
-  async function entrar(email, senha) {
+  async function entrar(identificador, senha) {
     setEntrando(true);
     setErroAutenticacao("");
 
     try {
-      await concluirAcesso(email, senha);
+      await concluirAcesso(identificador, senha);
     } catch (erroRecebido) {
       limparToken();
       setErroAutenticacao(erroRecebido.message);
@@ -153,12 +158,12 @@ export default function App() {
     }
   }
 
-  async function cadastrar(nome, email, senha) {
+  async function cadastrar(nome, email, usuario, senha) {
     setCadastrando(true);
     setErroAutenticacao("");
 
     try {
-      await cadastrarUsuario({ nome, email, senha });
+      await cadastrarUsuario({ nome, email, usuario, senha });
       return true;
     } catch (erroRecebido) {
       limparToken();

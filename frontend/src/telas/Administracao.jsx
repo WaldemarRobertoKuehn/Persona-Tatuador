@@ -83,7 +83,8 @@ export default function Administracao({ perfil }) {
       .then((novo) => {
         setFormulario(FORMULARIO_VAZIO);
         setConfirmacaoCadastro(
-          `${novo.nome} agora faz parte da equipe de tatuadores.`,
+          `${novo.nome} agora faz parte da equipe de tatuadores. ` +
+            `Usuário de acesso: ${novo.usuario}.`,
         );
         return carregarTatuadores();
       })

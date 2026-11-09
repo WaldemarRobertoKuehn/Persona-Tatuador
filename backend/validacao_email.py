@@ -62,6 +62,9 @@ def validar_email_entregavel(email: str) -> None:
     Levanta EmailInvalidoError com uma frase que pode ir direto para a tela. A
     consulta ao DNS é feita com tempo limite curto para a rota não ficar presa.
     """
+    if "@" not in email:
+        raise EmailInvalidoError("Informe um e-mail válido.")
+
     local, dominio = email.strip().lower().rsplit("@", 1)
 
     if dominio in _DOMINIOS_RESERVADOS or local in _PARTES_LOCAIS_RESERVADAS:

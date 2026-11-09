@@ -29,7 +29,7 @@ export default function Login({
   const [modo, setModo] = useState(tokenInicial ? "redefinir" : "entrar");
   const [tokenRedefinicao, setTokenRedefinicao] = useState(tokenInicial || "");
   const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
+  const [identificador, setIdentificador] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [erroConfirmacao, setErroConfirmacao] = useState("");
@@ -68,12 +68,12 @@ export default function Login({
         return;
       }
 
-      const cadastroConcluido = await aoCadastrar(nome, email, senha);
+      const cadastroConcluido = await aoCadastrar(nome, identificador, senha);
       if (cadastroConcluido) {
         trocarModo("entrar");
       }
     } else if (ehEsqueciSenha) {
-      const solicitado = await aoSolicitarRedefinicao(email);
+      const solicitado = await aoSolicitarRedefinicao(identificador);
       if (solicitado) {
         setMensagemSucesso(
           "Se houver uma conta com este email, enviaremos um link para redefinir a senha.",
@@ -98,7 +98,7 @@ export default function Login({
         setModo("entrar");
       }
     } else {
-      aoEntrar(email, senha);
+      aoEntrar(identificador, senha);
     }
   }
 
@@ -152,7 +152,7 @@ export default function Login({
             ? "Informe o email da conta para receber um link seguro."
             : ehRedefinicao
               ? "Escolha uma senha nova e confirme antes de salvar."
-              : "Use o e-mail e a senha da sua conta."}
+              : "Use o e-mail ou o usuário e a senha da sua conta."}
       </p>
 
       <form className="cartao" onSubmit={enviar}>
@@ -174,12 +174,14 @@ export default function Login({
 
         {!ehRedefinicao ? (
           <label className="campo">
-            <span className="campo-rodape">E-mail</span>
+            <span className="campo-rodape">
+              {ehCadastro || ehEsqueciSenha ? "E-mail" : "E-mail ou usuário"}
+            </span>
             <input
-              type="email"
-              name="email"
-              value={email}
-              onChange={(evento) => setEmail(evento.target.value)}
+              type={ehCadastro || ehEsqueciSenha ? "email" : "text"}
+              name="identificador"
+              value={identificador}
+              onChange={(evento) => setIdentificador(evento.target.value)}
               autoComplete={ehCadastro || ehEsqueciSenha ? "email" : "username"}
               maxLength={254}
               required

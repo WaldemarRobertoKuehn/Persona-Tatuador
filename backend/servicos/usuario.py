@@ -11,6 +11,7 @@ import repositorios.grupo as repositorio_grupos
 import repositorios.usuario as repositorio_usuarios
 import seguranca
 import servicos.email as servico_email
+import validacao_email
 
 # Os códigos iniciais dos dois grupos de persona. A permissão efetiva vem agora
 # do vínculo de grupo e do catálogo administrável, não apenas destes códigos.
@@ -19,7 +20,7 @@ PAPEL_TATUADOR = "tatuador"
 logger = logging.getLogger(__name__)
 
 
-def cadastrar(dados: dict) -> dict | None:
+def cadastrar(dados: dict, *, validar_email: bool = True) -> dict | None:
     """Cria uma conta ou devolve None quando o email já está cadastrado.
 
     Quem se cadastra pelo formulário público entra no grupo cliente. Os outros
@@ -29,10 +30,23 @@ def cadastrar(dados: dict) -> dict | None:
     essa ligação que faz "minhas tatuagens" filtrar por cliente_id. Quando a
     pessoa ainda não é cliente do estúdio, o serviço cria a linha dela aqui, em
     um commit só: ou os dois nascem, ou nenhum dos dois nasce.
+
+    A checagem do e-mail acontece antes de qualquer gravação. Se o endereço não
+    puder receber a confirmação, EmailInvalidoError sobe e nenhuma linha é
+    criada, nem em clientes nem em usuarios. Scripts de demonstração que usam
+    endereços internos passam validar_email=False.
+
+    O usuário curto é escolhido por quem se cadastra e chega em dados["usuario"].
+    Contas antigas que ainda não têm um passam por definir_usuario().
     """
     email = dados["email"].strip().lower()
     if repositorio_usuarios.buscar_por_email(email) is not None:
         return None
+    usuario_login = dados["usuario"].strip().lower()
+    if repositorio_usuarios.buscar_por_usuario(usuario_login) is not None:
+        return None
+    if validar_email:
+        validacao_email.validar_email_entregavel(email)
     senha_hash = seguranca.gerar_hash(dados["senha"])
     nome = dados["nome"].strip()
     papel = dados.get("papel", PAPEL_CLIENTE)
@@ -50,7 +64,13 @@ def cadastrar(dados: dict) -> dict | None:
 
     try:
         usuario = repositorio_usuarios.criar_usuario(
-            nome, email, senha_hash, grupo["codigo"], cliente_id, grupo["id"]
+            nome,
+            email,
+            senha_hash,
+            grupo["codigo"],
+            cliente_id,
+            grupo["id"],
+            usuario_login,
         )
     except Exception as erro:
         # Trata a corrida em que duas requisições tentam cadastrar o mesmo email.
@@ -87,20 +107,32 @@ def _notificar_conta_criada(usuario: dict) -> None:
         servico_email.enviar_boas_vindas(
             usuario["email"],
             usuario["nome"],
+            usuario["usuario"],
             f"{configuracao.endereco_do_front()}/",
         )
     except Exception:
         logger.exception("Falha ao enviar email de confirmação de cadastro.")
 
 
-def autenticar(email: str, senha: str) -> dict | None:
-    """Devolve a conta quando o email e a senha conferem."""
-    usuario = repositorio_usuarios.buscar_por_email(email.strip().lower())
+def autenticar(identificador: str, senha: str) -> dict | None:
+    """Devolve a conta quando o e-mail ou o usuário curto e a senha conferem."""
+    identificador = identificador.strip().lower()
+    usuario = repositorio_usuarios.buscar_por_identificador(identificador)
     if usuario is None or not usuario.get("senha_hash"):
         return None
     if not seguranca.verificar_senha(senha, usuario["senha_hash"]):
         return None
     return usuario
+
+
+def definir_usuario(usuario_id: int, usuario: str) -> bool:
+    """Define ou troca o usuário curto, recusando um que já é de outra conta."""
+    usuario = usuario.strip().lower()
+    existente = repositorio_usuarios.buscar_por_usuario(usuario)
+    if existente is not None and existente["id"] != usuario_id:
+        return False
+    repositorio_usuarios.atualizar_usuario(usuario_id, usuario)
+    return True
 
 
 def solicitar_redefinicao_senha(email: str) -> None:
@@ -180,8 +212,7 @@ def mover_conta(cliente_id: int, papel: str) -> dict | None:
     grupo = repositorio_grupos.buscar_grupo_por_codigo(papel)
     if grupo is None:
         raise ValueError("O grupo informado não existe.")
-    # NOVO: a migração provisiona os grupos de persona; a conta antiga passa a
-    # carregar também o identificador do grupo correspondente.
+    # A conta antiga entra sem usuário curto e define um depois, pela tela.
     conta = repositorio_usuarios.criar_usuario(
         acesso["nome"],
         acesso["email"],
@@ -189,6 +220,7 @@ def mover_conta(cliente_id: int, papel: str) -> dict | None:
         grupo["codigo"],
         cliente_id if papel == PAPEL_CLIENTE else None,
         grupo["id"],
+        None,
     )
     repositorio_clientes.esvaziar_acesso(cliente_id)
 

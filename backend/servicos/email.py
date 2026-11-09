@@ -49,14 +49,20 @@ def enviar_link_redefinicao(destinatario: str, nome: str, link: str) -> None:
     _enviar(mensagem)
 
 
-def enviar_boas_vindas(destinatario: str, nome: str, link_acesso: str) -> None:
+def enviar_boas_vindas(
+    destinatario: str,
+    nome: str,
+    usuario: str,
+    link_acesso: str,
+) -> None:
     """Envia a confirmação de conta criada para o endereço da própria conta."""
     mensagem = _montar(
         destinatario,
         "Conta criada no Traço Fino",
         f"Olá, {nome}.\n\n"
         "Sua conta no estúdio Traço Fino foi criada com sucesso. "
-        "Use o link abaixo para entrar com o email e a senha que você cadastrou.\n\n"
+        "Seu usuário para entrar é "
+        f"\"{usuario}\"; você também pode usar este e-mail.\n\n"
         f"{link_acesso}\n\n"
         "Se você não criou esta conta, ignore esta mensagem.",
     )

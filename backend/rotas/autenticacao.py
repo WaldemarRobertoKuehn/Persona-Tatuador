@@ -26,6 +26,7 @@ def usuario_publico(usuario: dict) -> dict:
         "id": usuario["id"],
         "nome": usuario["nome"],
         "email": usuario["email"],
+        "usuario": usuario["usuario"],
         "papel": usuario["papel"],
         "cliente_id": usuario["cliente_id"],
         "grupo_id": usuario["grupo_id"],
@@ -36,16 +37,19 @@ def usuario_publico(usuario: dict) -> dict:
 
 @roteador_autenticacao.post("/login", response_model=TokenSaida)
 def login(credenciais: CredenciaisEntrada) -> dict:
-    """Confere email e senha, emite o token e devolve a conta autenticada.
+    """Confere e-mail/usuário e senha, emite o token e devolve a conta.
 
     A conta vai junto para o front não precisar de um segundo pedido a
     /usuarios/eu logo depois do login.
     """
-    usuario = servico_usuarios.autenticar(credenciais.email, credenciais.senha)
+    usuario = servico_usuarios.autenticar(
+        credenciais.identificador,
+        credenciais.senha,
+    )
     if usuario is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou senha incorretos.",
+            detail="E-mail, usuário ou senha incorretos.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return {

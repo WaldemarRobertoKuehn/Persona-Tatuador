@@ -25,7 +25,7 @@ import banco
 
 # NOVO: o JOIN devolve o código do grupo como papel, preservando o contrato do front.
 _CONSULTA_USUARIO = (
-    "SELECT u.id, u.nome, u.email, u.senha_hash, u.papel, u.cliente_id, "
+    "SELECT u.id, u.nome, u.email, u.usuario, u.senha_hash, u.papel, u.cliente_id, "
     "u.grupo_id, g.codigo AS grupo_codigo, g.nome AS grupo_nome, "
     "COALESCE(("
     "SELECT array_agg(p.codigo ORDER BY p.codigo) "
@@ -51,6 +51,31 @@ def buscar_por_email(email: str) -> dict | None:
         )
         return cursor.fetchone()
 
+
+def buscar_por_usuario(usuario: str) -> dict | None:
+    """Busca uma conta pelo identificador curto usado no login."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            _CONSULTA_USUARIO + "WHERE u.usuario = %s",
+            (usuario,),
+        )
+        return cursor.fetchone()
+
+
+def buscar_por_identificador(identificador: str) -> dict | None:
+    """Busca pelo e-mail ou pelo usuário, que são os dois jeitos de entrar.
+
+    O e-mail e o usuário têm índices únicos, então a consulta devolve no máximo
+    uma linha mesmo com o OR.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            _CONSULTA_USUARIO + "WHERE u.email = %s OR u.usuario = %s",
+            (identificador, identificador),
+        )
+        return cursor.fetchone()
+
+
 def criar_usuario(
     nome: str,
     email: str,
@@ -58,6 +83,7 @@ def criar_usuario(
     papel: str,
     cliente_id: int | None,
     grupo_id: int,
+    usuario: str | None,
 ) -> dict:
     """Cria a conta e devolve os dados dela, com o id retornado pelo PostgreSQL.
 
@@ -65,9 +91,10 @@ def criar_usuario(
     """
     with banco.cursor() as cursor:
         cursor.execute(
-            "INSERT INTO usuarios (nome, email, senha_hash, papel, cliente_id, grupo_id) "
-            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-            (nome, email, senha_hash, papel, cliente_id, grupo_id),
+            "INSERT INTO usuarios "
+            "(nome, email, senha_hash, papel, cliente_id, grupo_id, usuario) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (nome, email, senha_hash, papel, cliente_id, grupo_id, usuario),
         )
         usuario_id = cursor.fetchone()["id"]
         cursor.execute(
@@ -75,6 +102,15 @@ def criar_usuario(
             (usuario_id,),
         )
         return cursor.fetchone()
+
+
+def atualizar_usuario(usuario_id: int, usuario: str) -> None:
+    """Define o identificador curto de uma conta que ainda não tinha um."""
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "UPDATE usuarios SET usuario = %s WHERE id = %s",
+            (usuario, usuario_id),
+        )
 
 
 def buscar_usuario_por_id(usuario_id: int) -> dict | None:
