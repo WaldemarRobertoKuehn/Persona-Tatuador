@@ -17,7 +17,7 @@ import { AvisoCarregando, AvisoErro, AvisoVazio } from "../componentes/Avisos";
 import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
 
-const FORMULARIO_VAZIO = { nome: "", email: "", senha: "" };
+const FORMULARIO_VAZIO = { nome: "", email: "", usuario: "", senha: "" };
 
 export default function Administracao({ perfil }) {
   const [tatuadores, setTatuadores] = useState([]);
@@ -180,6 +180,21 @@ export default function Administracao({ perfil }) {
                 />
               </label>
             </div>
+
+            <label className="campo">
+              <span>Usuário</span>
+              <input
+                name="usuario"
+                value={formulario.usuario}
+                onChange={(evento) => mudar("usuario", evento.target.value)}
+                minLength={3}
+                maxLength={50}
+                pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,49}"
+                title="Use de 3 a 50 caracteres: letras, números, ponto, hífen ou sublinhado."
+                autoComplete="username"
+                required
+              />
+            </label>
 
             <label className="campo">
               <span>Senha inicial</span>

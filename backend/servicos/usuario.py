@@ -5,6 +5,9 @@ import hashlib
 import logging
 import secrets
 
+import psycopg2
+from psycopg2 import errorcodes
+
 import configuracao
 import repositorios.cliente as repositorio_clientes
 import repositorios.grupo as repositorio_grupos
@@ -21,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def cadastrar(dados: dict, *, validar_email: bool = True) -> dict | None:
-    """Cria uma conta ou devolve None quando o email já está cadastrado.
+    """Cria uma conta ou devolve None quando o e-mail ou o usuário já existe.
 
     Quem se cadastra pelo formulário público entra no grupo cliente. Os outros
     grupos são atribuídos pelo Administrador ou por scripts locais confiáveis.
@@ -72,9 +75,9 @@ def cadastrar(dados: dict, *, validar_email: bool = True) -> dict | None:
             grupo["id"],
             usuario_login,
         )
-    except Exception as erro:
-        # Trata a corrida em que duas requisições tentam cadastrar o mesmo email.
-        if getattr(erro, "errno", None) == 1062:
+    except psycopg2.IntegrityError as erro:
+        # Trata a corrida em que duas requisições tentam o mesmo e-mail ou usuário.
+        if erro.pgcode == errorcodes.UNIQUE_VIOLATION:
             return None
         raise
 
@@ -131,7 +134,13 @@ def definir_usuario(usuario_id: int, usuario: str) -> bool:
     existente = repositorio_usuarios.buscar_por_usuario(usuario)
     if existente is not None and existente["id"] != usuario_id:
         return False
-    repositorio_usuarios.atualizar_usuario(usuario_id, usuario)
+    try:
+        repositorio_usuarios.atualizar_usuario(usuario_id, usuario)
+    except psycopg2.IntegrityError as erro:
+        # A corrida entre duas contas escolhendo o mesmo usuário cai no índice.
+        if erro.pgcode == errorcodes.UNIQUE_VIOLATION:
+            return False
+        raise
     return True
 
 

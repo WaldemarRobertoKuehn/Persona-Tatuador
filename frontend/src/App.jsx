@@ -225,6 +225,28 @@ export default function App() {
     setTela("senha");
   }
 
+  async function definirUsuario(usuario) {
+    setSalvandoUsuario(true);
+    setErroUsuario("");
+
+    try {
+      const atualizado = await solicitarDefinicaoUsuario(usuario);
+      setPerfil((anterior) => ({ ...anterior, usuario: atualizado.usuario }));
+      return true;
+    } catch (erroRecebido) {
+      setErroUsuario(erroRecebido.message);
+      return false;
+    } finally {
+      setSalvandoUsuario(false);
+    }
+  }
+
+  function abrirDefinicaoUsuario() {
+    setTelaAnterior(tela);
+    setErroUsuario("");
+    setTela("usuario");
+  }
+
   function sair() {
     limparToken();
     setPerfil(null);
@@ -232,6 +254,8 @@ export default function App() {
     setTatuagemAberta(null);
     setTelaAnterior(null);
     setErroAutenticacao("");
+    setErroSenha("");
+    setErroUsuario("");
     setEstadoAutenticacao("desconectado");
   }
 
@@ -321,6 +345,16 @@ export default function App() {
             <button
               type="button"
               className="tela-link"
+              aria-current={tela === "usuario" ? "page" : undefined}
+              onClick={abrirDefinicaoUsuario}
+            >
+              {perfil.usuario ? "Usuário" : "Definir usuário"}
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="tela-link"
               aria-current={tela === "senha" ? "page" : undefined}
               onClick={abrirAlteracaoSenha}
             >
@@ -337,6 +371,17 @@ export default function App() {
 
       {/* Cada tela é desenhada em um bloco só seu, e só entra quando ela é a
           tela atual. É o que mantém o perfil da Bruna longe da agenda. */}
+      {tela === "usuario" ? (
+        <DefinirUsuario
+          usuarioAtual={perfil.usuario}
+          aoSalvar={definirUsuario}
+          aoVoltar={() => setTela(telaAnterior || TELAS[perfil.tipo][0])}
+          aoLimparErro={() => setErroUsuario("")}
+          erro={erroUsuario}
+          salvando={salvandoUsuario}
+        />
+      ) : null}
+
       {tela === "senha" ? (
         <AlterarSenha
           aoSalvar={alterarSenha}

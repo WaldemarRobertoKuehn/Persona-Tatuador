@@ -30,6 +30,8 @@ export default function Login({
   const [tokenRedefinicao, setTokenRedefinicao] = useState(tokenInicial || "");
   const [nome, setNome] = useState("");
   const [identificador, setIdentificador] = useState("");
+  const [usuario, setUsuario] = useState("");
+  const [usuarioEditado, setUsuarioEditado] = useState(false);
   const [senha, setSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [erroConfirmacao, setErroConfirmacao] = useState("");
@@ -50,8 +52,20 @@ export default function Login({
     }
   }, [tokenRedefinicao]);
 
+  function transformarEmUsuario(valor) {
+    return valor
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ".")
+      .replace(/^\.+|\.+$/g, "")
+      .slice(0, 50);
+  }
+
   function trocarModo(novoModo) {
     setModo(novoModo);
+    setUsuario("");
+    setUsuarioEditado(false);
     setSenha("");
     setConfirmacaoSenha("");
     setErroConfirmacao("");
@@ -68,7 +82,12 @@ export default function Login({
         return;
       }
 
-      const cadastroConcluido = await aoCadastrar(nome, identificador, senha);
+      const cadastroConcluido = await aoCadastrar(
+        nome,
+        identificador,
+        usuario,
+        senha,
+      );
       if (cadastroConcluido) {
         trocarModo("entrar");
       }
@@ -147,7 +166,7 @@ export default function Login({
       </h2>
       <p className="legenda">
         {ehCadastro
-          ? "Nome, e-mail e senha. Sua conta começa como Cliente."
+          ? "Nome, e-mail, usuário e senha. Sua conta começa como Cliente."
           : ehEsqueciSenha
             ? "Informe o email da conta para receber um link seguro."
             : ehRedefinicao
@@ -163,7 +182,13 @@ export default function Login({
               type="text"
               name="nome"
               value={nome}
-              onChange={(evento) => setNome(evento.target.value)}
+              onChange={(evento) => {
+                const valor = evento.target.value;
+                setNome(valor);
+                if (!usuarioEditado) {
+                  setUsuario(transformarEmUsuario(valor));
+                }
+              }}
               autoComplete="name"
               minLength={2}
               maxLength={100}
@@ -184,6 +209,32 @@ export default function Login({
               onChange={(evento) => setIdentificador(evento.target.value)}
               autoComplete={ehCadastro || ehEsqueciSenha ? "email" : "username"}
               maxLength={254}
+              required
+            />
+          </label>
+        ) : null}
+
+        {ehCadastro ? (
+          <label className="campo">
+            <span className="campo-rodape">
+              Usuário
+              <span className="campo-dica">
+                3 a 50 caracteres: letras, números, ponto, hífen ou sublinhado
+              </span>
+            </span>
+            <input
+              type="text"
+              name="usuario"
+              value={usuario}
+              onChange={(evento) => {
+                setUsuario(evento.target.value.toLowerCase());
+                setUsuarioEditado(true);
+              }}
+              autoComplete="username"
+              minLength={3}
+              maxLength={50}
+              pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,49}"
+              title="Use de 3 a 50 caracteres: letras, números, ponto, hífen ou sublinhado."
               required
             />
           </label>
