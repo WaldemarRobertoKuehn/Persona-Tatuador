@@ -28,6 +28,7 @@ import Etiqueta from "../componentes/Etiqueta";
 import ImagensDaTatuagem from "../componentes/ImagensDaTatuagem";
 import LinhaDoTempo from "../componentes/LinhaDoTempo";
 import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
+import ResumoDoHistorico from "../componentes/ResumoDoHistorico";
 import { formatarData } from "../datas";
 
 /* "desenho aprovado" não aparece mais aqui: esse passo nasce da aprovação do
@@ -194,6 +195,11 @@ export default function Ficha({ tatuagem, perfil, aoVoltarParaAgenda }) {
           ) : (
             <LinhaDoTempo passos={passos} />
           )}
+
+          <ResumoDoHistorico
+            key={tatuagem.id}
+            tatuagemId={tatuagem.id}
+          />
         </section>
 
         {/* A coluna do formulário. */}

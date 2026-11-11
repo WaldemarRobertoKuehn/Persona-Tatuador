@@ -559,6 +559,24 @@ p {
   color: var(--cor-acento-texto);
 }
 
+/* Separar os controles do resumo da linha do tempo e permitir quebra no celular. */
+.resumo-ia {
+  display: grid;
+  gap: var(--espaco-2);
+  margin-top: var(--espaco-4);
+}
+
+.resumo-ia h3,
+.resumo-ia p {
+  margin: 0;
+}
+
+.resumo-ia__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}
+
 /* A linha do tempo dos quatro pontos de uma tatuagem.
  *
  * É a peça que traduz a regra da cartilha em figura: a tatuagem nasce pedida e

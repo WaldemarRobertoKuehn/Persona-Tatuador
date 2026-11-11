@@ -269,6 +269,14 @@ export function buscarPassos(tatuagemId) {
   ).then(conferirResposta);
 }
 
+/* Solicita um rascunho de resumo sem enviar dados pessoais nem gravar a resposta. */
+export function gerarResumoIA(tatuagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/resumo-ia`),
+    opcoesAutenticadas({ method: "POST" }),
+  ).then(conferirResposta);
+}
+
 /* Registra um passo. O tipo vai exatamente como o back espera, com o til em
  * "sessão": sem ele, o back recusa, porque a regra da cartilha compara o texto
  * inteiro. */

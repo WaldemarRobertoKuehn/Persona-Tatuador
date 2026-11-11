@@ -1,40 +1,59 @@
 # Regras do projeto para a IA
 
-Atualizado até a **aula 3** da UC2, Práticas DevOps em Projetos Web. Salve na raiz do repositório
-da cartilha com o nome `REGRAS.md`, por cima da versão da UC4. Só vale a versão mais nova.
-
-O estado atual inclui melhorias solicitadas depois da aula: cadastro público de clientes sem login
-automático, recuperação e troca de senha, perfis distintos de Cliente, Tatuador e Administrador,
-identificação visual por iniciais da conta, imagens de referência e desenho, agenda por tatuador
-responsável e tela de Administração. Essas funcionalidades já fazem parte do projeto e não devem ser
-tratadas como propostas pendentes.
+Regras até a aula 2 da UC3, Desenvolvimento de Software Apoiado por IA. Salvar na raiz do
+repositório da cartilha como `REGRAS.md`, substituindo a versão anterior.
 
 ## O projeto
 
-- Repositório da cartilha sorteada na UC4. Na UC2, ele é o caso que vai para produção: a aplicação
-  foi desenvolvida na UC4. Agora vamos preparar a infraestrutura e a publicação.
-- Na raiz: `README.md`, `REGRAS.md`, `docs/` (a cartilha, o briefing, o DER, o COMO_RODAR e a
-  arquitetura), `.docs/` (o diário de obra), `frontend/`, `backend/`, `api/` e os arquivos de deploy.
-- A infraestrutura real é **Vercel + Supabase**: o React é estático na Vercel, a API roda como função
-  serverless e o banco é um PostgreSQL do Supabase. O `.env` fica na raiz e o `configuracao.py` é o
-  único que o lê. O `docker-compose.yml` é legado: ele ainda declara MySQL 8.4, `banco`, `api` e
-  `web`; não é o caminho de produção nem prova que a API atual se conecta a esse MySQL.
-- `Caddyfile` na raiz: do caminho local com contêineres. Atende na porta 80, entrega o `/srv` e
-  encaminha `/api/*` para `api:8000`, tirando o prefixo `/api`.
+- Repositório da cartilha sorteada na UC4. A aplicação foi desenvolvida na UC4 e publicada na UC2.
+  Na UC3, ela ganha a funcionalidade de IA planejada no `.docs/ia.md` e apresentada na avaliação.
+- As chaves da IA ficam no `backend/.env`: `GEMINI_API_KEY` e `OPENROUTER_API_KEY`, grátis, e
+  `ANTHROPIC_API_KEY`, paga, do professor. O `configuracao.py` lê com `chave_do_gemini`,
+  `chave_do_openrouter` e `chave_do_claude`. O `.env.exemplo` tem os três nomes, sem valor.
+- `backend/testar_ia.py`: o primeiro pedido, direto pela API do Google, fora da API do projeto.
+- `backend/testar_jangada.py`: o mesmo pedido pelo Jangada (`jangada-ai`), uma biblioteca que chama
+  os provedores, e o pedido do `.docs/ia.md` com a instrução de sistema. Os dois scripts servem
+  para testar antes de integrar a funcionalidade.
+- `backend/ia/`: a pasta da funcionalidade de IA. As configurações dos provedores e as tools ficam aqui.
+  A rota chama uma função dessa pasta.
+  - `ia/__init__.py`, vazio.
+  - `ia/modelos.py`: o `gemini` (principal, plano grátis), o `openrouter` (`openrouter/free`, a
+    primeira reserva, grátis), o `claude` (a terceira opção, chave paga do professor) e
+    `llm = gemini.with_fallback(openrouter, claude)`, que o projeto usa.
+  - `ia/ferramentas.py`: as tools da funcionalidade, prontas do Jangada ou funções do projeto, e a
+    lista `FERRAMENTAS`.
+  - `ia/<funcionalidade>.py`: a `INSTRUCAO` e a função que monta a entrada e chama a IA, com um
+    `Agent` quando houver tools.
+- A rota da funcionalidade chama a função da `ia/`, com `POST`, não grava nada sem a pessoa conferir e
+  devolve 503 com uma frase quando nenhuma das três opções responde.
+- Na raiz: `README.md`, `docs/` (a cartilha, o briefing e o DER), `.docs/` (o diário de obra),
+  `frontend/` e `backend/`.
+- Em produção: o banco é o PostgreSQL do Supabase, pelo Transaction pooler (porta 6543). A API e a
+  tela são dois projetos na Vercel, do mesmo repositório: a API com Root Directory `backend`, a tela
+  com Root Directory `frontend`. O `frontend/vercel.json` encaminha `/api/:caminho*` para a API. As
+  senhas ficam nas Environment Variables da Vercel e no `backend/.env`, nunca no Git.
+- `backend/banco.py`: o `create_engine` usa `poolclass=NullPool`, porque quem guarda conexões é o pooler.
+- `backend/main.py` liga o Sentry antes de criar o `app`. O DSN vem da variável `DSN_DO_SENTRY`.
+- `docker-compose.yml` na raiz, com três serviços: `banco` (MySQL 8.4, com o volume
+  `dados_do_banco`), `api` (imagem do `backend/Dockerfile`) e `web` (imagem do `frontend/Dockerfile`,
+  com o Caddy acessível pela porta 8080 da máquina). As senhas vêm do `.env` da raiz, que fica fora do Git; o `.env.exemplo`
+  tem as mesmas chaves, sem valor.
+- `Caddyfile` na raiz: o servidor web. Atende na porta 80 do contêiner, entrega o `/srv` e encaminha
+  `/api/*` para `api:8000`, tirando o prefixo `/api`.
 - `backend/Dockerfile`, `backend/.dockerignore` e `backend/requirements.txt`, gerado com `pip freeze`.
 - `frontend/Dockerfile`, em duas etapas (Node para o build, Caddy com o `dist/`), e `frontend/.dockerignore`.
 - `frontend/`: o React, rodando com `npm run dev` na porta 5173. O endereço da API vem da variável
   `VITE_URL_DA_API`, lida em `src/api.js`: `.env.development` tem o endereço local que o projeto já usa (no exemplo,
-  `http://localhost:8000`) e
+  `http://127.0.0.1:8000`) e
   `.env.production` tem `/api`. Os dois arquivos vão para o Git e não têm segredo.
 - `frontend/dist/`: gerado pelo `npm run build`, fora do Git.
 - `backend/`: a API em FastAPI, em camadas (`rotas/`, `servicos/`, `repositorios/`, `esquemas/`,
-  `modelos/`), com PostgreSQL pelo SQLAlchemy/psycopg2, migrations com Alembic e login com JWT. Fora do Docker, roda com
-  `fastapi dev main.py`. No contêiner, usa `fastapi run main.py --port 8000`.
-- `api/index.py` e `vercel.json` na raiz: o deploy que serve o front e a API no mesmo projeto da
-  Vercel. `backend/vercel.json` e `backend/api/index.py` fazem o mesmo para o projeto separado de API.
-- `.docs/` contém os registros de IA e infraestrutura mantidos no repositório, incluindo `ia.md`,
-  `infra.md` e `proximos-passos.md`.
+  `modelos/`), com SQLAlchemy, migrations com Alembic e login com JWT. O Compose local usa MySQL;
+  a publicação desta aula usa PostgreSQL no Supabase. Fora do Docker, roda com
+  `fastapi dev main.py`. No contêiner, usa `fastapi run main.py --port 8000`. O MySQL roda na porta 3306.
+- `.docs/` tem `README.md`, `arquitetura.md`, `decisoes.md`, `proximos-passos.md`, `roadmap.md`
+  e `ia.md`, mais o `infra.md`, com a arquitetura de produção e a seção "Como saber que caiu", e a
+  pasta `prints/`.
 - Trabalho individual, inclusive o desenho de abertura. Cada aluno usa o próprio projeto e repositório.
 - Código, nomes, comentários, documentação e respostas sempre em português do Brasil.
 - Cartilha: escreva aqui o número e o nome, e em uma linha a pessoa e a regra.
@@ -76,53 +95,98 @@ tratadas como propostas pendentes.
 - O `depends_on` simples controla a ordem de partida. Ele não espera o MySQL aceitar conexões.
 - `docker compose up -d --build`, `ps`, `logs`, `exec`, `down`. O `down -v` apaga o volume do banco.
 - `fastapi run` como o modo de produção do FastAPI.
-- IaaS, PaaS e SaaS como modelos. EC2, SSH com chave `.pem`, o domínio apontando para o IP e o Caddy
-  emitindo o certificado após configurar domínio, DNS e portas: vistos na demonstração do professor, opcionais.
+- Supabase: projeto, região, senha do banco, botão Connect, Direct connection, Session pooler e
+  Transaction pooler, Table Editor e RLS ativo em cada tabela, sem políticas. A conexão direta
+  com o usuário `postgres` ignora o RLS; a API da aplicação continua responsável pelas permissões.
+- PostgreSQL com o driver `psycopg2-binary` e a URL `postgresql://`. `NullPool` no `create_engine`.
+- Vercel: projeto importado do GitHub, Root Directory, Environment Variables, Deploy, Redeploy, Logs,
+  Domains e o deploy integrado ao Git. Na configuração padrão, a branch de produção atualiza o site
+  após um deploy bem-sucedido; outras branches geram prévias. `vercel.json` com
+  `rewrites`. Função sem servidor: execução sob demanda e sem garantia de arquivos locais persistentes.
+- Vercel e Supabase administram os servidores. O aluno configura a aplicação, o banco e o domínio
+  pelos painéis das plataformas. A publicação da aula 4 parte do projeto local com Docker Compose.
+- Log: o registro que o programa escreve enquanto roda. O terminal do `fastapi dev` já era um log.
+  A linha de acesso traz endereço, método, caminho e status. O erro 500 deixa um traceback, que se
+  lê de baixo para cima: a última linha diz o tipo do erro e a mensagem.
+- `docker compose logs api`, com `--tail N` para as últimas linhas e `-f` para acompanhar.
+  `docker compose stop banco` e `docker compose start banco` para derrubar e religar um serviço.
+- Logs da API na Vercel, na aba Logs do projeto. No plano Hobby, o log de execução fica guardado
+  por uma hora.
+- A rota `/health` como sinal de vida. Do jeito que está, ela prova que a API respondeu, e não que
+  o banco está de pé.
+- Sentry como o log de produção dos erros, no plano grátis Developer. O `sentry-sdk` no
+  `requirements.txt`; `dsn_do_sentry = os.getenv("DSN_DO_SENTRY")` no `configuracao.py`; no
+  `main.py`, `import sentry_sdk` e o `sentry_sdk.init` antes do `app = FastAPI(...)`, com
+  `dsn=configuracao.dsn_do_sentry`, `include_local_variables=False` e `max_request_body_size="never"`.
+  Sem essas duas opções, um erro no login manda a senha e o e-mail para o Sentry.
+- O DSN fica só nas Environment Variables do projeto da API na Vercel. No `.env.exemplo`, a chave vai
+  sem valor. Sem DSN, o Sentry fica desligado: no computador, ele não envia nada.
+- A rota temporária `GET /erro-de-teste`, com `1 / 0`, serviu para forçar o erro em produção e foi
+  apagada depois do teste. Ela não volta.
+- O projeto grátis do Supabase pausa depois de 7 dias sem pedidos ao banco. Ele volta pelo painel.
 
-## Funcionalidades implementadas depois da aula
+- UC3, aula 1: o modelo de linguagem gera texto a partir do pedido recebido. Neste teste, ele não
+  acessa o banco do projeto. Pode errar com confiança e variar a resposta à mesma entrada.
+- Chat e API: no chat, uma pessoa digita; na API, o programa manda o pedido com a chave e recebe a
+  resposta como dado. A API do projeto passa a ser cliente da API do Google.
+- As peças do pedido: modelo, instrução de sistema (o papel e as regras, fixos), entrada (o caso de
+  agora, que muda) e resposta.
+- `from google import genai`, `genai.Client(api_key=configuracao.chave_do_gemini)` e
+  `cliente.interactions.create(model=..., system_instruction=..., input=...)`, com a resposta em
+  `.output_text`. O modelo da aula é o `gemini-3.8-flash`.
+- Os erros: sem chave, `ValueError` (`No API key was provided`); chave errada, 400
+  (`API key not valid`); limite do plano grátis, 429 (`RESOURCE_EXHAUSTED`). O limite vale por projeto.
+- O plano grátis: o Google usa as entradas e as respostas para melhorar os produtos, e pessoas podem
+  ler. Só dados fictícios nos pedidos.
 
-- O cadastro público `POST /usuarios` cria somente contas Cliente. Depois do cadastro, a tela volta
-  ao login; criar uma conta não inicia uma sessão.
-- O login retorna o token e os dados públicos do perfil. Cliente, Tatuador e Administrador recebem
-  telas e rótulos próprios; a autorização continua sendo decidida pelos grupos e permissões do backend.
-- A recuperação de senha envia um link por SMTP. O token expira em 15 minutos, só pode ser usado
-  uma vez e é persistido como hash. A troca autenticada exige a senha atual; as duas operações
-  confirmam a nova senha.
-- O envio de email depende de `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e
-  `SMTP_FROM_EMAIL`, configurados somente no ambiente do backend.
-- A conta do Administrador tem painel próprio. `backend/promover_administrador.py` promove a conta
-  existente identificada pelo projeto; o script de demonstração mantém esse papel ao ser repetido.
-- A barra usa iniciais do nome retornado pelo backend. As imagens das personas de demonstração não
-  são mais avatares compartilhados entre todas as contas.
-- `backend/migracoes/versions/20261106_01_tokens_redefinicao_senha.py` adiciona os campos de
-  expiração e hash do token. O banco existente precisa receber essa migration antes de usar a recuperação.
-- Há testes unitários focados na redefinição em `backend/tests/`; eles não substituem testes de integração
-  com banco ou provedor SMTP.
-- As imagens de uma tatuagem ficam na tabela `tatuagem_imagens`, em `BYTEA`, com limite de 4 MB e
-  tipos JPEG, PNG e WebP. O cliente envia referência e aprova ou recusa o desenho; o tatuador envia o
-  desenho. A aprovação do desenho na etapa `pedida` registra o passo e move a etapa.
-- A agenda é do tatuador responsável, em blocos de uma hora, no fuso UTC-3. Sábado tem expediente
-  reduzido e domingo é fechado. Um índice único parcial impede dois agendamentos ativos no mesmo
-  horário do mesmo tatuador; cancelar libera o horário sem apagar o histórico.
-- `tatuagens.tatuador_id` é o responsável pela agenda, atribuído pelo Administrador. A migration
-  `20261107_02` criou a coluna; o modelo ORM de `tatuagens` ainda não a declara, e o repositório a
-  acessa por SQL explícito.
-- A tela **Administração** cadastra tatuadores e atribui o responsável de cada tatuagem. A gestão de
-  grupos e permissões continua disponível pelas rotas `/grupos` e `/usuarios/{id}/grupo`.
-- Há testes unitários de agenda, imagem e tatuador em `backend/tests/`, além dos de redefinição.
+- O AI Studio: a área de testes (Playground), o **Get code** e a página de limites do projeto.
+- O OpenRouter: uma porta para muitos modelos com uma chave só. Os modelos grátis têm limite (sem
+  créditos comprados, 20 pedidos por minuto e 50 por dia), e o `openrouter/free` escolhe um deles.
+  Alguns provedores grátis guardam os pedidos: só dados fictícios.
+
+- UC3, aula 2: `pip install -U google-genai "jangada-ai[gemini,openai,anthropic]"`. O `[openai]` é o
+  que o Jangada usa para falar com o OpenRouter.
+- Jangada: `from jangada_ai import LLM`,
+  `LLM("gemini", "gemini-3.8-flash", api_key=configuracao.chave_do_gemini)`,
+  `llm.complete(entrada, system=INSTRUCAO)` e a resposta em `.text`, com `.provider` e `.model`
+  dizendo quem respondeu.
+
+- Fallback em três níveis: `gemini.with_fallback(openrouter, claude)`. O Jangada tenta de novo no limite
+  (429), na demora, na falha de conexão e no erro 5xx, e depois passa ao próximo; no modelo inexistente
+  (404) passa direto. Chave inválida e pedido errado dão erro, sem passar adiante. A espera soma a cada
+  nível. `resposta.provider` diz quem respondeu.
+- Tools: uma função que a IA pode pedir para o código rodar. Prontas do Jangada
+  (`jangada_ai.prebuilt`: `consultar_cep`, `feriados_nacionais`, `wikipedia_search`, `calculator` e
+  outras), nativas do provedor (`web_search()`, que no Gemini é a busca do Google) e funções do
+  projeto, com tipos e docstring. `Agent(llm, role=..., goal=INSTRUCAO, tools=[...]).run(entrada)` faz
+  o laço e devolve `.text`.
+- Tool só lê ou calcula. Ela não grava, não apaga e não manda nada para fora sem a pessoa conferir.
 
 ## O que ainda não foi visto, e não deve aparecer
 
-- Mudanças adicionais na lógica do backend além das funcionalidades implementadas e registradas
-  nesta seção, salvo quando forem solicitadas explicitamente. Mudanças em tabelas continuam exigindo
-  migrations versionadas; não altere o banco manualmente.
+- Chamada à IA pelo `frontend/`, SDK de provedor no `frontend/` e qualquer chave em variável `VITE_`.
+- Código de IA fora da pasta `backend/ia/`, e provedor chamado sem passar pelo `llm` de `ia/modelos.py`.
+- Streaming, conversa com memória, vários agentes (`Squad`, `Flow`, `Graph`), MCP e RAG.
+- `async def` e cliente assíncrono.
+- LangChain, LlamaIndex, CrewAI e outro orquestrador no lugar do Jangada.
+- Gravar no banco o que a IA devolveu sem uma pessoa conferir antes.
+- Mudança na regra da cartilha, nos modelos e nas migrations por causa da IA.
 - Redes do Docker declaradas à mão, `network_mode: host`, Docker Swarm e Kubernetes.
 - Nginx configurado no projeto. Ele só foi mostrado para comparar.
-- Domínio e HTTPS no `Caddyfile` do repositório. Isso só existe no servidor da demonstração.
+- Domínio e HTTPS no `Caddyfile` do repositório. Nesta aula, domínio e certificado são configurados
+  pela Vercel. O Caddy continua no ambiente local.
+- SDK do Supabase, API REST do Supabase, autenticação do Supabase e regras de RLS escritas à mão.
+- `asyncpg`, `psycopg` 3, `async def` e sessão assíncrona.
+- Vercel Services, `builds` e `routes` no `vercel.json`, e `vercel.json` no `backend/`.
 - Scripts `.sh` e `Makefile`.
 - Branches, pull request, tags e proteção da `main`. O Git continua como na UC4.
-- GitHub Actions e pipeline de CI/CD. Os testes unitários existentes devem continuar passando.
-- Ferramenta de monitoramento, logs centralizados, métricas.
+- GitHub Actions e testes automatizados. A entrega contínua é a da Vercel, a cada push.
+- Código novo de log no `backend/` (`logging`, `print` de depuração esquecido no código entregue).
+- `send_default_pii`, `traces_sample_rate`, profiling e logs do Sentry. Só os erros.
+- SDK do Sentry no `frontend/`.
+- Monitor externo de disponibilidade, métricas, painéis, Grafana, Prometheus e afins.
+- `healthcheck` no `docker-compose.yml` e mudança na rota `/health`.
+- Agendador para manter o Supabase acordado (cron, GitHub Actions ou similar).
 
 ## Como escrever o código
 
@@ -140,7 +204,7 @@ tratadas como propostas pendentes.
 
 - No começo de toda conversa, leia a `.docs/` inteira antes de abrir qualquer outro arquivo.
 - O que é infraestrutura vai no `infra.md`: o desenho de produção, a tabela de ambientes, o caminho
-  de uma requisição e o que ainda está chumbado no código.
+  de uma requisição, o que ainda está chumbado no código e onde olhar quando algo cai.
 - Escreva frases curtas. Marque com `?` o que você deduziu sem confirmar no código.
 - Não leia `.env` do backend ou da raiz, chaves privadas ou credenciais. Consulte `.env.exemplo`, se existir.
   No front, leia ou altere apenas `VITE_URL_DA_API` nos arquivos de variáveis desta aula.
@@ -150,10 +214,13 @@ tratadas como propostas pendentes.
 ## Como responder
 
 - Uma coisa por vez. Não adiante etapa que eu não pedi.
+- Nas instruções de passo a passo, use verbos no infinitivo.
 - Se a tarefa exigir algo da lista de cima, avise antes e proponha a versão simples.
 - Em todo desenho, diga onde cada peça roda. Para servidores, indique as portas e o acesso
   público ou interno. Para o navegador, indique que é cliente. Não invente uma porta pública nele.
 - Quando houver mais de uma escolha de infraestrutura, me mostre as opções e o que cada uma custa.
   A escolha é minha.
 - Justifique cada decisão em uma linha. Eu preciso explicar o que entrego na apresentação.
+- Num trecho de log que eu colar, se aparecer senha, token ou e-mail de usuário, me avise para apagar
+  e não repita o valor na resposta.
 - Não apague bancos, volumes ou backups. Não execute `docker compose down -v`.

@@ -13,6 +13,7 @@ httptools==0.8.0
 httpx==0.28.1
 idna==3.20
 iniconfig==2.3.1
+jangada-ai[anthropic,gemini,openai]==1.14.1
 Mako==1.4.3
 MarkupSafe==3.0.4
 opentelemetry-api==1.45.1

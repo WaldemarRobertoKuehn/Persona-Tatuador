@@ -23,6 +23,7 @@ import Etiqueta from "../componentes/Etiqueta";
 import ImagensDaTatuagem from "../componentes/ImagensDaTatuagem";
 import LinhaDoTempo from "../componentes/LinhaDoTempo";
 import ProgressoDasEtapas from "../componentes/ProgressoDasEtapas";
+import ResumoDoHistorico from "../componentes/ResumoDoHistorico";
 
 /* O histórico de uma tatuagem, buscado só quando a Bruna abre ela. As imagens e
  * a agenda entram junto porque são a mesma pergunta: o que está acontecendo com
@@ -77,6 +78,8 @@ function Historico({
       {estado === "pronto" && passos.length > 0 ? (
         <LinhaDoTempo passos={passos} />
       ) : null}
+
+      <ResumoDoHistorico tatuagemId={tatuagemId} />
 
       <ImagensDaTatuagem
         tatuagemId={tatuagemId}

@@ -1,9 +1,19 @@
+"""Configurar os provedores de linguagem usados pela funcionalidade."""
+
 from jangada_ai import LLM
+
+# Carregar a configuração central para disponibilizar as variáveis do ambiente
+# ao Jangada, sem copiar ou exibir valores de credenciais neste módulo.
 import configuracao
-gemini = LLM("gemini", "gemini-3.5-flash-lite", api_key=configuracao.chave_do_gemini)
-# a primeira reserva: um modelo grátis escolhido pelo OpenRouter
-openrouter = LLM("openrouter", "openrouter/free",
-                 api_key=configuracao.chave_do_openrouter)
-# a terceira opção: o Claude, pago; só entra quando os outros falham
-#claude = LLM("anthropic", "claude-opus-5-5", api_key=configuracao.chave_do_claude)
-llm = gemini.with_fallback(openrouter)
+
+# Configurar o Gemini principal usando o modelo adotado nas regras da aula.
+gemini = LLM("gemini", "gemini-3.8-flash")
+
+# Configurar a primeira reserva gratuita, deixando o OpenRouter escolher o modelo.
+openrouter = LLM("openrouter", "openrouter/free")
+
+# Configurar o Claude pago como terceira opção, após Gemini e OpenRouter falharem.
+claude = LLM("anthropic", "claude-opus-5-5")
+
+# Encadear os provedores na ordem de prioridade escolhida para a funcionalidade.
+llm = gemini.with_fallback(openrouter, claude)
