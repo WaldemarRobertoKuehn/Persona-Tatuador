@@ -11,9 +11,10 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
 
     # Substituir LLM por um objeto falso que registra a ordem sem usar credenciais.
     class LLMFalso:
-        def __init__(self, provedor, modelo):
+        def __init__(self, provedor, modelo, **opcoes):
             self.provedor = provedor
             self.modelo = modelo
+            self.opcoes = opcoes
             chamadas.append((provedor, modelo))
 
         def with_fallback(self, *reservas):
@@ -21,10 +22,18 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
 
     jangada_falsa = types.ModuleType("jangada_ai")
     jangada_falsa.LLM = LLMFalso
+    erros_falsos = types.ModuleType("jangada_ai.errors")
+
+    class ErroAutenticacaoFalso(Exception):
+        pass
+
+    erros_falsos.AuthError = ErroAutenticacaoFalso
+    erros_falsos.DEFAULT_FAILOVER = (RuntimeError,)
     configuracao_falsa = types.ModuleType("configuracao")
 
     # Substituir módulos externos antes de importar a configuração de provedores.
     monkeypatch.setitem(sys.modules, "jangada_ai", jangada_falsa)
+    monkeypatch.setitem(sys.modules, "jangada_ai.errors", erros_falsos)
     monkeypatch.setitem(sys.modules, "configuracao", configuracao_falsa)
     modulo_anterior = sys.modules.pop("ia.modelos", None)
 
@@ -41,6 +50,10 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
             modelos.gemini,
             modelos.openrouter,
             modelos.claude,
+        )
+        assert modelos.gemini.opcoes["retry_on"] == (
+            RuntimeError,
+            ErroAutenticacaoFalso,
         )
     finally:
         # Restaurar o módulo real anterior para não afetar outros testes.

@@ -49,7 +49,9 @@ separada e a identificação de resumos antigos ficam fora desta implementação
   preenchê-la por inferência.
 - **Provedores:** Gemini (`gemini-3.8-flash`) como principal, OpenRouter (`openrouter/free`) como
   primeira reserva e Anthropic (`claude-opus-5-5`) como terceira opção paga. A dependência Jangada
-  está fixada em `1.14.1`, com extras Gemini, OpenAI para OpenRouter e Anthropic.
+  está fixada em `1.14.1`, com extras Gemini, OpenAI para OpenRouter e Anthropic. Falhas de
+  autenticação no provedor principal também avançam para as reservas; a rota registra apenas
+  provedor, categoria e status da última falha, sem registrar mensagens da API ou credenciais.
 - **Persistência:** não implementada por decisão de escopo. A confirmação na tela não grava nada.
 - **Teste manual real:** ainda pendente; o script pode usar os provedores e, se necessário, o Claude
   pago. Não executar sem considerar o uso de cota e custo.

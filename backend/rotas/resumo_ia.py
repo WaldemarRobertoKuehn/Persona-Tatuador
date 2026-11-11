@@ -1,5 +1,7 @@
 """Rota HTTP para solicitar um rascunho de resumo por IA."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from jangada_ai.errors import LLMError
 
@@ -8,6 +10,11 @@ from rotas.dependencias import exigir_acesso_a_tatuagem
 
 # Manter a lógica de IA dentro de backend/ia; a rota só encaminha e traduz falhas.
 from ia.sugestoes import resumir_historico
+
+
+# Registrar somente metadados normalizados para ajudar a diagnosticar falhas
+# sem expor mensagens do provedor, conteúdo da tatuagem ou credenciais.
+logger = logging.getLogger(__name__)
 
 
 # Agrupar a rota no caminho da tatuagem e documentar o recurso no /docs.
@@ -36,8 +43,15 @@ def gerar_resumo_ia(
     try:
         return {"rascunho": resumir_historico(tatuagem)}
     except LLMError as erro:
-        # Traduzir falhas normalizadas do Jangada em indisponibilidade, sem
-        # expor detalhes de provedores, configurações ou credenciais na resposta.
+        # Registrar apenas a categoria e o provedor da última falha normalizada.
+        logger.warning(
+            "Resumo por IA indisponível: provedor=%s categoria=%s status=%s",
+            erro.provider or "não identificado",
+            erro.category,
+            erro.status_code or "não informado",
+        )
+
+        # Traduzir a falha em indisponibilidade sem expor detalhes na resposta.
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="A IA não conseguiu gerar o resumo agora. Tente novamente mais tarde.",
