@@ -16,6 +16,7 @@ import {
 import { AvisoCarregando, AvisoErro, AvisoVazio } from "../componentes/Avisos";
 import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
+import SimulacaoDoStudio from "../componentes/SimulacaoDoStudio";
 
 const FORMULARIO_VAZIO = { nome: "", email: "", usuario: "", senha: "" };
 
@@ -120,6 +121,8 @@ export default function Administracao({ perfil }) {
         titulo="Administração"
         apoio={`${perfil.nome}, cadastre tatuadores e defina quem responde pela agenda de cada tatuagem.`}
       />
+
+      <SimulacaoDoStudio />
 
       <div className="secoes-da-ficha">
         <section className="cartao">

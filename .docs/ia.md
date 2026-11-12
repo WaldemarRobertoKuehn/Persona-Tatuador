@@ -40,7 +40,25 @@ separada e a identificação de resumos antigos ficam fora desta implementação
 - O Jangada encadeia Gemini, OpenRouter e Claude. A rota responde 503 com uma frase fixa quando a
   chamada à IA falha.
 - O rascunho é revisado e editado na tela, mas não é salvo. Não há endpoint de persistência de resumo.
-- A implementação usa um único Agent por solicitação; não usa Squad, Flow, Graph, MCP ou RAG.
+- O resumo do histórico usa um Agent por solicitação; a simulação do estúdio usa quatro Agents,
+  um por persona, em sequência. Nenhuma das duas funcionalidades usa Squad, Flow, Graph, MCP ou RAG.
+
+### Simulação de atendimento com personas
+
+A área **Administração** oferece uma simulação fictícia iniciada com uma situação curta descrita
+pela pessoa administradora. A API valida a permissão `grupos:consultar` e chama quatro Agents,
+sequencialmente:
+
+1. **Cliente:** apresenta a ideia e uma dúvida somente quando ela estiver no contexto informado.
+2. **Atendente:** acolhe e pergunta o que falta para organizar o pedido, sem confirmar preço ou agenda.
+3. **Tatuador(a):** comenta o aspecto artístico e aponta alinhamentos, sem recomendar cuidados de saúde.
+4. **Administrador(a):** resume os encaminhamentos, sem alegar que realizou qualquer operação.
+
+Cada etapa devolve um resumo explicativo e a fala da persona. O resultado depende da IA e é apenas
+uma demonstração: não cria pedidos, não altera tatuagens nem agenda, e não é salvo. O texto digitado
+é enviado ao provedor configurado; a tela pede que não sejam informados nomes, contatos ou outros
+dados pessoais. Falhas do provedor ou respostas fora do formato esperado resultam em 503, sem
+fabricar etapas.
 
 ### Requisitos definidos e pendências
 

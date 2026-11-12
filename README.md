@@ -42,6 +42,7 @@ Além delas, o sistema tem as capacidades que foram acrescentadas depois da cart
 | Aprovar ou recusar o desenho | `POST /tatuagens/{tatuagem_id}/imagens/{imagem_id}/aprovacao`, `.../recusa` |
 | Consultar e marcar a agenda | `GET/POST /tatuagens/{tatuagem_id}/agendamentos`, `GET .../disponibilidade`, `DELETE .../{agendamento_id}` |
 | Administrar grupos e permissões | `GET/POST /grupos`, `PUT /grupos/{grupo_id}/permissoes`, `GET /grupos/permissoes`, `PUT /usuarios/{usuario_id}/grupo` |
+| Simular atendimento com Cliente, Atendente, Tatuador(a) e Administrador(a) | `POST /simulacoes/studio` (somente Administração) |
 
 As imagens ficam no próprio PostgreSQL, na coluna `conteudo` de `tatuagem_imagens`, e o download é
 autenticado. A agenda é do tatuador responsável: cada sessão ou retoque ocupa um bloco de uma hora,

@@ -577,6 +577,47 @@ p {
   gap: var(--espaco-2);
 }
 
+.simulacao-studio {
+  display: grid;
+  gap: var(--espaco-3);
+  margin-bottom: var(--espaco-4);
+}
+
+.simulacao-studio h2,
+.simulacao-studio h3,
+.simulacao-studio p {
+  margin: 0;
+}
+
+.etapas-simulacao {
+  display: grid;
+  gap: var(--espaco-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.etapa-simulacao {
+  display: grid;
+  gap: var(--espaco-2);
+  padding: var(--espaco-3);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+}
+
+.etapa-simulacao__numero {
+  color: var(--cor-acento-texto);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.etapa-simulacao blockquote {
+  margin: 0;
+  padding-left: var(--espaco-3);
+  border-left: 2px solid var(--cor-borda);
+}
+
 /* A linha do tempo dos quatro pontos de uma tatuagem.
  *
  * É a peça que traduz a regra da cartilha em figura: a tatuagem nasce pedida e

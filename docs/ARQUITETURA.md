@@ -150,6 +150,8 @@ sequenceDiagram
 | `rotas/grupos.py` | catálogo de permissões, grupos e atribuição de permissões |
 | `rotas/tatuagens.py` | CRUD de tatuagem, filtros e atribuição do tatuador responsável |
 | `rotas/passos.py` | histórico e registro de passo |
+| `rotas/resumo_ia.py` | rascunho de resumo do histórico |
+| `rotas/simulacao_studio.py` | simulação fictícia de atendimento, restrita à Administração |
 | `rotas/imagens.py` | upload, listagem, download, aprovação, recusa e remoção |
 | `rotas/agendamentos.py` | disponibilidade, criação, listagem e cancelamento |
 | `rotas/health.py` | confirmação de disponibilidade sem consultar o banco |
@@ -157,6 +159,10 @@ sequenceDiagram
 
 `main.py` não declara rota: ele só cria o app, registra o CORS, instala o middleware de conexão e
 inclui os routers.
+
+A simulação de atendimento chama quatro Agents em sequência, um para cada persona, e apresenta
+resumo e fala em cada etapa. A entrada é hipotética, não é persistida e não aciona operações do
+estúdio. A rota exige a permissão administrativa `grupos:consultar`.
 
 ### 5.2 Esquemas
 
@@ -450,5 +456,5 @@ documentação da produção nem como prova de conexão funcional com o banco at
   coluna. O modelo está incompleto em relação ao banco.
 - `docker-compose.yml` e `Caddyfile` descrevem MySQL e um caminho antigo; são legado.
 - Não há teste de integração com PostgreSQL real nem com SMTP.
-- A funcionalidade de IA descrita em `.docs/ia.md` está planejada, sem rota, tela ou implementação.
+- A funcionalidade de IA e a simulação de personas estão descritas em `.docs/ia.md`.
 - `.docs/ia.doc` não foi confirmado como documento texto ou binário.

@@ -277,6 +277,18 @@ export function gerarResumoIA(tatuagemId) {
   ).then(conferirResposta);
 }
 
+/* Gera uma simulação fictícia em quatro etapas, sem gravar dados do estúdio. */
+export function simularAtendimentoStudio(situacao) {
+  return fetch(
+    caminho("/simulacoes/studio"),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ situacao }),
+    }),
+  ).then(conferirResposta);
+}
+
 /* Registra um passo. O tipo vai exatamente como o back espera, com o til em
  * "sessão": sem ele, o back recusa, porque a regra da cartilha compara o texto
  * inteiro. */

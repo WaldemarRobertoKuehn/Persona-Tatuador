@@ -22,6 +22,7 @@ from rotas import agendamentos as rotas_agendamentos
 from rotas import imagens as rotas_imagens
 from rotas import passos as rotas_passos
 from rotas import resumo_ia as rotas_resumo_ia
+from rotas import simulacao_studio as rotas_simulacao_studio
 from rotas import autenticacao as rotas_autenticacao
 # NOVO: o router de grupos oferece gestão administrativa de permissões.
 from rotas import grupos as rotas_grupos
@@ -69,6 +70,7 @@ app.include_router(rotas_imagens.roteador_imagens)
 app.include_router(rotas_agendamentos.roteador_agendamentos)
 app.include_router(rotas_passos.roteador_passos)
 app.include_router(rotas_resumo_ia.roteador_resumo_ia)
+app.include_router(rotas_simulacao_studio.roteador_simulacao_studio)
 app.include_router(rotas_usuarios.roteador_usuarios)
 app.include_router(rotas_autenticacao.roteador_autenticacao)
 # NOVO: endpoint administrativo de grupos e permissões.
