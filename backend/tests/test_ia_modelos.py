@@ -42,7 +42,7 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
 
         # Conferir os nomes escolhidos e a composição exata da cadeia.
         assert chamadas == [
-            ("gemini", "gemini-3.8-flash"),
+            ("gemini", "gemini-3.5-flash"),
             ("openrouter", "openrouter/free"),
             ("anthropic", "claude-opus-5-5"),
         ]

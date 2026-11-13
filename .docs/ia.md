@@ -65,8 +65,10 @@ fabricar etapas.
 - **Referências:** cada afirmação factual deve apontar para os números dos passos que a sustentam.
   Quando os registros não sustentarem uma conclusão, o resumo deve explicitar a lacuna, sem
   preenchê-la por inferência.
-- **Provedores:** Gemini (`gemini-3.8-flash`) como principal, OpenRouter (`openrouter/free`) como
-  primeira reserva e Anthropic (`claude-opus-5-5`) como terceira opção paga. A dependência Jangada
+- **Provedores:** Gemini (`gemini-3.5-flash`) como principal, OpenRouter (`openrouter/free`) como
+  primeira reserva e Anthropic (`claude-opus-5-5`) como terceira opção paga. O `gemini-3.8-flash`
+  foi substituído por responder 503 de alta demanda com frequência; a chamada ao Gemini usa timeout
+  de 30 s e não repete a tentativa, para a reserva assumir sem deixar a tela esperando. A dependência Jangada
   está fixada em `1.14.1`, com extras Gemini, OpenAI para OpenRouter e Anthropic. Falhas de
   autenticação no provedor principal também avançam para as reservas; a rota registra apenas
   provedor, categoria e status da última falha, sem registrar mensagens da API ou credenciais.

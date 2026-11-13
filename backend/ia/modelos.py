@@ -9,10 +9,15 @@ import configuracao
 
 # Configurar o Gemini principal e permitir a troca de provedor quando a
 # credencial dele estiver ausente ou inválida, sem repetir a mesma chamada.
+# O modelo 3.5 é usado porque o 3.8 responde 503 de alta demanda com frequência.
+# O timeout e a ausência de retentativa fazem a reserva assumir rapidamente em
+# vez de deixar a pessoa esperando por uma resposta que não vem.
 gemini = LLM(
     "gemini",
-    "gemini-3.8-flash",
+    "gemini-3.5-flash",
     retry_on=(*DEFAULT_FAILOVER, AuthError),
+    max_retries=0,
+    http_options={"timeout": 30000},
 )
 
 # Configurar a primeira reserva gratuita, deixando o OpenRouter escolher o modelo.
