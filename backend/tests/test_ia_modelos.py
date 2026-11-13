@@ -5,7 +5,7 @@ import sys
 import types
 
 
-# Garantir que o fallback aponta primeiro ao OpenRouter e depois ao Claude.
+# Garantir que o fallback aponta primeiro ao OpenRouter, depois ao Gemini e Claude.
 def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
     chamadas = []
 
@@ -47,11 +47,15 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
             ("anthropic", "claude-opus-5-5"),
         ]
         assert modelos.llm == (
-            modelos.gemini,
             modelos.openrouter,
+            modelos.gemini,
             modelos.claude,
         )
         assert modelos.gemini.opcoes["retry_on"] == (
+            RuntimeError,
+            ErroAutenticacaoFalso,
+        )
+        assert modelos.openrouter.opcoes["retry_on"] == (
             RuntimeError,
             ErroAutenticacaoFalso,
         )
