@@ -15,6 +15,19 @@ fechar a aba.
 - **Node.js**, para o front. O `node_modules` já está em `frontend/`, então
   `npm install` só é preciso se você apagar essa pasta.
 
+### Configurar a IA
+
+Configure `GEMINI_API_KEY` e `OPENROUTER_API_KEY` no `.env` da raiz. A chave
+`ANTHROPIC_API_KEY` é opcional e habilita o último provedor de reserva.
+
+Se estiver usando o Compose legado, as três variáveis são repassadas para a API
+pelo `docker-compose.yml`. Depois de alterar o `.env`, recrie o serviço `api`
+para ele receber os valores novos:
+
+```powershell
+docker compose up -d --build --force-recreate api
+```
+
 ### Se o banco não existir ainda
 
 O back não sobe sem o PostgreSQL, porque é nele que os dados moram. O desenho do
