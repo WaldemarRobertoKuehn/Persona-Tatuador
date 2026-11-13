@@ -1,14 +1,15 @@
 """Configurar os provedores de linguagem usados pela funcionalidade."""
 
 from jangada_ai import LLM
-from jangada_ai.errors import AuthError, DEFAULT_FAILOVER
+from jangada_ai.errors import AuthError, DEFAULT_FAILOVER, ProviderError
 
 # Carregar a configuração central para disponibilizar as variáveis do ambiente
 # ao Jangada, sem copiar ou exibir valores de credenciais neste módulo.
 import configuracao
 
-# Permitir a próxima opção da cadeia em falhas transitórias e de autenticação.
-ERROS_DE_FALLBACK = (*DEFAULT_FAILOVER, AuthError)
+# Permitir a próxima opção da cadeia em falhas transitórias, de autenticação
+# e de configuração do provedor (por exemplo, chave de API ausente).
+ERROS_DE_FALLBACK = (*DEFAULT_FAILOVER, AuthError, ProviderError)
 
 # Configurar o Gemini como segunda opção sem repetir a mesma chamada.
 # O modelo 3.5 é usado porque o 3.8 responde 503 de alta demanda com frequência.
