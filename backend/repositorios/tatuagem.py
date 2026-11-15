@@ -35,7 +35,7 @@ import banco
 # por linha.
 _IMAGEM_DO_DESENHO = (
     "LEFT JOIN LATERAL ("
-    "SELECT i.id FROM tatuagem_imagens AS i "
+    "SELECT i.id, i.status FROM tatuagem_imagens AS i "
     "WHERE i.tatuagem_id = t.id AND i.tipo = 'desenho' "
     "ORDER BY (i.status = 'aprovada') DESC, "
     "(i.status = 'recusada') ASC, i.id DESC "
@@ -91,10 +91,10 @@ def listar_tatuagens(
 
     sql = (
         "SELECT t.id, t.cliente_id, t.tatuador_id, t.ideia, t.local_do_corpo, "
-        "t.tamanho, t.etapa, "
+        "t.tamanho, t.etapa, t.origem, "
         "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
         "u.nome AS tatuador_nome, "
-        "d.id AS desenho_imagem_id "
+        "d.id AS desenho_imagem_id, d.status AS desenho_status "
         "FROM tatuagens AS t "
         "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
         "LEFT JOIN usuarios AS u ON u.id = t.tatuador_id "
@@ -123,10 +123,10 @@ def buscar_tatuagem(tatuagem_id: int) -> dict | None:
     with banco.cursor() as cursor:
         cursor.execute(
             "SELECT t.id, t.cliente_id, t.tatuador_id, t.ideia, t.local_do_corpo, "
-            "t.tamanho, t.etapa, "
+            "t.tamanho, t.etapa, t.origem, "
             "COALESCE(c.nome, 'cliente ' || t.cliente_id) AS nome_da_cliente, "
             "u.nome AS tatuador_nome, "
-            "d.id AS desenho_imagem_id "
+            "d.id AS desenho_imagem_id, d.status AS desenho_status "
             "FROM tatuagens AS t "
             "LEFT JOIN clientes AS c ON c.id = t.cliente_id "
             "LEFT JOIN usuarios AS u ON u.id = t.tatuador_id "
@@ -161,8 +161,8 @@ def criar_tatuagem(dados: dict) -> dict:
     with banco.cursor() as cursor:
         cursor.execute(
             "INSERT INTO tatuagens "
-            "(cliente_id, tatuador_id, ideia, local_do_corpo, tamanho, etapa) "
-            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            "(cliente_id, tatuador_id, ideia, local_do_corpo, tamanho, etapa, origem) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
             (
                 dados["cliente_id"],
                 dados.get("tatuador_id"),
@@ -170,6 +170,7 @@ def criar_tatuagem(dados: dict) -> dict:
                 dados["local_do_corpo"],
                 dados["tamanho"],
                 dados["etapa"],
+                dados.get("origem", "cliente"),
             ),
         )
 
@@ -230,6 +231,25 @@ def atualizar_tatuador(
         )
 
     return "ok", buscar_tatuagem(tatuagem_id)
+
+
+def listar_tatuagens_sem_desenho() -> list[dict]:
+    """Devolve as tatuagens que ainda não têm nenhuma imagem do tipo desenho.
+
+    A consulta usa NOT EXISTS em vez de LEFT JOIN com IS NULL para não multiplicar
+    a tatuagem quando ela tiver referências. O script de preenchimento usa esta
+    lista para gerar uma proposta por tatuagem faltante.
+    """
+    with banco.cursor() as cursor:
+        cursor.execute(
+            "SELECT t.id, t.ideia, t.local_do_corpo, t.tamanho "
+            "FROM tatuagens AS t "
+            "WHERE NOT EXISTS ("
+            "SELECT 1 FROM tatuagem_imagens AS i "
+            "WHERE i.tatuagem_id = t.id AND i.tipo = 'desenho'"
+            ") ORDER BY t.id"
+        )
+        return [_com_tamanho_em_float(tatuagem) for tatuagem in cursor.fetchall()]
 
 
 def atualizar_etapa(tatuagem_id: int, etapa: str) -> dict | None:

@@ -24,7 +24,12 @@ import { AvisoCarregando, AvisoErro, AvisoVazio } from "./Avisos";
 /* O mesmo limite do back, repetido aqui só para avisar antes do upload. Quem
  * recusa de verdade continua sendo o servidor. */
 const TAMANHO_MAXIMO = 4 * 1024 * 1024;
-const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
+const TIPOS_ACEITOS = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+];
 
 const ROTULO_DO_STATUS = {
   pendente: "Aguardando aprovação",
@@ -153,7 +158,7 @@ export default function ImagensDaTatuagem({
     }
 
     if (!TIPOS_ACEITOS.includes(escolhido.type)) {
-      setErroAcao("Escolha uma imagem JPEG, PNG ou WebP.");
+      setErroAcao("Escolha uma imagem JPEG, PNG, WebP ou SVG.");
       evento.target.value = "";
       setArquivo(null);
       return;
@@ -394,7 +399,7 @@ export default function ImagensDaTatuagem({
             <input
               ref={campoArquivo}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/svg+xml"
               onChange={escolherArquivo}
             />
           </label>

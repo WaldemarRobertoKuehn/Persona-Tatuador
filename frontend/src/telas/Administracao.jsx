@@ -13,6 +13,7 @@ import {
   buscarTatuagens,
   cadastrarTatuador,
 } from "../api";
+import AtendimentoPresencial from "../componentes/AtendimentoPresencial";
 import { AvisoCarregando, AvisoErro, AvisoVazio } from "../componentes/Avisos";
 import CabecalhoDaTela from "../componentes/CabecalhoDaTela";
 import Etiqueta from "../componentes/Etiqueta";
@@ -119,7 +120,14 @@ export default function Administracao({ perfil }) {
     <main className="tela">
       <CabecalhoDaTela
         titulo="Administração"
-        apoio={`${perfil.nome}, cadastre tatuadores e defina quem responde pela agenda de cada tatuagem.`}
+        apoio={`${perfil.nome}, cadastre clientes e tatuadores, gere desenhos e defina quem responde pela agenda de cada tatuagem.`}
+      />
+
+      <AtendimentoPresencial
+        perfil={perfil}
+        tatuadores={tatuadores}
+        tatuagens={tatuagens}
+        aoAtualizarTatuagens={carregarTatuagens}
       />
 
       <SimulacaoDoStudio />

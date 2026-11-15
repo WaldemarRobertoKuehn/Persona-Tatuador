@@ -60,6 +60,29 @@ uma demonstração: não cria pedidos, não altera tatuagens nem agenda, e não 
 dados pessoais. Falhas do provedor ou respostas fora do formato esperado resultam em 503, sem
 fabricar etapas.
 
+### Desenho de tatuagem em SVG
+
+A **Administração** ganhou o fluxo de atendimento presencial. O administrador cadastra a cliente,
+registra o pedido com origem `presencial`, escolhe ou aceita o tatuador padrão e pede uma proposta de
+desenho à IA. A rota `POST /tatuagens/{tatuagem_id}/desenho-ia` exige `desenhos:gerar`, chama
+`ia.desenho.gerar_desenho` e grava o SVG como imagem `desenho` com status `pendente`.
+
+O modelo de texto não devolve imagem raster. Por isso o desenho é pedido como SVG de linha fina, com
+apenas `svg`, `g`, `path`, `circle`, `ellipse`, `line`, `polyline`, `polygon` e `rect`. O validador
+em `backend/ia/desenho.py` remove preenchimento, força traço preto, recusa script, estilo, imagem,
+texto, link, DTD e entidade, e limita o arquivo a 500 KB. A rota responde 503 quando nenhum provedor
+consegue desenhar; não há desenho fabricado como resposta.
+
+No atendimento presencial, o administrador aprova ou recusa o desenho em nome da cliente. A exceção
+só vale para tatuagem com origem `presencial`, e o passo `desenho aprovado` continua sendo o único
+caminho para a tatuagem entrar na agenda do tatuador. A aprovação grava o passo com
+`aprovado_pelo_cliente=True` e uma observação identificando o balcão.
+
+O script `backend/gerar_desenhos_pendentes.py` preenche tatuagens sem imagem do tipo desenho. Ele
+tem `--simular`, `--limite` e `--reserva`; a reserva local é exclusiva do script e não é usada pela
+rota HTTP. O primeiro passo em produção deve ser `--simular`, porque o banco real não é acessado pelos
+testes automatizados.
+
 ### Requisitos definidos e pendências
 
 - **Referências:** cada afirmação factual deve apontar para os números dos passos que a sustentam.
@@ -160,7 +183,8 @@ Os números são referências de teste; o backend precisaria fornecê-los no uso
 ### Testes
 
 Os testes automatizados usam somente dados fictícios e substituem o Agent/provedor por objetos
-falsos. A suíte do backend foi executada: `66 passed`. O lint e o build do frontend também passaram.
+falsos. A suíte do backend foi executada: `84 passed`, incluindo `tests/test_desenho.py` e os casos
+de aprovação administrativa em `tests/test_imagem.py`. O lint e o build do frontend também passaram.
 Isso não confirma uma resposta real dos provedores. O teste manual abaixo continua pendente.
 
 Para validar a ordem sem chamadas externas, executar na pasta `backend`:

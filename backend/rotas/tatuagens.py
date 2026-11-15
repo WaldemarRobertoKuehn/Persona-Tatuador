@@ -95,16 +95,35 @@ def pedir_tatuagem(
     O status é 201 e não 200 porque foi criado algo novo. A etapa "pedida" não é
     passada aqui: quem decide essa etapa é o serviço, que aplica a regra.
     """
+    permissoes = set(usuario.get("permissoes", []))
+
     if (
-        "tatuagens:criar_para_qualquer_cliente"
-        not in usuario.get("permissoes", [])
+        "tatuagens:criar_para_qualquer_cliente" not in permissoes
         and tatuagem.cliente_id != usuario.get("cliente_id")
     ):
         raise HTTPException(
             status_code=403,
             detail="Você só pode solicitar tatuagens para o seu próprio cadastro.",
         )
-    return servico_tatuagens.pedir_tatuagem(tatuagem.model_dump())
+
+    if tatuagem.origem == "presencial" and "clientes:cadastrar" not in permissoes:
+        raise HTTPException(
+            status_code=403,
+            detail="Só a administração pode registrar um atendimento presencial.",
+        )
+
+    dados = tatuagem.model_dump()
+
+    # Fora do balcão, o front não escolhe o profissional nem a origem: o serviço
+    # usa o tatuador padrão e a tatuagem nasce como pedido do site.
+    if "clientes:cadastrar" not in permissoes:
+        dados["origem"] = "cliente"
+        dados["tatuador_id"] = None
+
+    try:
+        return servico_tatuagens.pedir_tatuagem(dados)
+    except ValueError as erro:
+        raise HTTPException(status_code=422, detail=str(erro)) from erro
 
 
 # NOVO: o acesso ao detalhe confere permissão e titularidade no servidor.

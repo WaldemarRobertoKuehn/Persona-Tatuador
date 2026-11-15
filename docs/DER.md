@@ -108,6 +108,7 @@ erDiagram
         VARCHAR(80) local_do_corpo NOT_NULL
         DECIMAL(6,2) tamanho NOT_NULL
         VARCHAR(30) etapa NOT_NULL
+        VARCHAR(20) origem NOT_NULL
     }
 
     PASSOS {
@@ -226,6 +227,7 @@ ao conteúdo do JWT. A API impede remover a última conta Administrador.
 | `local_do_corpo` | VARCHAR(80) | `NOT NULL` | onde no corpo vai ser tatuado |
 | `tamanho` | DECIMAL(6,2) | `NOT NULL` | o tamanho em centímetros |
 | `etapa` | VARCHAR(30) | `NOT NULL` | em que etapa a tatuagem está |
+| `origem` | VARCHAR(20) | `NOT NULL`, `DEFAULT 'cliente'` | `cliente` para pedido pelo site ou `presencial` para pedido cadastrado no balcão |
 
 - **`cliente_id` com `FOREIGN KEY`** porque é essa restrição que impede uma tatuagem órfã, que é o
   tipo de dado quebrado que ninguém percebe até a tela abrir em branco. A chave estrangeira vai na
@@ -252,6 +254,9 @@ ao conteúdo do JWT. A API impede remover a última conta Administrador.
   mudasse num esquecesse do outro. Fica em `VARCHAR`, e quem garante o texto é o serviço.
 - **`etapa` começa em `pedida`** e isso é o serviço que decide, no `pedir_tatuagem`, porque é a regra
   da cartilha que diz que a tatuagem nova nasce pedida.
+- **`origem` começa em `cliente`** e só a Administração grava `presencial`, pela rota de criação. A
+  coluna não muda a etapa: ela libera a aprovação administrativa do desenho quando a cliente não tem
+  conta no site. A migration `20261115_01` criou a coluna com esse padrão para as linhas antigas.
 
 ## 6. passos
 
@@ -283,7 +288,7 @@ ao conteúdo do JWT. A API impede remover a última conta Administrador.
 | `id` | INT | `PRIMARY KEY`, `AUTO_INCREMENT` | o número que identifica a imagem |
 | `tatuagem_id` | INT | `NOT NULL`, `FOREIGN KEY` → `tatuagens(id)`, `ON DELETE CASCADE` | de qual tatuagem é a imagem |
 | `nome` | VARCHAR(255) | `NOT NULL` | o nome do arquivo enviado |
-| `content_type` | VARCHAR(100) | `NOT NULL` | `image/jpeg`, `image/png` ou `image/webp` |
+| `content_type` | VARCHAR(100) | `NOT NULL` | `image/jpeg`, `image/png`, `image/webp` ou `image/svg+xml` |
 | `tamanho_bytes` | INT | `NOT NULL` | o tamanho do arquivo, conferido contra o limite de 4 MB |
 | `tipo` | VARCHAR(20) | `NOT NULL`, `DEFAULT 'desenho'` | `desenho` ou `referencia` |
 | `status` | VARCHAR(20) | `NOT NULL`, `DEFAULT 'pendente'` | `pendente`, `aprovada` ou `recusada` |
@@ -368,8 +373,10 @@ duas colunas ficaram vazias, como está escrito na seção 4.
 A migration `20261107_01` criou `tatuagem_imagens` e `agendamentos`, com as chaves
 `fk_tatuagem_imagens_tatuagem`, `fk_tatuagem_imagens_aprovador`, `fk_agendamentos_tatuagem` e
 `fk_agendamentos_tatuador`, e o índice único parcial da agenda. A migration `20261107_02` acrescentou
-`tatuagens.tatuador_id` e a chave `fk_tatuagens_tatuador`. As duas vêm depois da migration de grupos
-e permissões, e é essa ordem que `alembic upgrade head` aplica.
+`tatuagens.tatuador_id` e a chave `fk_tatuagens_tatuador`. A migration `20261115_01` acrescentou
+`tatuagens.origem` e as permissões `clientes:consultar`, `clientes:cadastrar` e `desenhos:gerar`.
+Todas vêm depois da migration de grupos e permissões, e é essa ordem que `alembic upgrade head`
+aplica.
 
 Um `esquema.sql` com o mesmo desenho não entra no projeto: dois lugares dizendo como o banco é dariam
 duas versões do mesmo desenho, e o banco nasceria de um deles enquanto o outro ficaria velho sem

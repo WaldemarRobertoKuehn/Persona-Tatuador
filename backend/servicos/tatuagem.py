@@ -51,15 +51,25 @@ def pedir_tatuagem(dados: dict) -> dict:
     precisa saber de onde veio cada campo.
 
     O tatuador padrão também é uma decisão daqui: a tela da cliente não escolhe
-    profissional, mas a agenda precisa de um responsável para abrir. Se o
-    estúdio ainda não tiver tatuador, o campo fica vazio e o administrador
-    atribui depois.
+    profissional, mas a agenda precisa de um responsável para abrir. No
+    atendimento presencial, o administrador pode escolher o profissional no
+    próprio pedido; quando escolhe, o serviço confere se a conta existe no grupo
+    tatuador antes de gravar.
     """
+    tatuador_id = dados.get("tatuador_id")
+
+    if tatuador_id is not None:
+        if repositorio_usuarios.buscar_tatuador_por_id(tatuador_id) is None:
+            raise ValueError("O tatuador informado não existe neste estúdio.")
+    else:
+        tatuador_id = repositorio_usuarios.buscar_tatuador_padrao_id()
+
     return repositorio_tatuagens.criar_tatuagem(
         {
             **dados,
             "etapa": "pedida",
-            "tatuador_id": repositorio_usuarios.buscar_tatuador_padrao_id(),
+            "origem": dados.get("origem", "cliente"),
+            "tatuador_id": tatuador_id,
         }
     )
 

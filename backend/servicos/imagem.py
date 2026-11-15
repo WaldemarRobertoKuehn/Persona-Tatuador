@@ -12,6 +12,7 @@ tipo desenho e a tatuagem ainda está "pedida", o próprio serviço registra o p
 from datetime import datetime, timezone
 
 import repositorios.imagem as repositorio_imagens
+from ia.desenho import DesenhoGeradoInvalido, validar_svg
 from servicos import passo as servico_passos
 from servicos.excecoes import (
     AprovacaoDoClienteNecessaria,
@@ -27,7 +28,12 @@ from servicos.excecoes import (
 # requisição viaja junto, então o arquivo precisa caber com folga.
 TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024
 
-TIPOS_DE_CONTEUDO = {"image/jpeg", "image/png", "image/webp"}
+TIPOS_DE_CONTEUDO = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/svg+xml",
+}
 
 TIPOS_DE_IMAGEM = {"desenho", "referencia"}
 
@@ -50,13 +56,13 @@ def _validar_tipo(tipo: str) -> str:
     return tipo_normalizado
 
 
-def _validar_arquivo(content_type: str, conteudo: bytes) -> str:
-    """Confere tamanho e tipo do arquivo, e devolve o content type limpo."""
+def _validar_arquivo(content_type: str, conteudo: bytes) -> tuple[str, bytes]:
+    """Confere tipo e tamanho, limpa SVG e devolve o arquivo pronto para gravar."""
     tipo_de_conteudo = (content_type or "").split(";")[0].strip().lower()
 
     if tipo_de_conteudo not in TIPOS_DE_CONTEUDO:
         raise ArquivoDeImagemInvalido(
-            "O arquivo precisa ser uma imagem JPEG, PNG ou WebP."
+            "O arquivo precisa ser uma imagem JPEG, PNG, WebP ou SVG."
         )
 
     if not conteudo:
@@ -67,7 +73,16 @@ def _validar_arquivo(content_type: str, conteudo: bytes) -> str:
             "A imagem passa do limite de 4 MB. Envie uma versão menor."
         )
 
-    return tipo_de_conteudo
+    # O SVG é XML e pode carregar script. A limpeza mora no módulo de desenho,
+    # junto com a geração por IA, para as duas entradas passarem pela mesma lista
+    # fechada de elementos e atributos.
+    if tipo_de_conteudo == "image/svg+xml":
+        try:
+            conteudo = validar_svg(conteudo)
+        except DesenhoGeradoInvalido as erro:
+            raise ArquivoDeImagemInvalido(str(erro)) from erro
+
+    return tipo_de_conteudo, conteudo
 
 
 def listar_imagens(tatuagem_id: int) -> list[dict]:
@@ -104,7 +119,7 @@ def enviar_imagem(
         return None
 
     tipo_normalizado = _validar_tipo(tipo)
-    tipo_de_conteudo = _validar_arquivo(content_type, conteudo)
+    tipo_de_conteudo, conteudo = _validar_arquivo(content_type, conteudo)
 
     if usuario["papel"] == "cliente":
         tipo_normalizado = "referencia"
@@ -123,6 +138,52 @@ def enviar_imagem(
     )
 
 
+def salvar_desenho_gerado(
+    tatuagem_id: int,
+    nome: str,
+    conteudo: bytes,
+) -> dict:
+    """Grava uma proposta de desenho SVG já validada como imagem pendente.
+
+    A gravação é separada do upload porque a rota de IA não recebe um arquivo do
+    navegador: ela chama o provedor e entrega o SVG aqui. O tipo é sempre
+    "desenho" e o status nasce pendente, para a aprovação continuar sendo um ato
+    humano separado.
+    """
+    tipo_de_conteudo, conteudo_limpo = _validar_arquivo(
+        "image/svg+xml",
+        conteudo,
+    )
+    nome_limpo = (nome or "").strip()[:255] or "desenho-ia.svg"
+
+    return repositorio_imagens.criar_imagem(
+        tatuagem_id,
+        {
+            "nome": nome_limpo,
+            "content_type": tipo_de_conteudo,
+            "tamanho_bytes": len(conteudo_limpo),
+            "tipo": "desenho",
+            "conteudo": conteudo_limpo,
+        },
+    )
+
+
+def _pode_decidir_desenho(usuario: dict, tatuagem: dict) -> bool:
+    """Diz se a conta pode aprovar ou recusar o desenho desta tatuagem.
+
+    O fluxo normal é do cliente. No atendimento presencial, o cliente não tem
+    conta e o administrador decide no balcão; por isso a exceção vale somente
+    para tatuagem marcada com origem "presencial".
+    """
+    if usuario.get("papel") == "cliente":
+        return True
+
+    return (
+        usuario.get("papel") == "administrador"
+        and tatuagem.get("origem") == "presencial"
+    )
+
+
 def aprovar_imagem(
     tatuagem_id: int,
     imagem_id: int,
@@ -137,9 +198,10 @@ def aprovar_imagem(
     if tatuagem is None:
         return None
 
-    if usuario["papel"] != "cliente":
+    if not _pode_decidir_desenho(usuario, tatuagem):
         raise AprovacaoDoClienteNecessaria(
-            "O desenho é aprovado pelo cliente, não pelo tatuador."
+            "O desenho é aprovado pelo cliente, não pelo tatuador. "
+            "No atendimento presencial, o administrador aprova em nome dele."
         )
 
     imagem = repositorio_imagens.buscar_imagem(tatuagem_id, imagem_id)
@@ -174,11 +236,16 @@ def aprovar_imagem(
     # estava em "desenho aprovado" ou além, a imagem é aprovada mas o passo não é
     # repetido.
     if tatuagem["etapa"] == "pedida":
+        quem_aprovou = (
+            "no atendimento presencial"
+            if usuario.get("papel") == "administrador"
+            else "pelo cliente"
+        )
         servico_passos.registrar_passo(
             tatuagem_id,
             {
                 "tipo": "desenho aprovado",
-                "observacao": f'Desenho "{imagem["nome"]}" aprovado pelo cliente.',
+                "observacao": f'Desenho "{imagem["nome"]}" aprovado {quem_aprovou}.',
             },
             tatuagem=tatuagem,
             aprovado_pelo_cliente=True,
@@ -191,12 +258,17 @@ def recusar_imagem(
     tatuagem_id: int,
     imagem_id: int,
     motivo: str,
+    tatuagem: dict | None,
     usuario: dict,
 ) -> dict | None:
     """Recusa o desenho, guardando o motivo que o cliente escreveu."""
-    if usuario["papel"] != "cliente":
+    if tatuagem is None:
+        return None
+
+    if not _pode_decidir_desenho(usuario, tatuagem):
         raise AprovacaoDoClienteNecessaria(
-            "O desenho é aprovado ou recusado pelo cliente, não pelo tatuador."
+            "O desenho é aprovado ou recusado pelo cliente, não pelo tatuador. "
+            "No atendimento presencial, o administrador decide em nome dele."
         )
 
     imagem = repositorio_imagens.buscar_imagem(tatuagem_id, imagem_id)

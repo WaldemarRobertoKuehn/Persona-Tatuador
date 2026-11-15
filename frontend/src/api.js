@@ -206,6 +206,26 @@ export function cadastrarTatuador({ nome, email, usuario, senha }) {
   ).then(conferirResposta);
 }
 
+/* Lista as clientes para o atendimento presencial. */
+export function buscarClientes() {
+  return fetch(
+    caminho("/clientes"),
+    opcoesAutenticadas(),
+  ).then(conferirResposta);
+}
+
+/* Cadastra uma cliente no balcão. O nome repetido devolve a cliente existente. */
+export function cadastrarCliente(nome) {
+  return fetch(
+    caminho("/clientes"),
+    opcoesAutenticadas({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome }),
+    }),
+  ).then(conferirResposta);
+}
+
 /* Lista as tatuagens. Os dois filtros são opcionais, e são os mesmos filtros
  * que a rota do back aceita: etapa e cliente. Sem nenhum, volta tudo. */
 export function buscarTatuagens({ etapa, clienteId } = {}) {
@@ -308,6 +328,15 @@ export function buscarImagens(tatuagemId) {
   return fetch(
     caminho(`/tatuagens/${tatuagemId}/imagens`),
     opcoesAutenticadas(),
+  ).then(conferirResposta);
+}
+
+/* Pede à IA uma proposta de desenho. A rota grava a imagem como pendente, então
+ * a aprovação continua sendo uma chamada separada da administração. */
+export function gerarDesenhoIA(tatuagemId) {
+  return fetch(
+    caminho(`/tatuagens/${tatuagemId}/desenho-ia`),
+    opcoesAutenticadas({ method: "POST" }),
   ).then(conferirResposta);
 }
 

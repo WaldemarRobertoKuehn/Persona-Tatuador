@@ -39,6 +39,8 @@ Além delas, o sistema tem as capacidades que foram acrescentadas depois da cart
 | Cadastrar e listar tatuadores | `POST /usuarios/tatuadores`, `GET /usuarios/tatuadores` |
 | Atribuir o tatuador responsável pela tatuagem | `PUT /tatuagens/{tatuagem_id}/tatuador` |
 | Enviar, listar, baixar e remover imagens | `POST/GET /tatuagens/{tatuagem_id}/imagens`, `GET/DELETE /tatuagens/{tatuagem_id}/imagens/{imagem_id}` |
+| Cadastrar e listar clientes do atendimento presencial | `POST/GET /clientes` (Administração) |
+| Gerar uma proposta de desenho com IA | `POST /tatuagens/{tatuagem_id}/desenho-ia` |
 | Aprovar ou recusar o desenho | `POST /tatuagens/{tatuagem_id}/imagens/{imagem_id}/aprovacao`, `.../recusa` |
 | Consultar e marcar a agenda | `GET/POST /tatuagens/{tatuagem_id}/agendamentos`, `GET .../disponibilidade`, `DELETE .../{agendamento_id}` |
 | Administrar grupos e permissões | `GET/POST /grupos`, `PUT /grupos/{grupo_id}/permissoes`, `GET /grupos/permissoes`, `PUT /usuarios/{usuario_id}/grupo` |

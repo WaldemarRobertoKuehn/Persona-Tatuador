@@ -74,6 +74,15 @@ class Tatuagem(Base):
     # mudasse num esquecesse do outro.
     etapa = Column(String(30), nullable=False)
 
+    # origem: "cliente" quando o pedido veio pelo site, "presencial" quando o
+    # administrador cadastrou no balcão. A origem não muda a etapa; ela só libera
+    # a aprovação administrativa do desenho no fluxo presencial.
+    origem = Column(
+        String(20),
+        nullable=False,
+        server_default="cliente",
+    )
+
     # relationship liga a tatuagem aos passos dela, para o histórico ser lido com
     # ponto: tatuagem.passos. O nome da classe vai como texto entre aspas, e não
     # como import, porque o Passo está num arquivo que importa este: importar aqui

@@ -11,10 +11,9 @@ dado de tela. Guardar o nome aqui, e não dentro de cada tatuagem, evita o mesmo
 nome estar escrito em dois lugares e divergir quando alguém corrigir uma das
 duas.
 
-Por que este arquivo não tem rota: a cartilha não pede rota de cliente. Ela pede
-cinco capacidades, e nenhuma delas é "listar clientes". O que ela pede é que a
-agenda mostre a cliente, e o nome indo junto da tatuagem resolve isso sem
-inventar rota nenhuma.
+A rota de clientes existe para o atendimento presencial: a administração lista
+quem já está no estúdio e cadastra um nome novo antes de abrir o pedido. A agenda
+continua recebendo o nome junto da tatuagem, sem uma segunda leitura.
 
 O que mudou quando os dados foram para o banco
 
@@ -33,6 +32,13 @@ O que mudou quando os dados foram para o banco
 # Este import é o mesmo que o main.py faz, por módulo e com `as`, e o apelido deixa
 # claro que o que está do outro lado é o banco, e não uma lista na memória.
 import banco
+
+
+def listar_clientes() -> list[dict]:
+    """Devolve as clientes do estúdio em ordem alfabética para a administração."""
+    with banco.cursor() as cursor:
+        cursor.execute("SELECT id, nome FROM clientes ORDER BY nome, id")
+        return cursor.fetchall()
 
 
 def buscar_cliente(cliente_id: int) -> dict | None:

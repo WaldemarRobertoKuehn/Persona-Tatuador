@@ -16,9 +16,11 @@ from servicos.excecoes import (
     TipoDeImagemDesconhecido,
 )
 
-TATUAGEM = {"id": 1, "etapa": "pedida"}
+TATUAGEM = {"id": 1, "etapa": "pedida", "origem": "cliente"}
+TATUAGEM_PRESENCIAL = {"id": 1, "etapa": "pedida", "origem": "presencial"}
 CLIENTE = {"id": 7, "papel": "cliente"}
 TATUADOR = {"id": 2, "papel": "tatuador"}
+ADMINISTRADOR = {"id": 9, "papel": "administrador"}
 
 
 def test_cliente_envia_sempre_como_referencia(monkeypatch):
@@ -170,6 +172,109 @@ def test_tatuador_nao_aprova_desenho(monkeypatch):
         servico.aprovar_imagem(1, 5, TATUAGEM, TATUADOR)
 
 
+def test_administrador_aprova_desenho_do_atendimento_presencial(monkeypatch):
+    imagem = {
+        "id": 5,
+        "tipo": "desenho",
+        "status": "pendente",
+        "nome": "leao.svg",
+    }
+    chamadas = {}
+
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "buscar_imagem",
+        lambda *_: imagem,
+    )
+    monkeypatch.setattr(
+        servico.servico_passos,
+        "aplicar_passo",
+        lambda *_: "desenho aprovado",
+    )
+
+    def registrar(tatuagem_id, dados, tatuagem=None, aprovado_pelo_cliente=False):
+        chamadas.update(
+            dados=dados,
+            aprovado_pelo_cliente=aprovado_pelo_cliente,
+        )
+        return {"id": 1, "tipo": "desenho aprovado"}
+
+    monkeypatch.setattr(servico.servico_passos, "registrar_passo", registrar)
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "aprovar_imagem",
+        lambda *_: {**imagem, "status": "aprovada"},
+    )
+
+    aprovada = servico.aprovar_imagem(
+        1,
+        5,
+        TATUAGEM_PRESENCIAL,
+        ADMINISTRADOR,
+    )
+
+    assert aprovada["status"] == "aprovada"
+    assert chamadas["aprovado_pelo_cliente"] is True
+    assert "presencial" in chamadas["dados"]["observacao"]
+
+
+def test_administrador_nao_aprova_pedido_feito_pelo_site():
+    with pytest.raises(AprovacaoDoClienteNecessaria):
+        servico.aprovar_imagem(1, 5, TATUAGEM, ADMINISTRADOR)
+
+
+def test_svg_aceito_no_upload_e_sanitizado(monkeypatch):
+    capturado = {}
+
+    def criar(tatuagem_id, dados):
+        capturado.update(dados)
+        return {"tatuagem_id": tatuagem_id, **dados}
+
+    monkeypatch.setattr(servico.repositorio_imagens, "criar_imagem", criar)
+
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+        '<path d="M10 10 L90 90" fill="red"/>'
+        "</svg>"
+    )
+
+    imagem = servico.enviar_imagem(
+        1,
+        TATUAGEM,
+        TATUADOR,
+        "desenho.svg",
+        "desenho",
+        "image/svg+xml",
+        svg.encode("utf-8"),
+    )
+
+    assert imagem["content_type"] == "image/svg+xml"
+    assert imagem["tipo"] == "desenho"
+    assert b"fill=\"none\"" in capturado["conteudo"]
+    assert b"stroke=\"#111111\"" in capturado["conteudo"]
+
+
+def test_desenho_gerado_e_sempre_pendente_e_do_tipo_desenho(monkeypatch):
+    capturado = {}
+
+    def criar(tatuagem_id, dados):
+        capturado.update(dados)
+        return {"tatuagem_id": tatuagem_id, **dados}
+
+    monkeypatch.setattr(servico.repositorio_imagens, "criar_imagem", criar)
+
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+        '<circle cx="50" cy="50" r="20"/>'
+        "</svg>"
+    )
+
+    servico.salvar_desenho_gerado(1, "desenho-ia.svg", svg.encode("utf-8"))
+
+    assert capturado["tipo"] == "desenho"
+    assert capturado["content_type"] == "image/svg+xml"
+
+
 def test_referencia_nao_pode_ser_aprovada(monkeypatch):
     monkeypatch.setattr(
         servico.repositorio_imagens,
@@ -189,4 +294,4 @@ def test_desenho_aprovado_nao_pode_ser_recusado(monkeypatch):
     )
 
     with pytest.raises(ImagemJaAprovada):
-        servico.recusar_imagem(1, 5, "mudei de ideia", CLIENTE)
+        servico.recusar_imagem(1, 5, "mudei de ideia", TATUAGEM, CLIENTE)

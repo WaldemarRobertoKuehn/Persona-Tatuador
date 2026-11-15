@@ -19,6 +19,8 @@ import configuracao
 # NOVO: os routers são importados sem trazer as funções de rota para este módulo;
 # o main continua apenas conectando cada recurso à aplicação.
 from rotas import agendamentos as rotas_agendamentos
+from rotas import clientes as rotas_clientes
+from rotas import desenhos_ia as rotas_desenhos_ia
 from rotas import imagens as rotas_imagens
 from rotas import passos as rotas_passos
 from rotas import resumo_ia as rotas_resumo_ia
@@ -66,6 +68,8 @@ app.add_middleware(
 # Cada include registra um recurso; as rotas administrativas continuam nos
 # próprios módulos e o main não declara nenhuma rota.
 app.include_router(rotas_tatuagens.roteador_tatuagens)
+app.include_router(rotas_clientes.roteador_clientes)
+app.include_router(rotas_desenhos_ia.roteador_desenhos_ia)
 app.include_router(rotas_imagens.roteador_imagens)
 app.include_router(rotas_agendamentos.roteador_agendamentos)
 app.include_router(rotas_passos.roteador_passos)

@@ -9,6 +9,8 @@ na entrada o id e a etapa não existem ainda, porque quem os dá é o repositór
 regra do serviço.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -35,6 +37,22 @@ class TatuagemEntrada(BaseModel):
     # gt=0 significa "maior que zero": tamanho zero não é tatuagem nenhuma, então
     # o Pydantic barra antes do serviço precisar conferir.
     tamanho: float = Field(gt=0, description="O tamanho combinado, em centímetros.")
+
+    # origem: o site manda "cliente"; a administração pode mandar "presencial"
+    # quando o pedido é feito no balcão. A rota confere a permissão antes de
+    # aceitar o valor presencial.
+    origem: Literal["cliente", "presencial"] = Field(
+        default="cliente",
+        description="Se o pedido veio pelo site ou foi cadastrado no balcão.",
+    )
+
+    # tatuador_id: opcional, e só a administração pode escolher. O serviço usa o
+    # tatuador padrão quando este campo não vem.
+    tatuador_id: int | None = Field(
+        default=None,
+        gt=0,
+        description="Tatuador responsável, quando a administração já escolheu.",
+    )
 
 
 class TatuagemSaida(BaseModel):
@@ -67,12 +85,25 @@ class TatuagemSaida(BaseModel):
         )
     )
 
+    origem: str = Field(
+        default="cliente",
+        description="Se o pedido veio pelo site ou foi cadastrado no balcão.",
+    )
+
     desenho_imagem_id: int | None = Field(
         default=None,
         description=(
             "Id da imagem do desenho usada como miniatura na agenda. É o desenho "
             "aprovado, se houver; senão o mais recente. None quando a tatuagem "
             "ainda não tem desenho."
+        ),
+    )
+
+    desenho_status: str | None = Field(
+        default=None,
+        description=(
+            "Status do desenho escolhido pela agenda: pendente, aprovada ou "
+            "recusada. None quando a tatuagem ainda não tem desenho."
         ),
     )
 

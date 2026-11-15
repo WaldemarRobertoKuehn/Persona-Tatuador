@@ -195,6 +195,7 @@ def recusar_imagem(
             tatuagem_id,
             imagem_id,
             dados.motivo,
+            tatuagem,
             usuario,
         )
     except (
