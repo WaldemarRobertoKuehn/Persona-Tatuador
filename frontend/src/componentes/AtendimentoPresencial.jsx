@@ -350,6 +350,10 @@ export default function AtendimentoPresencial({
         <div className="revisao-do-desenho">
           <ImagensDaTatuagem
             tatuagemId={revisandoId}
+            ideia={
+              presenciais.find((tatuagem) => tatuagem.id === revisandoId)
+                ?.ideia ?? ""
+            }
             perfil={perfil}
             aoAtualizarTatuagem={aoAtualizarTatuagens}
           />

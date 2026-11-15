@@ -274,6 +274,7 @@ export default function Ficha({ tatuagem, perfil, aoVoltarParaAgenda }) {
       <div className="secoes-da-ficha">
         <ImagensDaTatuagem
           tatuagemId={tatuagem.id}
+          ideia={tatuagem.ideia}
           perfil={perfil}
           aoAtualizarTatuagem={recarregar}
         />

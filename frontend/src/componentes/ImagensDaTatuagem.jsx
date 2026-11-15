@@ -37,6 +37,11 @@ const ROTULO_DO_STATUS = {
   recusada: "Recusada",
 };
 
+function enderecoDaBuscaNoGoogle(ideia) {
+  const termo = [ideia, "tatuagem", "desenho"].filter(Boolean).join(" ");
+  return `https://www.google.com/search?tbm=isch&hl=pt-BR&q=${encodeURIComponent(termo)}`;
+}
+
 /* A miniatura busca o arquivo uma vez e revoga o object URL ao desmontar, para
  * o navegador não guardar o blob da imagem antiga depois que a tela troca. */
 function Miniatura({ tatuagemId, imagem }) {
@@ -84,6 +89,7 @@ function Miniatura({ tatuagemId, imagem }) {
 
 export default function ImagensDaTatuagem({
   tatuagemId,
+  ideia = "",
   perfil,
   aoAtualizarTatuagem,
 }) {
@@ -392,17 +398,39 @@ export default function ImagensDaTatuagem({
 
       {podeEnviar ? (
         <form className="formulario-de-imagem" onSubmit={enviar}>
-          <h4>Enviar imagem</h4>
+          <h4>Buscar ou enviar imagem</h4>
 
-          <label className="campo">
-            <span>Arquivo</span>
-            <input
-              ref={campoArquivo}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/svg+xml"
-              onChange={escolherArquivo}
-            />
-          </label>
+          <a
+            className="botao botao-largo"
+            href={enderecoDaBuscaNoGoogle(ideia)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Escolher desenho no Google
+          </a>
+
+          <p className="legenda">
+            A busca abre o Google Imagens em outra aba. Depois de baixar o
+            desenho, envie o arquivo aqui.
+          </p>
+
+          <input
+            ref={campoArquivo}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/svg+xml"
+            onChange={escolherArquivo}
+            hidden
+          />
+
+          <button
+            type="button"
+            className="link-acao"
+            onClick={() => campoArquivo.current?.click()}
+          >
+            {arquivo
+              ? `Arquivo escolhido: ${arquivo.name}`
+              : "Já tenho o arquivo: escolher do computador"}
+          </button>
 
           {!ehCliente ? (
             <label className="campo">
@@ -418,8 +446,8 @@ export default function ImagensDaTatuagem({
           ) : null}
 
           <p className="legenda">
-            JPEG, PNG ou WebP, até 4 MB. O cliente envia referência; o desenho é
-            enviado pelo tatuador.
+            JPEG, PNG, WebP ou SVG, até 4 MB. O cliente envia referência; o
+            desenho é enviado pelo tatuador.
           </p>
 
           <button

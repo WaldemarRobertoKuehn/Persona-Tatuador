@@ -35,6 +35,11 @@
   --cor-acento: #c2410c;
   --cor-acento-texto: #c2410c;
 
+  /* O fundo fixo das miniaturas de desenho. O SVG gerado usa traço escuro e
+   * fundo transparente, então ele precisa de uma superfície clara nos dois
+   * temas para continuar visível. */
+  --cor-fundo-da-imagem: #ffffff;
+
   /* O texto que fica sobre o preenchimento de acento, que é o botão principal. É
    * branco nos dois temas, porque o preenchimento é o mesmo laranja nos dois, e
    * branco sobre ele dá 5,18:1. Ficar com token, e não com o #ffffff escrito no

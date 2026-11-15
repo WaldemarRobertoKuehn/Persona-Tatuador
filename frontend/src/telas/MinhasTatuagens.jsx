@@ -30,6 +30,7 @@ import ResumoDoHistorico from "../componentes/ResumoDoHistorico";
  * esta tatuagem? */
 function Historico({
   tatuagemId,
+  ideia,
   tatuadorId,
   etapa,
   perfil,
@@ -83,6 +84,7 @@ function Historico({
 
       <ImagensDaTatuagem
         tatuagemId={tatuagemId}
+        ideia={ideia}
         perfil={perfil}
         aoAtualizarTatuagem={aoAtualizarTatuagem}
       />
@@ -207,6 +209,7 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
                   {estaAberta ? (
                     <Historico
                       tatuagemId={tatuagem.id}
+                      ideia={tatuagem.ideia}
                       tatuadorId={tatuagem.tatuador_id}
                       etapa={tatuagem.etapa}
                       perfil={perfil}

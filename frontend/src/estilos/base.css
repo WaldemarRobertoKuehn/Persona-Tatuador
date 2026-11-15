@@ -246,6 +246,7 @@ p {
   font-family: var(--fonte-texto);
   font-size: 1rem;
   font-weight: 500;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -268,6 +269,7 @@ p {
   color: var(--cor-texto);
   font-family: var(--fonte-texto);
   font-size: 1rem;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -1273,7 +1275,9 @@ p {
 
 .miniatura-da-imagem {
   display: block;
-  object-fit: cover;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-fundo-da-imagem);
+  object-fit: contain;
 }
 
 .imagem-sem-preview {
@@ -1300,8 +1304,8 @@ p {
 
 .miniatura-da-agenda {
   display: block;
-  object-fit: cover;
-  background: var(--cor-fundo);
+  object-fit: contain;
+  background: var(--cor-fundo-da-imagem);
 }
 
 .sem-miniatura-da-agenda {
