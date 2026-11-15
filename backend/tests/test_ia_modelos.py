@@ -27,7 +27,12 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
     class ErroAutenticacaoFalso(Exception):
         pass
 
+    # Simular a falha de configuração do provedor para validar a lista de erros do fallback.
+    class ErroProvedorFalso(Exception):
+        pass
+
     erros_falsos.AuthError = ErroAutenticacaoFalso
+    erros_falsos.ProviderError = ErroProvedorFalso
     erros_falsos.DEFAULT_FAILOVER = (RuntimeError,)
     configuracao_falsa = types.ModuleType("configuracao")
 
@@ -54,10 +59,12 @@ def test_modelos_configuram_fallback_na_ordem_escolhida(monkeypatch):
         assert modelos.gemini.opcoes["retry_on"] == (
             RuntimeError,
             ErroAutenticacaoFalso,
+            ErroProvedorFalso,
         )
         assert modelos.openrouter.opcoes["retry_on"] == (
             RuntimeError,
             ErroAutenticacaoFalso,
+            ErroProvedorFalso,
         )
     finally:
         # Restaurar o módulo real anterior para não afetar outros testes.
