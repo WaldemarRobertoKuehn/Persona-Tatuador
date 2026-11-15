@@ -87,6 +87,38 @@ function Miniatura({ tatuagemId, imagem }) {
   return <img className="miniatura-da-imagem" src={url} alt={imagem.nome} />;
 }
 
+function PreviaDoArquivo({ arquivo }) {
+  const [url, setUrl] = useState(null);
+
+  useEffect(() => {
+    const criado = URL.createObjectURL(arquivo);
+    let vivo = true;
+
+    Promise.resolve().then(() => {
+      if (vivo) {
+        setUrl(criado);
+      }
+    });
+
+    return () => {
+      vivo = false;
+      URL.revokeObjectURL(criado);
+    };
+  }, [arquivo]);
+
+  if (!url) {
+    return null;
+  }
+
+  return (
+    <img
+      className="previa-do-arquivo"
+      src={url}
+      alt={`Prévia de ${arquivo.name}`}
+    />
+  );
+}
+
 export default function ImagensDaTatuagem({
   tatuagemId,
   ideia = "",
@@ -107,6 +139,7 @@ export default function ImagensDaTatuagem({
   const [erroAcao, setErroAcao] = useState("");
   const [aviso, setAviso] = useState("");
   const [arquivo, setArquivo] = useState(null);
+  const [arrastando, setArrastando] = useState(false);
   const [tipo, setTipo] = useState(ehCliente ? "referencia" : "desenho");
   const [enviando, setEnviando] = useState(false);
   const [acaoId, setAcaoId] = useState(null);
@@ -152,9 +185,7 @@ export default function ImagensDaTatuagem({
       .catch((erroRecebido) => setErroAcao(erroRecebido.message));
   }
 
-  function escolherArquivo(evento) {
-    const escolhido = evento.target.files?.[0] ?? null;
-
+  function definirArquivo(escolhido) {
     setErroAcao("");
     setAviso("");
 
@@ -165,19 +196,36 @@ export default function ImagensDaTatuagem({
 
     if (!TIPOS_ACEITOS.includes(escolhido.type)) {
       setErroAcao("Escolha uma imagem JPEG, PNG, WebP ou SVG.");
-      evento.target.value = "";
       setArquivo(null);
       return;
     }
 
     if (escolhido.size > TAMANHO_MAXIMO) {
       setErroAcao("A imagem passa do limite de 4 MB. Escolha uma versão menor.");
-      evento.target.value = "";
       setArquivo(null);
       return;
     }
 
     setArquivo(escolhido);
+  }
+
+  function escolherArquivo(evento) {
+    definirArquivo(evento.target.files?.[0] ?? null);
+    evento.target.value = "";
+  }
+
+  function soltarArquivo(evento) {
+    evento.preventDefault();
+    setArrastando(false);
+    definirArquivo(evento.dataTransfer.files?.[0] ?? null);
+  }
+
+  function limparArquivo() {
+    setArquivo(null);
+
+    if (campoArquivo.current) {
+      campoArquivo.current.value = "";
+    }
   }
 
   function enviar(evento) {
@@ -194,13 +242,8 @@ export default function ImagensDaTatuagem({
 
     enviarImagem(tatuagemId, { arquivo, tipo, nome: arquivo.name })
       .then(() => {
-        setAviso("Imagem enviada.");
-        setArquivo(null);
-
-        if (campoArquivo.current) {
-          campoArquivo.current.value = "";
-        }
-
+        setAviso("Imagem salva no banco de dados.");
+        limparArquivo();
         return recarregarImagens();
       })
       .catch((erroRecebido) => setErroAcao(erroRecebido.message))
@@ -410,8 +453,8 @@ export default function ImagensDaTatuagem({
           </a>
 
           <p className="legenda">
-            A busca abre o Google Imagens em outra aba. Depois de baixar o
-            desenho, envie o arquivo aqui.
+            A busca abre o Google Imagens em outra aba. Baixe o desenho e
+            arraste o arquivo para a área abaixo.
           </p>
 
           <input
@@ -422,15 +465,52 @@ export default function ImagensDaTatuagem({
             hidden
           />
 
-          <button
-            type="button"
-            className="link-acao"
+          <div
+            className="area-de-soltura"
+            data-arrastando={arrastando ? "true" : "false"}
+            role="button"
+            tabIndex={0}
+            aria-label="Soltar ou escolher uma imagem"
             onClick={() => campoArquivo.current?.click()}
+            onKeyDown={(evento) => {
+              if (evento.key === "Enter" || evento.key === " ") {
+                evento.preventDefault();
+                campoArquivo.current?.click();
+              }
+            }}
+            onDragOver={(evento) => {
+              evento.preventDefault();
+              setArrastando(true);
+            }}
+            onDragLeave={(evento) => {
+              if (!evento.currentTarget.contains(evento.relatedTarget)) {
+                setArrastando(false);
+              }
+            }}
+            onDrop={soltarArquivo}
           >
-            {arquivo
-              ? `Arquivo escolhido: ${arquivo.name}`
-              : "Já tenho o arquivo: escolher do computador"}
-          </button>
+            {arquivo ? <PreviaDoArquivo arquivo={arquivo} /> : null}
+            <strong>
+              {arquivo
+                ? arquivo.name
+                : "Arraste o desenho baixado do Google aqui"}
+            </strong>
+            <span className="legenda">
+              {arquivo
+                ? "Clique na área para trocar a imagem."
+                : "Ou clique para escolher uma foto do computador."}
+            </span>
+          </div>
+
+          {arquivo ? (
+            <button
+              type="button"
+              className="link-acao"
+              onClick={limparArquivo}
+            >
+              Escolher outro arquivo
+            </button>
+          ) : null}
 
           {!ehCliente ? (
             <label className="campo">
@@ -455,7 +535,7 @@ export default function ImagensDaTatuagem({
             className="botao"
             disabled={enviando || !arquivo}
           >
-            {enviando ? "Enviando..." : "Enviar imagem"}
+            {enviando ? "Salvando..." : "Salvar imagem"}
           </button>
         </form>
       ) : null}

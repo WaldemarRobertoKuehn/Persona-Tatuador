@@ -1404,6 +1404,39 @@ p {
   margin: 0;
 }
 
+.area-de-soltura {
+  display: grid;
+  place-items: center;
+  gap: var(--espaco-2);
+  min-height: 10rem;
+  padding: var(--espaco-4);
+  border: 1px dashed var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  text-align: center;
+  cursor: pointer;
+}
+
+.area-de-soltura[data-arrastando="true"] {
+  border-color: var(--cor-acento);
+  background: var(--cor-fundo);
+}
+
+.area-de-soltura:focus-visible {
+  outline: 2px solid var(--cor-acento-texto);
+  outline-offset: 2px;
+}
+
+.previa-do-arquivo {
+  max-width: 100%;
+  max-height: 12rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo-da-imagem);
+  object-fit: contain;
+}
+
 .linha-de-campos {
   display: grid;
   gap: var(--espaco-3);
