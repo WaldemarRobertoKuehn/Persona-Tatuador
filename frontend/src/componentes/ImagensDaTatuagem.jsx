@@ -122,14 +122,18 @@ function PreviaDoArquivo({ arquivo }) {
 export default function ImagensDaTatuagem({
   tatuagemId,
   ideia = "",
+  origem = "",
   perfil,
   aoAtualizarTatuagem,
 }) {
   const permissoes = new Set(perfil.permissoes ?? []);
   const podeEnviar = permissoes.has("imagens:enviar");
-  const podeAprovar = permissoes.has("imagens:aprovar");
   const podeRemover = permissoes.has("imagens:remover");
   const ehCliente = perfil.tipo === "cliente";
+  const podeDecidirDesenho =
+    permissoes.has("imagens:aprovar") &&
+    (ehCliente ||
+      (perfil.tipo === "administrador" && origem === "presencial"));
 
   const [imagens, setImagens] = useState([]);
   /* Guarda de qual tatuagem é a lista que está na tela. Enquanto não bater com a
@@ -280,7 +284,11 @@ export default function ImagensDaTatuagem({
 
     recusarImagem(tatuagemId, imagem.id, motivo)
       .then(() => {
-        setAviso("Desenho recusado. O tatuador vai ver o motivo.");
+        setAviso(
+          podeRemover
+            ? "Desenho recusado. Você pode remover a imagem recusada abaixo."
+            : "Desenho recusado. O tatuador vai ver o motivo.",
+        );
         setRecusandoId(null);
         setMotivo("");
         return recarregarImagens();
@@ -329,7 +337,9 @@ export default function ImagensDaTatuagem({
         <div className="grade-de-imagens">
           {imagens.map((imagem) => {
             const ehDesenho = imagem.tipo === "desenho";
-            const podeDecidir = podeAprovar && ehDesenho;
+            const podeDecidir = podeDecidirDesenho && ehDesenho;
+            const podeRemoverImagem =
+              podeRemover && (!ehCliente || imagem.status === "recusada");
 
             return (
               <article key={imagem.id} className="cartao-de-imagem">
@@ -411,14 +421,18 @@ export default function ImagensDaTatuagem({
                   )
                 ) : null}
 
-                {podeRemover ? (
+                {podeRemoverImagem ? (
                   <button
                     type="button"
                     className="botao-neutro"
                     disabled={acaoId !== null}
                     onClick={() => remover(imagem)}
                   >
-                    {acaoId === imagem.id ? "Removendo..." : "Remover imagem"}
+                    {acaoId === imagem.id
+                      ? "Removendo..."
+                      : imagem.status === "recusada"
+                        ? "Remover desenho recusado"
+                        : "Remover imagem"}
                   </button>
                 ) : null}
               </article>

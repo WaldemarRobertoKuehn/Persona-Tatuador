@@ -23,6 +23,7 @@ from servicos.excecoes import (
     ImagemJaAprovada,
     ImagemNaoAprovavel,
     ImagemNaoEncontrada,
+    ImagemNaoRemovivel,
     TipoDeImagemDesconhecido,
 )
 
@@ -42,7 +43,15 @@ def _traduzir_erro(erro: Exception) -> None:
     if isinstance(erro, AprovacaoDoClienteNecessaria):
         raise HTTPException(status_code=403, detail=str(erro))
 
-    if isinstance(erro, (ImagemNaoAprovavel, ImagemJaAprovada, EtapaNaoAceitaPasso)):
+    if isinstance(
+        erro,
+        (
+            ImagemNaoAprovavel,
+            ImagemJaAprovada,
+            ImagemNaoRemovivel,
+            EtapaNaoAceitaPasso,
+        ),
+    ):
         raise HTTPException(status_code=409, detail=str(erro))
 
     if isinstance(erro, ImagemNaoEncontrada):
@@ -209,7 +218,7 @@ def recusar_imagem(
     return imagem
 
 
-# Remover é exclusivo do tatuador. A resposta não tem corpo.
+# Remover exige a permissão, e o serviço limita o cliente ao desenho recusado.
 @roteador_imagens.delete("/{imagem_id}", status_code=204)
 def remover_imagem(
     tatuagem_id: int,
@@ -224,8 +233,8 @@ def remover_imagem(
 ) -> Response:
     """Apaga a imagem e devolve 204 quando ela existia."""
     try:
-        servico_imagens.remover_imagem(tatuagem_id, imagem_id)
-    except ImagemNaoEncontrada as erro:
+        servico_imagens.remover_imagem(tatuagem_id, imagem_id, usuario)
+    except (ImagemNaoEncontrada, ImagemNaoRemovivel) as erro:
         _traduzir_erro(erro)
 
     return Response(status_code=204)

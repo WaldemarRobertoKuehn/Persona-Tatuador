@@ -13,6 +13,7 @@ from servicos.excecoes import (
     ArquivoDeImagemInvalido,
     ImagemJaAprovada,
     ImagemNaoAprovavel,
+    ImagemNaoRemovivel,
     TipoDeImagemDesconhecido,
 )
 
@@ -295,3 +296,44 @@ def test_desenho_aprovado_nao_pode_ser_recusado(monkeypatch):
 
     with pytest.raises(ImagemJaAprovada):
         servico.recusar_imagem(1, 5, "mudei de ideia", TATUAGEM, CLIENTE)
+
+
+def test_cliente_remove_desenho_recusado(monkeypatch):
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "buscar_imagem",
+        lambda *_: {"id": 5, "tipo": "desenho", "status": "recusada"},
+    )
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "remover_imagem",
+        lambda *_: True,
+    )
+
+    assert servico.remover_imagem(1, 5, CLIENTE) is True
+
+
+def test_cliente_nao_remove_desenho_que_nao_recusou(monkeypatch):
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "buscar_imagem",
+        lambda *_: {"id": 5, "tipo": "desenho", "status": "aprovada"},
+    )
+
+    with pytest.raises(ImagemNaoRemovivel):
+        servico.remover_imagem(1, 5, CLIENTE)
+
+
+def test_tatuador_remove_qualquer_imagem(monkeypatch):
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "buscar_imagem",
+        lambda *_: {"id": 5, "tipo": "desenho", "status": "aprovada"},
+    )
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "remover_imagem",
+        lambda *_: True,
+    )
+
+    assert servico.remover_imagem(1, 5, TATUADOR) is True

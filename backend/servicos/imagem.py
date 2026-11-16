@@ -20,6 +20,7 @@ from servicos.excecoes import (
     ImagemJaAprovada,
     ImagemNaoAprovavel,
     ImagemNaoEncontrada,
+    ImagemNaoRemovivel,
     TipoDeImagemDesconhecido,
 )
 
@@ -294,8 +295,23 @@ def recusar_imagem(
     )
 
 
-def remover_imagem(tatuagem_id: int, imagem_id: int) -> bool:
-    """Remove uma imagem e avisa quando ela não existia na tatuagem."""
+def remover_imagem(tatuagem_id: int, imagem_id: int, usuario: dict) -> bool:
+    """Remove uma imagem e avisa quando ela não existia na tatuagem.
+
+    O tatuador e o administrador removem qualquer imagem da tatuagem. O cliente
+    só apaga o desenho que ele recusou, para não sumir com uma referência ou com
+    um desenho já aprovado.
+    """
+    imagem = repositorio_imagens.buscar_imagem(tatuagem_id, imagem_id)
+
+    if imagem is None:
+        raise ImagemNaoEncontrada("Essa imagem não existe nesta tatuagem.")
+
+    if usuario.get("papel") == "cliente" and imagem["status"] != "recusada":
+        raise ImagemNaoRemovivel(
+            "Você só pode remover um desenho que recusou."
+        )
+
     removida = repositorio_imagens.remover_imagem(tatuagem_id, imagem_id)
 
     if not removida:

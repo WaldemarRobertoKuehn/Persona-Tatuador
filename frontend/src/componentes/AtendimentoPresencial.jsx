@@ -52,6 +52,9 @@ export default function AtendimentoPresencial({
   const presenciais = tatuagens.filter(
     (tatuagem) => tatuagem.origem === "presencial",
   );
+  const tatuagemEmRevisao = presenciais.find(
+    (tatuagem) => tatuagem.id === revisandoId,
+  );
 
   function carregarClientes() {
     return buscarClientes()
@@ -350,10 +353,8 @@ export default function AtendimentoPresencial({
         <div className="revisao-do-desenho">
           <ImagensDaTatuagem
             tatuagemId={revisandoId}
-            ideia={
-              presenciais.find((tatuagem) => tatuagem.id === revisandoId)
-                ?.ideia ?? ""
-            }
+            ideia={tatuagemEmRevisao?.ideia ?? ""}
+            origem={tatuagemEmRevisao?.origem ?? ""}
             perfil={perfil}
             aoAtualizarTatuagem={aoAtualizarTatuagens}
           />

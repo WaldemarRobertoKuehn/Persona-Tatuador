@@ -84,6 +84,11 @@ class ImagemJaAprovada(Exception):
     """A imagem já foi aprovada e não pode ser recusada."""
 
 
+# ImagemNaoRemovivel: o cliente só pode apagar o desenho que ele mesmo recusou.
+class ImagemNaoRemovivel(Exception):
+    """O cliente só pode remover uma imagem que recusou."""
+
+
 # AgendamentoNaoEncontrado: o id não pertence à tatuagem consultada.
 class AgendamentoNaoEncontrado(Exception):
     """O agendamento não existe nesta tatuagem."""
