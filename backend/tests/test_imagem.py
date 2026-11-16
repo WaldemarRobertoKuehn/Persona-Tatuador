@@ -24,7 +24,27 @@ TATUADOR = {"id": 2, "papel": "tatuador"}
 ADMINISTRADOR = {"id": 9, "papel": "administrador"}
 
 
-def test_cliente_envia_sempre_como_referencia(monkeypatch):
+def test_cliente_envia_desenho(monkeypatch):
+    def criar(tatuagem_id, dados):
+        return {"tatuagem_id": tatuagem_id, **dados}
+
+    monkeypatch.setattr(servico.repositorio_imagens, "criar_imagem", criar)
+
+    imagem = servico.enviar_imagem(
+        1,
+        TATUAGEM,
+        CLIENTE,
+        "leao.png",
+        "desenho",
+        "image/png",
+        b"conteudo",
+    )
+
+    assert imagem["tipo"] == "desenho"
+    assert imagem["nome"] == "leao.png"
+
+
+def test_cliente_envia_referencia(monkeypatch):
     def criar(tatuagem_id, dados):
         return {"tatuagem_id": tatuagem_id, **dados}
 
@@ -35,32 +55,12 @@ def test_cliente_envia_sempre_como_referencia(monkeypatch):
         TATUAGEM,
         CLIENTE,
         "foto.png",
-        "desenho",
+        "referencia",
         "image/png",
         b"conteudo",
     )
 
     assert imagem["tipo"] == "referencia"
-    assert imagem["nome"] == "foto.png"
-
-
-def test_tatuador_envia_desenho(monkeypatch):
-    def criar(tatuagem_id, dados):
-        return {"tatuagem_id": tatuagem_id, **dados}
-
-    monkeypatch.setattr(servico.repositorio_imagens, "criar_imagem", criar)
-
-    imagem = servico.enviar_imagem(
-        1,
-        TATUAGEM,
-        TATUADOR,
-        "leao.png",
-        "desenho",
-        "image/png",
-        b"conteudo",
-    )
-
-    assert imagem["tipo"] == "desenho"
 
 
 def test_arquivo_precisa_ser_imagem_aceita(monkeypatch):

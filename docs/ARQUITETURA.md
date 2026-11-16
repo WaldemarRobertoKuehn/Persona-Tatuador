@@ -222,6 +222,7 @@ A cadeia de migrations é:
 → 20261109_01_usuario_login
 → 20261115_01_atendimento_presencial
 → 20261115_02_cliente_remove_imagem
+→ 20261115_03_tatuador_somente_agenda
 ```
 
 `python criar_tabelas.py` executa `alembic upgrade head`. Mudança nova segue o caminho
@@ -309,9 +310,11 @@ passo aceito é o que muda a etapa.
 
 - Limite de 4 MB; JPEG, PNG, WebP e SVG sanitizado.
 - `tipo` é `desenho` ou `referencia`; `status` é `pendente`, `aprovada` ou `recusada`.
-- Só o desenho é aprovado ou recusado, pelo cliente ou pelo administrador no atendimento presencial.
+- O cliente escolhe e envia o desenho, e aprova ou recusa a arte. No atendimento presencial,
+  o administrador escolhe e autoriza.
+- O tatuador não envia, não remove e não gera imagens; ele continua a agenda e os passos.
 - Aprovar na etapa `pedida` registra o passo e move a etapa; recusar exige motivo e não move.
-- O cliente remove o desenho que recusou; tatuador e administrador removem qualquer imagem.
+- O cliente remove o desenho que recusou; o administrador remove qualquer imagem.
   O download exige autenticação.
 
 ### 7.3 Agenda

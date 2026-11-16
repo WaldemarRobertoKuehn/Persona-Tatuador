@@ -144,7 +144,7 @@ export default function ImagensDaTatuagem({
   const [aviso, setAviso] = useState("");
   const [arquivo, setArquivo] = useState(null);
   const [arrastando, setArrastando] = useState(false);
-  const [tipo, setTipo] = useState(ehCliente ? "referencia" : "desenho");
+  const [tipo, setTipo] = useState("desenho");
   const [enviando, setEnviando] = useState(false);
   const [acaoId, setAcaoId] = useState(null);
   const [recusandoId, setRecusandoId] = useState(null);
@@ -328,8 +328,8 @@ export default function ImagensDaTatuagem({
 
       {!carregando && !erro && imagens.length === 0 ? (
         <AvisoVazio>
-          Nenhuma imagem ainda. O tatuador envia o desenho e o cliente pode enviar
-          referências.
+          Nenhuma imagem ainda. O cliente envia o desenho e aprova. No
+          presencial, o administrador escolhe e autoriza.
         </AvisoVazio>
       ) : null}
 
@@ -526,22 +526,21 @@ export default function ImagensDaTatuagem({
             </button>
           ) : null}
 
-          {!ehCliente ? (
-            <label className="campo">
-              <span>Tipo</span>
-              <select
-                value={tipo}
-                onChange={(evento) => setTipo(evento.target.value)}
-              >
-                <option value="desenho">Desenho</option>
-                <option value="referencia">Referência</option>
-              </select>
-            </label>
-          ) : null}
+          <label className="campo">
+            <span>Tipo</span>
+            <select
+              value={tipo}
+              onChange={(evento) => setTipo(evento.target.value)}
+            >
+              <option value="desenho">Desenho</option>
+              <option value="referencia">Referência</option>
+            </select>
+          </label>
 
           <p className="legenda">
-            JPEG, PNG, WebP ou SVG, até 4 MB. O cliente envia referência; o
-            desenho é enviado pelo tatuador.
+            JPEG, PNG, WebP ou SVG, até 4 MB. O cliente escolhe e envia o
+            desenho para o tatuador e aprova a arte. No presencial, o
+            administrador escolhe e autoriza.
           </p>
 
           <button

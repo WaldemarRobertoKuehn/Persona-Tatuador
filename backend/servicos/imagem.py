@@ -110,20 +110,17 @@ def enviar_imagem(
     content_type: str,
     conteudo: bytes,
 ) -> dict | None:
-    """Grava uma imagem nova, aplicando as regras de quem pode enviar o quê.
+    """Grava uma imagem nova, aplicando as regras do arquivo e do tipo.
 
-    O cliente só envia referência: mesmo que a tela mande "desenho", o serviço
-    troca para "referencia". O desenho é upload do tatuador, e a aprovação é uma
-    ação separada do cliente.
+    O cliente escolhe o arquivo, envia como desenho ou referência e aprova o
+    desenho. No atendimento presencial, o administrador faz a escolha e a
+    autorização. O tatuador não participa desta etapa.
     """
     if tatuagem is None:
         return None
 
     tipo_normalizado = _validar_tipo(tipo)
     tipo_de_conteudo, conteudo = _validar_arquivo(content_type, conteudo)
-
-    if usuario["papel"] == "cliente":
-        tipo_normalizado = "referencia"
 
     nome_limpo = (nome or "").strip()[:255] or "imagem"
 
