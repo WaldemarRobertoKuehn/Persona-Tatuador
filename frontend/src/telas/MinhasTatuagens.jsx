@@ -204,7 +204,11 @@ export default function MinhasTatuagens({ perfil, aoAbrirPedido }) {
                       className="botao-neutro"
                       onClick={() => setAberta(estaAberta ? null : tatuagem.id)}
                     >
-                      {estaAberta ? "Fechar histórico" : "Ver histórico"}
+                      {estaAberta
+                        ? "Fechar histórico"
+                        : tatuagem.etapa === "pedida"
+                          ? "Ver desenho e aprovar"
+                          : "Ver histórico"}
                     </button>
                   </div>
 

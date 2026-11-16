@@ -337,7 +337,7 @@ export default function ImagensDaTatuagem({
         <div className="grade-de-imagens">
           {imagens.map((imagem) => {
             const ehDesenho = imagem.tipo === "desenho";
-            const podeDecidir = podeDecidirDesenho && ehDesenho;
+            const podeDecidir = podeDecidirDesenho;
             const podeRemoverImagem =
               podeRemover && (!ehCliente || imagem.status === "recusada");
 
@@ -350,14 +350,12 @@ export default function ImagensDaTatuagem({
                   <span className="legenda">
                     {ehDesenho ? "Desenho" : "Referência"}
                   </span>
-                  {ehDesenho ? (
-                    <span
-                      className="etiqueta-status"
-                      data-status={imagem.status}
-                    >
-                      {ROTULO_DO_STATUS[imagem.status] ?? imagem.status}
-                    </span>
-                  ) : null}
+                  <span
+                    className="etiqueta-status"
+                    data-status={imagem.status}
+                  >
+                    {ROTULO_DO_STATUS[imagem.status] ?? imagem.status}
+                  </span>
 
                   {imagem.motivo_recusa ? (
                     <p className="legenda">
@@ -405,7 +403,11 @@ export default function ImagensDaTatuagem({
                         disabled={acaoId !== null}
                         onClick={() => aprovar(imagem)}
                       >
-                        {acaoId === imagem.id ? "Aprovando..." : "Aprovar desenho"}
+                        {acaoId === imagem.id
+                          ? "Aprovando..."
+                          : ehDesenho
+                            ? "Aprovar desenho"
+                            : "Aprovar como desenho"}
                       </button>
                       <button
                         type="button"

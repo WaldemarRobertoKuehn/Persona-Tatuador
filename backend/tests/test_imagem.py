@@ -12,7 +12,6 @@ from servicos.excecoes import (
     AprovacaoDoClienteNecessaria,
     ArquivoDeImagemInvalido,
     ImagemJaAprovada,
-    ImagemNaoAprovavel,
     ImagemNaoRemovivel,
     TipoDeImagemDesconhecido,
 )
@@ -276,15 +275,38 @@ def test_desenho_gerado_e_sempre_pendente_e_do_tipo_desenho(monkeypatch):
     assert capturado["content_type"] == "image/svg+xml"
 
 
-def test_referencia_nao_pode_ser_aprovada(monkeypatch):
+def test_cliente_aprova_referencia_e_ela_vira_desenho(monkeypatch):
+    imagem = {
+        "id": 5,
+        "tipo": "referencia",
+        "status": "pendente",
+        "nome": "escolhida.png",
+    }
     monkeypatch.setattr(
         servico.repositorio_imagens,
         "buscar_imagem",
-        lambda *_: {"id": 5, "tipo": "referencia", "status": "pendente"},
+        lambda *_: imagem,
+    )
+    monkeypatch.setattr(
+        servico.repositorio_imagens,
+        "aprovar_imagem",
+        lambda *_: {**imagem, "tipo": "desenho", "status": "aprovada"},
+    )
+    monkeypatch.setattr(
+        servico.servico_passos,
+        "aplicar_passo",
+        lambda *_: "desenho aprovado",
+    )
+    monkeypatch.setattr(
+        servico.servico_passos,
+        "registrar_passo",
+        lambda *_, **__: {"id": 1, "tipo": "desenho aprovado"},
     )
 
-    with pytest.raises(ImagemNaoAprovavel):
-        servico.aprovar_imagem(1, 5, TATUAGEM, CLIENTE)
+    aprovada = servico.aprovar_imagem(1, 5, TATUAGEM, CLIENTE)
+
+    assert aprovada["tipo"] == "desenho"
+    assert aprovada["status"] == "aprovada"
 
 
 def test_desenho_aprovado_nao_pode_ser_recusado(monkeypatch):

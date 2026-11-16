@@ -354,7 +354,7 @@ export default function AtendimentoPresencial({
           <ImagensDaTatuagem
             tatuagemId={revisandoId}
             ideia={tatuagemEmRevisao?.ideia ?? ""}
-            origem={tatuagemEmRevisao?.origem ?? ""}
+            origem="presencial"
             perfil={perfil}
             aoAtualizarTatuagem={aoAtualizarTatuagens}
           />

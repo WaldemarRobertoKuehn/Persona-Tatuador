@@ -21,7 +21,6 @@ from servicos.excecoes import (
     ArquivoDeImagemInvalido,
     EtapaNaoAceitaPasso,
     ImagemJaAprovada,
-    ImagemNaoAprovavel,
     ImagemNaoEncontrada,
     ImagemNaoRemovivel,
     TipoDeImagemDesconhecido,
@@ -46,7 +45,6 @@ def _traduzir_erro(erro: Exception) -> None:
     if isinstance(
         erro,
         (
-            ImagemNaoAprovavel,
             ImagemJaAprovada,
             ImagemNaoRemovivel,
             EtapaNaoAceitaPasso,
@@ -174,7 +172,6 @@ def aprovar_imagem(
         )
     except (
         AprovacaoDoClienteNecessaria,
-        ImagemNaoAprovavel,
         ImagemJaAprovada,
         ImagemNaoEncontrada,
         EtapaNaoAceitaPasso,
@@ -198,7 +195,7 @@ def recusar_imagem(
     ),
     usuario: dict = Depends(exigir_permissao("imagens:aprovar")),
 ) -> dict:
-    """Recusa o desenho e devolve a imagem com o motivo gravado."""
+    """Recusa a arte e devolve a imagem com o motivo gravado."""
     try:
         imagem = servico_imagens.recusar_imagem(
             tatuagem_id,
@@ -209,7 +206,6 @@ def recusar_imagem(
         )
     except (
         AprovacaoDoClienteNecessaria,
-        ImagemNaoAprovavel,
         ImagemJaAprovada,
         ImagemNaoEncontrada,
     ) as erro:

@@ -75,11 +75,15 @@ def aprovar_imagem(
     usuario_id: int,
     aprovada_em,
 ) -> dict | None:
-    """Marca a imagem como aprovada e devolve os metadados atualizados."""
+    """Marca a imagem como aprovada e devolve os metadados atualizados.
+
+    A imagem aprovada passa a ser do tipo desenho: se o cliente escolheu uma
+    referência como arte final, ela deixa de ser referência.
+    """
     with banco.cursor() as cursor:
         cursor.execute(
             "UPDATE tatuagem_imagens "
-            "SET status = 'aprovada', aprovada_em = %s, "
+            "SET tipo = 'desenho', status = 'aprovada', aprovada_em = %s, "
             "aprovada_por_usuario_id = %s, recusada_em = NULL, "
             "motivo_recusa = NULL "
             "WHERE tatuagem_id = %s AND id = %s "

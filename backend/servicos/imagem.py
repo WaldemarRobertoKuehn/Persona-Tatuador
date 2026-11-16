@@ -18,7 +18,6 @@ from servicos.excecoes import (
     AprovacaoDoClienteNecessaria,
     ArquivoDeImagemInvalido,
     ImagemJaAprovada,
-    ImagemNaoAprovavel,
     ImagemNaoEncontrada,
     ImagemNaoRemovivel,
     TipoDeImagemDesconhecido,
@@ -191,7 +190,9 @@ def aprovar_imagem(
     """Aprova o desenho e, se a etapa ainda é "pedida", registra o passo.
 
     A validação da regra roda primeiro, para uma tatuagem que não aceite mais o
-    passo recusar sem deixar a imagem aprovada pela metade.
+    passo recusar sem deixar a imagem aprovada pela metade. A imagem que o
+    cliente enviou como referência também pode ser aprovada: nesse caso ela é
+    promovida a desenho, porque foi a arte escolhida.
     """
     if tatuagem is None:
         return None
@@ -206,12 +207,6 @@ def aprovar_imagem(
 
     if imagem is None:
         raise ImagemNaoEncontrada("Essa imagem não existe nesta tatuagem.")
-
-    if imagem["tipo"] != "desenho":
-        raise ImagemNaoAprovavel(
-            "Só a imagem do tipo desenho pode ser aprovada. "
-            "Referências não passam por aprovação."
-        )
 
     # Aprovar de novo não muda a etapa nem cria outro passo. A tela pode repetir
     # a chamada sem duplicar histórico.
@@ -259,7 +254,7 @@ def recusar_imagem(
     tatuagem: dict | None,
     usuario: dict,
 ) -> dict | None:
-    """Recusa o desenho, guardando o motivo que o cliente escreveu."""
+    """Recusa a arte, guardando o motivo que o cliente escreveu."""
     if tatuagem is None:
         return None
 
@@ -273,11 +268,6 @@ def recusar_imagem(
 
     if imagem is None:
         raise ImagemNaoEncontrada("Essa imagem não existe nesta tatuagem.")
-
-    if imagem["tipo"] != "desenho":
-        raise ImagemNaoAprovavel(
-            "Só a imagem do tipo desenho pode ser recusada."
-        )
 
     if imagem["status"] == "aprovada":
         raise ImagemJaAprovada(

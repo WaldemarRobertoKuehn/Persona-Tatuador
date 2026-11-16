@@ -74,11 +74,6 @@ class ArquivoDeImagemInvalido(Exception):
     """O arquivo enviado não serve como imagem."""
 
 
-# ImagemNaoAprovavel: o cliente tentou aprovar uma referência, e não o desenho.
-class ImagemNaoAprovavel(Exception):
-    """Só uma imagem do tipo desenho pode ser aprovada."""
-
-
 # ImagemJaAprovada: o cliente tentou recusar uma imagem que já aprovou.
 class ImagemJaAprovada(Exception):
     """A imagem já foi aprovada e não pode ser recusada."""
